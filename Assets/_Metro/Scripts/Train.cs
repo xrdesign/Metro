@@ -10,7 +10,7 @@ public class Train : MonoBehaviour
     public float direction;
     public int cars = 0;
     public int nextStop = 0;
-    public List<Passenger> passengers;
+    public List<Passenger> passengers = new List<Passenger>();
     
     public TransportLine line;
 

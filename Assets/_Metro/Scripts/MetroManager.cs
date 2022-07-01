@@ -236,7 +236,7 @@ public class MetroManager : MonoBehaviour
         }  
     }
 
-    public void AddScore(int inc){
+    public static void AddScore(int inc){
         Instance.score += inc;
         // 
     }
