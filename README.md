@@ -38,3 +38,30 @@ Open the Unity editor, import the Oculus Integration package by clicking the men
 
 - Upgrad MRTK shaders for Universal Render Pipeline: click menu item "Mixed Reality > Toolkit > Utilities > Upgrade MRTK Standard Shader for Universal Render Pipeline"
 
+
+## TODOs
+
+- Main UI / Heads up Display
+    - Main menu: 
+    - Heads up Display for Score
+    - Oveview map
+    - Current Time / time controls
+    - List of Lines / reset Line
+
+- Passenger display
+    - 2D bubble frames
+    - passenger shape icons
+
+- Line pathways as nice curves
+
+- Game logic
+    - passenger pickup / dropoff pathfinding
+    - tuning station / passenger spawning logic and probabilities
+
+- VR interface
+    - drag to connect stations
+    - drag track to insert station
+    - drag trains / cars to move to other lines
+
+
+

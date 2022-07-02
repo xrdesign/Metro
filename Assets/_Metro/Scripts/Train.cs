@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Train : MonoBehaviour
 {
@@ -11,6 +12,8 @@ public class Train : MonoBehaviour
     public int cars = 0;
     public int nextStop = 0;
     public List<Passenger> passengers = new List<Passenger>();
+
+    private Image[] seats;
     
     public TransportLine line;
 
@@ -26,6 +29,16 @@ public class Train : MonoBehaviour
         // go.transform.localScale = new Vector3(0.1f,0.1f,0.1f);
         // this.gameObject.transform.rotation = prefab.transform.rotation;        
         train.transform.SetParent(this.gameObject.transform, false);
+        seats = train.GetComponentsInChildren<Image>(true);
+        // var p = new Passenger();
+        // p.destination = StationType.Cone;
+        // passengers.Add(p);
+        // p = new Passenger();
+        // p.destination = StationType.Cube;
+        // passengers.Add(p);
+        // p = new Passenger();
+        // p.destination = StationType.Sphere;
+        // passengers.Add(p);
     }
 
     // Update is called once per frame
@@ -35,6 +48,26 @@ public class Train : MonoBehaviour
         this.gameObject.transform.position = line.track.GetPosition(position);
         var v = line.track.GetVelocity(position);
         this.gameObject.transform.rotation = Quaternion.LookRotation(v);
+
+
+        // show passengers
+        foreach(var s in seats) s.enabled = false;
+        if(passengers.Count > 0){
+            seats[0].enabled = true;
+            var dir = Vector3.Normalize(Camera.main.transform.position - transform.position);
+            var quat = Quaternion.LookRotation(dir);
+            seats[0].transform.parent.rotation = quat;
+        }
+        for(int i = 0; i < passengers.Count; i++){
+            seats[i+1].enabled = true;
+            var dest = passengers[i].destination;
+            if(dest == StationType.Cube)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/square");
+            else if(dest == StationType.Cone)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/triangle");
+            else if(dest == StationType.Sphere)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/circle");
+        }
 
         // var factor = v.magnitude;
         // if(factor == 0.0f) factor = 1.0f;
@@ -86,13 +119,19 @@ public class Train : MonoBehaviour
     }
 
     void PassengerPickup(Station station){
+        var newList = new List<Passenger>();
+
         foreach(var p in station.passengers){
             if(passengers.Count < 6 + 6*cars){
 
-                // if()
+                passengers.Add(p);
+                
 
-            }
+            }else
+                newList.Add(p);
         }
+
+        station.passengers = newList;
     }
 
 

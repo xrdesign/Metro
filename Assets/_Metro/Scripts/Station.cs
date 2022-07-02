@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Input;
 
@@ -26,7 +27,8 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler
     public List<TransportLine> lines;
 
 
-    public List<GameObject> passengerObject;
+    // public List<GameObject> passengerObject;
+    private Image[] seats;
 
 
     static bool dragging = false; 
@@ -34,12 +36,30 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler
     // Start is called before the first frame update
     void Start()
     {
-        // SetupBody();
+        seats = gameObject.GetComponentsInChildren<Image>(true);
     }
 
     // Update is called once per frame
     void Update()
     {
+        // show passengers
+        foreach(var s in seats) s.enabled = false;
+        if(passengers.Count > 0){
+            seats[0].enabled = true;
+            var dir = Vector3.Normalize(Camera.main.transform.position - transform.position);
+            var quat = Quaternion.LookRotation(dir);
+            seats[0].transform.parent.rotation = quat;
+        }
+        for(int i = 0; i < passengers.Count; i++){
+            seats[i+1].enabled = true;
+            var dest = passengers[i].destination;
+            if(dest == StationType.Cube)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/square");
+            else if(dest == StationType.Cone)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/triangle");
+            else if(dest == StationType.Sphere)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/circle");
+        }
     }
 
     public void SpawnRandomPassenger(){
@@ -67,35 +87,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler
         Passenger p = new Passenger();
         p.destination = type;
         passengers.Add(p);
-        GameObject go;
-        switch(type){
-            case StationType.Sphere:
-                var prefab = Resources.Load("Prefabs/Sphere");
-                go = GameObject.Instantiate(prefab, new Vector3(0,0,0), Quaternion.identity) as GameObject;
-                break;
-            case StationType.Cone:
-                prefab = Resources.Load("Prefabs/Cone");
-                go = GameObject.Instantiate(prefab, new Vector3(0,0,0), Quaternion.identity) as GameObject;
-                break;
-            case StationType.Cube:
-                prefab = Resources.Load("Prefabs/Cube");
-                go = GameObject.Instantiate(prefab, new Vector3(0,0,0), Quaternion.identity) as GameObject;
-                break;
-            default:
-                prefab = Resources.Load("Prefabs/Cub");
-                go = GameObject.Instantiate(prefab, new Vector3(0,0,0), Quaternion.identity) as GameObject;
-                break;
-        }
-        
-        var n = passengers.Count;
-        float x = 0.15f * n - 0.5f ;
-        float y = 0.85f;
-
-        go.transform.position = new Vector3(x, y, 0);
-        go.transform.localScale = new Vector3(0.1f,0.1f,0.1f);
-        go.transform.SetParent(this.gameObject.transform, false);
-
-
+       
     }
 
 

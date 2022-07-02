@@ -5,7 +5,7 @@ using UnityEngine;
 public class Passenger : MonoBehaviour
 {
 
-    public StationType destination;
+    public StationType destination = StationType.Cube;
     public float waitTime;
     public float travelTime;
 
