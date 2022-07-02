@@ -81,11 +81,16 @@ public class TrackSpline : MonoBehaviour
 
             // look back to i-1 
             if(i > 0){ 
+                var p00 = points[i-1];
+                var v = Vector3.Normalize(p1 - p00);
+                cp0 = p0 + v * 0.1f;
 
             }
             // look forward to i+2
             if(i < points.Count - 2){
-
+                var p2 = points[i+2];
+                var v = Vector3.Normalize(p2 - p0);
+                cp1 = p1 - v * 0.1f;
             }
             cp.Add(cp0);
             cp.Add(cp1);
