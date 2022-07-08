@@ -11,6 +11,9 @@
 /[Uu]ser[Ss]ettings/
 /[Mm]emoryCaptures/
 
+/[Aa]ssets/MRTK/
+/[Aa]ssets/Oculus/
+
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta
 
