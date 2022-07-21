@@ -55,7 +55,7 @@ public class Train : MonoBehaviour
         if(passengers.Count > 0){
             seats[0].enabled = true;
             var dir = Vector3.Normalize(Camera.main.transform.position - transform.position);
-            var quat = Quaternion.LookRotation(dir);
+            var quat = Quaternion.LookRotation(dir, Camera.main.transform.up);
             seats[0].transform.parent.rotation = quat;
         }
         for(int i = 0; i < passengers.Count; i++){
@@ -71,7 +71,7 @@ public class Train : MonoBehaviour
 
         // var factor = v.magnitude;
         // if(factor == 0.0f) factor = 1.0f;
-        speed = 0.01f / 60.0f; // / factor;
+        speed = 0.15f * Time.deltaTime; /// 60.0f; // / factor;
 
         position += direction * speed;
         if(position <= 0.0f){

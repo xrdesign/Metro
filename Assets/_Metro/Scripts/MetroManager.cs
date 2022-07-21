@@ -13,7 +13,7 @@ using Microsoft.MixedReality.Toolkit;
 * SpaceMetro aims to clone mini metro in VR
 * This singleton object initializes and handles global game state and events
 */
-public class MetroManager : MonoBehaviour
+public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 {
     public static MetroManager Instance;
 
@@ -40,6 +40,13 @@ public class MetroManager : MonoBehaviour
         else Destroy(this);
     }
 
+    void OnEnable(){
+        CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(this);
+    }
+    void OnDisable(){
+        CoreServices.InputSystem?.UnregisterHandler<IMixedRealityPointerHandler>(this);
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -64,12 +71,8 @@ public class MetroManager : MonoBehaviour
 
 
     void InitializeGameState(){
-        SpawnStation(StationType.Sphere);
-        SpawnStation(StationType.Cone);
         SpawnStation(StationType.Cube);
-        SpawnStation(StationType.Sphere);
-        SpawnStation(StationType.Sphere);
-        SpawnStation(StationType.Sphere);
+        SpawnStation(StationType.Cone);
         SpawnStation(StationType.Sphere);
 
         AddTransportLine(Color.red);
@@ -157,7 +160,7 @@ public class MetroManager : MonoBehaviour
         }
     }
 
-    public static void SpawnStation(StationType type, float radius = 1.0f){
+    public static void SpawnStation(StationType type){
         GameObject obj;
         switch(type){
             case StationType.Sphere:
@@ -180,8 +183,16 @@ public class MetroManager : MonoBehaviour
 
         Station station = obj.GetComponentInChildren<Station>();
 
-        var pos = Random.insideUnitSphere * radius;
-        if(pos.y < 0.5f) pos.Set(pos.x, 0.5f, pos.z);
+        var radius = 1.5f + 0.5f * Instance.week + 0.1f * Instance.day;
+
+        var pos = new Vector3(0f,1.0f,0f);
+        while(StationTooClose(pos)){
+            pos = Random.insideUnitSphere * radius;
+            radius += 0.02f;
+            if(pos.y < 0.5f) pos.Set(pos.x, 0.5f, pos.z);
+            if(pos.y > 2.0f) pos.Set(pos.x, 2.0f, pos.z);
+        }
+
         obj.transform.position = pos;
         obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
@@ -191,15 +202,23 @@ public class MetroManager : MonoBehaviour
     public static void SpawnRandomStation(){
         var p = Random.value;
         var type = StationType.Sphere;
-        if( p < 0.5f)
+        if( p < 0.45f)
             type = StationType.Sphere;
-        else if(p < 0.9f)
+        else if(p < 0.85f)
             type = StationType.Cone;
         else if(p < 1.0f)
             type = StationType.Cube;
 
         // todo unique stations..
         SpawnStation(type);
+    }
+
+    public static bool StationTooClose(Vector3 pos){
+        foreach(var station in Instance.stations){
+            var d = Vector3.Distance(pos, station.transform.position);
+            if(d < 0.5f) return true;
+        }
+        return false;
     }
 
     public static TransportLine SelectFreeLine(){
@@ -212,6 +231,15 @@ public class MetroManager : MonoBehaviour
             }
         }
         return null;
+    }
+
+    public static void DeselectLine(){
+        var line = selectedLine;
+        if( line != null){
+            if(line.stops.Count == 1) line.RemoveAll();
+
+        }
+        selectedLine = null;
     }
 
     public static Vector3 PointerTarget = new Vector3(0,0,0);
@@ -241,6 +269,23 @@ public class MetroManager : MonoBehaviour
         // 
     }
 
+    void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
+
+    }
+    
+    void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData){
+        Debug.Log("MetroManager pointer up");
+        DeselectLine();
+     
+    }
+
+    void IMixedRealityPointerHandler.OnPointerDragged(MixedRealityPointerEventData eventData){
+
+    }
+
+    void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData){
+    
+    }
 
     
 }

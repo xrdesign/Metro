@@ -11,6 +11,7 @@ public class TransportLine : MonoBehaviour
     public List<Station> stops = new List<Station>();
     // public List<TrackSegment> tracks = new List<TrackSegment>();
     public TrackSpline track = null;
+    public TrackSpline tempTrack = null;
     public List<Train> trains = new List<Train>();
 
     public Color color;
@@ -64,11 +65,24 @@ public class TransportLine : MonoBehaviour
         }
     }
 
-    public void RemoveStation(){
+    public void RemoveStation(Station station){
+        station.lines.Remove(this);
+        stops.Remove(station);
+        track.points.Remove(station.transform.position);
 
     }
 
-    public void RemoveAll(){}
+    public void RemoveAll(){
+        foreach(var s in stops){
+            s.lines.Remove(this);
+        }
+        stops.Clear();
+        track.points.Clear();
+        MetroManager.Instance.freeTrains += trains.Count;
+        trains.Clear();
+        isDeployed = false;
+
+    }
 
     public void AddTrain(float position, float direction){
         if(MetroManager.Instance.freeTrains == 0) return;
@@ -101,6 +115,10 @@ public class TransportLine : MonoBehaviour
             }
         }
         return station;
+    }
+
+    public TrackSpline CreateTemporarySegment(GameObject obj){
+        return null;
     }
 
     // public void UpdateTrackSegments(){

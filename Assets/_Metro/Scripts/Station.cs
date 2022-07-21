@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.Toolkit.Physics;
 
 public enum StationType {
     Sphere,
@@ -11,7 +14,7 @@ public enum StationType {
     Cube
 }
 
-public class Station : MonoBehaviour, IMixedRealityPointerHandler
+public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedRealityFocusHandler
 {
 
     public StationType type;
@@ -32,6 +35,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler
 
 
     static bool dragging = false; 
+    bool firstDrag = false;
 
     // Start is called before the first frame update
     void Start()
@@ -47,7 +51,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler
         if(passengers.Count > 0){
             seats[0].enabled = true;
             var dir = Vector3.Normalize(Camera.main.transform.position - transform.position);
-            var quat = Quaternion.LookRotation(dir);
+            var quat = Quaternion.LookRotation(dir, Camera.main.transform.up);
             seats[0].transform.parent.rotation = quat;
         }
         for(int i = 0; i < passengers.Count; i++){
@@ -93,39 +97,94 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler
 
     void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
     
+        var line = MetroManager.SelectFreeLine();
+        if( line != null){
+            Debug.Log("station down");
+            line.AddStation(this);
+            line.CreateTemporarySegment(this.gameObject);
+
+            eventData.Pointer.IsFocusLocked = false;
+            eventData.Pointer.IsTargetPositionLockedOnFocusLock = false;
+            // FocusDetails details;
+            // CoreServices.FocusProvider.TryGetFocusDetails(eventData.Pointer, out details);
+            // Debug.Log(details.Object);
+            // details.Object = null; //MetroManager.Instance.stations[1].gameObject;
+            // details.Point = MetroManager.Instance.stations[1].gameObject.transform.position;
+            // bool ret = CoreServices.FocusProvider.TryOverrideFocusDetails(eventData.Pointer, details);
+            firstDrag = false;
+
+            var hapticController = eventData.Pointer?.Controller as IMixedRealityHapticFeedback;
+            hapticController?.StartHapticImpulse(0.4f, 0.15f);
+        } else {
+            // TODO no free line feedback
+            // maybe instead create a NUllLine that is returned from SelectFreeLine
+            // grey segment with X icon
+        }
+
     }
     
     void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData){
-    
+        // var line = MetroManager.selectedLine;
+        // if( line != null){
+        //     if(line.stops.Count == 1) line.RemoveAll();
+
+        // }
+        // Debug.Log("station up");
+        // MetroManager.DeselectLine();
+
+        
     }
 
     void IMixedRealityPointerHandler.OnPointerDragged(MixedRealityPointerEventData eventData){
         // if first drag and no lines already connected, spawn next line
-        // Debug.Log("drag");
+        if(!firstDrag) return;
+        firstDrag = false;
+        Debug.Log("station drag " + type);
+        var line = MetroManager.selectedLine;
+        if( line != null){
+            // if valid add / remove
+            if(!line.stops.Contains(this))
+                line.AddStation(this);
+            else if(line.stops.Last() == this){ 
+                line.RemoveStation(this);
+            }
+            
+            var hapticController = eventData.Pointer?.Controller as IMixedRealityHapticFeedback;
+            hapticController?.StartHapticImpulse(0.4f, 0.15f);
 
+            // TODO trigger add/remove event viz
+
+        }
     }
 
     void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData){
     
         // Line selected
         // Add Station to selectedLines next index
-        if(MetroManager.selectedLine != null){
-            Debug.Log("Selected line addStation");
-            MetroManager.selectedLine.AddStation(this);
+        // if(MetroManager.selectedLine != null){
+        //     Debug.Log("Selected line addStation");
+        //     MetroManager.selectedLine.AddStation(this);
 
-        } else {
-            // No line selected and no lines attached
-            // SelectFreeLine and place        
-            if(lines.Count == 0){
-                Debug.Log("Select free line, addStation");
-                var line = MetroManager.SelectFreeLine();
-                if(line != null){
-                    line.AddStation(this);
-                } // else TODO visualize no free lines somehow
-            }
+        // } else {
+        //     // No line selected and no lines attached
+        //     // SelectFreeLine and place        
+        //     if(lines.Count == 0){
+        //         Debug.Log("Select free line, addStation");
+        //         var line = MetroManager.SelectFreeLine();
+        //         if(line != null){
+        //             line.AddStation(this);
+        //         } // else TODO visualize no free lines somehow
+        //     }
 
-            // No line selected and one line attached? multiple lines?
-        }
+        //     // No line selected and one line attached? multiple lines?
+        // }
+    }
+
+    void IMixedRealityFocusHandler.OnFocusEnter(FocusEventData eventData){
+        firstDrag = true;
+    }
+    void IMixedRealityFocusHandler.OnFocusExit(FocusEventData eventData){
+
     }
 
     
