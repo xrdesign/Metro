@@ -19,6 +19,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     public float score = 0.0f;
     public float time = 0.0f;
+    public float gameSpeed = 1.0f;
+    public static float dt;
+
     public int freeTrains = 3;
     public int freeCars = 0;
 
@@ -26,6 +29,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     public List<TransportLine> lines = new List<TransportLine>();
     
     public bool paused = false;
+    public float clockTime;
     public int hour;
     public int day;
     public int week; 
@@ -57,12 +61,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     void Update()
     {
         // Time progression
-        if(!paused){
-            CheckStationTimers(); // check for lose condition
-            UpdateClock(); // update clock, grant weekly reward
-
-
-        }
+        CheckStationTimers(); // check for lose condition
+        UpdateClock(); // update clock, grant weekly reward
 
         UpdatePointerState();
 
@@ -107,9 +107,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     public void UpdateClock(){
         float lengthOfDay = 20.0f;
 
-        time += Time.deltaTime;
+        if(paused) gameSpeed = 0.0f;
         
-        float clockTime = (time % lengthOfDay) / lengthOfDay * 24;
+        dt = Time.deltaTime * gameSpeed;
+        time += dt;
+        
+        clockTime = (time % lengthOfDay) / lengthOfDay * 24;
         int newHour = (int) clockTime;
         int newDay = (int)((time / lengthOfDay) % 7);
         int newWeek = (int)(time / (lengthOfDay * 7));

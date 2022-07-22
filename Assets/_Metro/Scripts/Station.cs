@@ -37,6 +37,8 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     static bool dragging = false; 
     bool firstDrag = false;
 
+    public Image timerImage;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -64,6 +66,17 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
             else if(dest == StationType.Sphere)
                 seats[i+1].sprite = Resources.Load<Sprite>("Images/circle");
         }
+
+        // Update overcrowding status
+        if(passengers.Count > 6){ 
+            timer += MetroManager.dt;
+
+        } else {
+            timer -= MetroManager.dt;
+            if(timer < 0f) timer = 0f;
+        }
+        timerImage.enabled = true;
+        timerImage.fillAmount = timer / 45.0f;
     }
 
     public void SpawnRandomPassenger(){
@@ -88,10 +101,18 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 
     public void SpawnPassenger(StationType type){
 
+        if(passengers.Count >= 30) return;
         Passenger p = new Passenger();
         p.destination = type;
         passengers.Add(p);
        
+    }
+
+    public void StartOvercrowdedTimer(){
+
+    }
+    public void NotifyCircleAnimation(){
+
     }
 
 

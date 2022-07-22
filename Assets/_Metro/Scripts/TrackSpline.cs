@@ -32,6 +32,7 @@ public class TrackSpline : MonoBehaviour
 
         lineRenderer.material = Resources.Load("Materials/MRTKTransparent") as Material;
         var block = new MaterialPropertyBlock();
+        color.a = 0.75f;
         block.SetColor("_Color", color);
         lineRenderer.SetPropertyBlock(block);
         lineRenderer.widthMultiplier = 0.01f;
