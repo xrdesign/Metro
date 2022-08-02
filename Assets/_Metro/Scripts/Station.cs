@@ -39,6 +39,8 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 
     public Image timerImage;
 
+    float cooldown = 0.0f;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -48,6 +50,8 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     // Update is called once per frame
     void Update()
     {
+        cooldown -= Time.deltaTime;
+
         // show passengers
         foreach(var s in seats) s.enabled = false;
         if(passengers.Count > 0){
@@ -122,7 +126,9 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         if( line != null){
             Debug.Log("station down");
             line.AddStation(this);
-            line.CreateTemporarySegment(this.gameObject);
+
+            var dist = eventData.Pointer.Result.Details.RayDistance;
+            MetroManager.StartEditingLine(line, 0, dist, false);
 
             eventData.Pointer.IsFocusLocked = false;
             eventData.Pointer.IsTargetPositionLockedOnFocusLock = false;
@@ -135,7 +141,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
             firstDrag = false;
 
             var hapticController = eventData.Pointer?.Controller as IMixedRealityHapticFeedback;
-            hapticController?.StartHapticImpulse(0.4f, 0.15f);
+            hapticController?.StartHapticImpulse(0.4f, 0.05f);
         } else {
             // TODO no free line feedback
             // maybe instead create a NUllLine that is returned from SelectFreeLine
@@ -157,22 +163,40 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     }
 
     void IMixedRealityPointerHandler.OnPointerDragged(MixedRealityPointerEventData eventData){
-        // if first drag and no lines already connected, spawn next line
         if(!firstDrag) return;
+        if(cooldown > 0.0f) return;
         firstDrag = false;
-        Debug.Log("station drag " + type);
-        var line = MetroManager.selectedLine;
+
+        var line = MetroManager.editingLine;
+        var index = MetroManager.editingIndex;
+        var dist = eventData.Pointer.Result.Details.RayDistance;
+        var insert = MetroManager.editingInsert;
+
         if( line != null){
-            // if valid add / remove
-            if(!line.stops.Contains(this))
-                line.AddStation(this);
-            else if(line.stops.Last() == this){ 
-                line.RemoveStation(this);
+            // add if not in line (unless closing loop TODO)
+            if(!line.stops.Contains(this)){
+                line.InsertStation(index+1, this);
+                var insrt = index+1 < line.stops.Count-1;
+                MetroManager.StartEditingLine(line, index+1, dist, insrt);
+            
+            // remove if adjacent to editingIndex
+            } else if(line.stops.Count > 1){
+                if (line.stops[index] == this){
+                    line.RemoveStation(this);
+                    var insrt = index-1 >= 0 && index-1 < line.stops.Count-1;
+                    MetroManager.StartEditingLine(line, index-1, dist, insrt);
+
+                }else if(insert && line.stops[index+1] == this){
+                    line.RemoveStation(this);
+                    var insrt = index < line.stops.Count-1;
+                    MetroManager.StartEditingLine(line, index, dist, insrt);
+
+                } 
             }
             
             var hapticController = eventData.Pointer?.Controller as IMixedRealityHapticFeedback;
-            hapticController?.StartHapticImpulse(0.4f, 0.15f);
-
+            hapticController?.StartHapticImpulse(0.4f, 0.05f);
+            cooldown = 1.0f;
             // TODO trigger add/remove event viz
 
         }

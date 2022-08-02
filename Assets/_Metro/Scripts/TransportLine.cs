@@ -9,29 +9,28 @@ public class TransportLine : MonoBehaviour
 
     public bool isDeployed = false;
     public List<Station> stops = new List<Station>();
-    // public List<TrackSegment> tracks = new List<TrackSegment>();
-    public TrackSpline track = null;
-    public TrackSpline tempTrack = null;
     public List<Train> trains = new List<Train>();
 
+    public Tracks tracks = null;
+
+
     public Color color;
-    // public TrackSegment selectedTrack = null;
     public int nextIndex = 0;
 
-    public int lengthOfLines = 20;
 
 
     // Start is called before the first frame update
     void Start()
     {
+        var go = new GameObject();
+        go.name = "Tracks";
+        tracks = go.AddComponent<Tracks>();
+        tracks.line = this;
     }
 
     // Update is called once per frame
     void Update()
     {
-        // if(selectedTrack != null)
-        //     selectedTrack.end = MetroManager.Instance.cursor;
-
     }
 
     // append station as last stop on line
@@ -41,15 +40,6 @@ public class TransportLine : MonoBehaviour
     
     // insert station as stop at arbitrary index
     public void InsertStation(int stopIndex, Station station){
-        if(track == null){
-            Debug.Log("create track spline");
-            var go = new GameObject();
-            go.name = "TrackSpline";
-            var t = go.AddComponent<TrackSpline>();
-            t.line = this;
-            t.color = color;
-            track = t;
-        }
         if(this.stops.Contains(station)){
             // only allow if making looping line
             // TODO
@@ -57,18 +47,18 @@ public class TransportLine : MonoBehaviour
         }
         Debug.Log("insert station");
         stops.Insert(stopIndex, station);
-        track.points.Insert(stopIndex, station.transform.position);
         if(!station.lines.Contains(this)) station.lines.Add(this);
         isDeployed = true;
         if(stops.Count >= 2 && trains.Count == 0){
             AddTrain(0.0f,1.0f);
         }
+        tracks.needsUpdate = true;
     }
 
     public void RemoveStation(Station station){
         station.lines.Remove(this);
         stops.Remove(station);
-        track.points.Remove(station.transform.position);
+        tracks.needsUpdate = true;
 
     }
 
@@ -77,11 +67,13 @@ public class TransportLine : MonoBehaviour
             s.lines.Remove(this);
         }
         stops.Clear();
-        track.points.Clear();
+        tracks.needsUpdate = true;
+        foreach(var t in trains){
+            Destroy(t.gameObject);
+        }
         MetroManager.Instance.freeTrains += trains.Count;
         trains.Clear();
         isDeployed = false;
-
     }
 
     public void AddTrain(float position, float direction){
@@ -117,49 +109,9 @@ public class TransportLine : MonoBehaviour
         return station;
     }
 
-    public TrackSpline CreateTemporarySegment(GameObject obj){
-        return null;
-    }
 
-    // public void UpdateTrackSegments(){
-    //     Debug.Log("UpdateTrackSegments");
-    //     for(int i=0; i < stops.Count - 1; i++){
-    //         var a = stops[i];
-    //         var b = stops[i+1];
-    //         UpdateTrackSegment(i,a,b);
-    //     }
-    // }
 
-    // public void UpdateTrackSegment(int index, Station a, Station b){
-    //     if(index >= tracks.Count) AddTrackSegment(index);
 
-    //     var track = tracks[index];
-    //     track.editing = true;
-    //     track.start = a.transform.position;
-    //     track.cp1 = a.transform.position;
-    //     track.end = b.transform.position;
-    //     track.cp2 = b.transform.position;
-    //     if(index > 0){
-    //         track.cp1 = track.start + (track.start - tracks[index-1].start).normalized;
-    //     }
-    //     if(index < tracks.Count - 1){
-    //         track.cp2 = track.end - (tracks[index+1].end - track.end).normalized;
-    //     }
-
-    // }
-
-    // public void AddTrackSegment(int index){
-    //     Debug.Log("AddTrackSegment");
-
-    //     var go = new GameObject();
-    //     var track = go.AddComponent<TrackSegment>();
-    //     track.line = this;
-    //     track.linkIndex = index;
-    //     track.color = color;
-    //     // selectedTrack = track;
-    //     tracks.Insert(index, track);
-    //     // GameObject.Instantiate(go, new Vector3(0,0,0), Quaternion.identity);
-    // }
 
 
     

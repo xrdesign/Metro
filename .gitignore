@@ -11,8 +11,16 @@
 /[Uu]ser[Ss]ettings/
 /[Mm]emoryCaptures/
 
+# Ignore 3rd party package files
 /[Aa]ssets/MRTK/
+/[Aa]ssets/MRTK.meta
+/[Aa]ssets/MixedRealityToolkit.Generated/
 /[Aa]ssets/Oculus/
+/[Aa]ssets/Oculus.meta
+/[Aa]ssets/TextMesh Pro/
+/[Aa]ssets/TextMesh Pro.meta
+/Packages/MixedReality/
+
 
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta

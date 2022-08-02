@@ -45,8 +45,8 @@ public class Train : MonoBehaviour
     void Update()
     {
 
-        this.gameObject.transform.position = line.track.GetPosition(position);
-        var v = line.track.GetVelocity(position);
+        this.gameObject.transform.position = line.tracks.GetPosition(position);
+        var v = line.tracks.GetVelocity(position);
         this.gameObject.transform.rotation = Quaternion.LookRotation(v);
 
 
@@ -86,7 +86,7 @@ public class Train : MonoBehaviour
         var closestStopIndex = System.Math.Round(d);
         var dist = System.Math.Abs(d - closestStopIndex);
         if(dist < 0.05 && nextStop == closestStopIndex){
-            Debug.Log("stop " + nextStop);
+            // Debug.Log("stop " + nextStop);
 
             var station = line.stops[nextStop];
             PassengerDrop(station);

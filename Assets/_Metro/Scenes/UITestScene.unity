@@ -446,6 +446,7 @@ GameObject:
   - component: {fileID: 1926457114}
   - component: {fileID: 1926457113}
   - component: {fileID: 1926457112}
+  - component: {fileID: 1926457116}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -492,7 +493,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!223 &1926457114
 Canvas:
   m_ObjectHideFlags: 0
@@ -502,7 +503,7 @@ Canvas:
   m_GameObject: {fileID: 1926457111}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
+  m_RenderMode: 2
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
@@ -523,7 +524,7 @@ RectTransform:
   m_GameObject: {fileID: 1926457111}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1806281144}
   m_Father: {fileID: 0}
@@ -531,9 +532,21 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 769.5, y: 459}
+  m_SizeDelta: {x: 1539, y: 918}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1926457116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1926457111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff4e3b9019304b5aaec5664de0778d21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2098475007
 GameObject:
   m_ObjectHideFlags: 0
@@ -642,6 +655,10 @@ PrefabInstance:
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 267991469}
+    - target: {fileID: 4634074218418852064, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
+      propertyPath: additionalOffset.z
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 4634074218418852067, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
