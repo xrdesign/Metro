@@ -24,7 +24,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     }
     public float timer = 0.0f; // max 45 seconds for animation + 2s grace period
 
-    public List<Passenger> passengers;
+    public List<Passenger> passengers = new List<Passenger>();
 
     // Reference to attached Lines for easier pathfinding along lines
     public List<TransportLine> lines;

@@ -63,7 +63,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     {
         gameSpeed = 0.0f;
         lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
-
+        StartGame();
     }
 
     void OnLevelWasLoaded(){

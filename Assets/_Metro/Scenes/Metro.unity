@@ -650,6 +650,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: UIMenu_v1
       objectReference: {fileID: 0}
+    - target: {fileID: 4634074218418852076, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5353746414718037302, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
       propertyPath: m_Mesh
       value: 

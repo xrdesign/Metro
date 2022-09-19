@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Passenger : MonoBehaviour
-{
+public class Passenger {
 
     public StationType destination = StationType.Cube;
     public float waitTime;

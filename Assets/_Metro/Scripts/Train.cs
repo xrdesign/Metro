@@ -25,20 +25,10 @@ public class Train : MonoBehaviour
     {
         prefab = Resources.Load("Prefabs/Train") as GameObject;
         train = GameObject.Instantiate(prefab, new Vector3(0,0,0), prefab.transform.rotation) as GameObject;
-        // go.transform.position = new Vector3(x, y, 0);
-        // go.transform.localScale = new Vector3(0.1f,0.1f,0.1f);
-        // this.gameObject.transform.rotation = prefab.transform.rotation;        
         train.transform.SetParent(this.gameObject.transform, false);
+
+        // seat[0] is image frame..
         seats = train.GetComponentsInChildren<Image>(true);
-        // var p = new Passenger();
-        // p.destination = StationType.Cone;
-        // passengers.Add(p);
-        // p = new Passenger();
-        // p.destination = StationType.Cube;
-        // passengers.Add(p);
-        // p = new Passenger();
-        // p.destination = StationType.Sphere;
-        // passengers.Add(p);
     }
 
     // Update is called once per frame
@@ -84,7 +74,8 @@ public class Train : MonoBehaviour
 
         var d = position * (line.stops.Count - 1);
         var closestStopIndex = System.Math.Round(d);
-        var dist = System.Math.Abs(d - closestStopIndex);
+        // var dist = System.Math.Abs(d - closestStopIndex);
+        var dist = direction*(closestStopIndex - d); // if overshot then negative
         if(dist < 0.05 && nextStop == closestStopIndex){
             // Debug.Log("stop " + nextStop);
 

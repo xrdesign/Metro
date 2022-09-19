@@ -109,6 +109,9 @@ public class TransportLine : MonoBehaviour
         return station;
     }
 
+    public Station FindTransfer(int from, int direction, StationType type){
+        return null;
+    }
 
 
 
