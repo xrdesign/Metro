@@ -6,7 +6,7 @@ using Microsoft.MixedReality.Toolkit.UI;
 
 public class TransportLine : MonoBehaviour
 {
-
+    public int id;
     public bool isDeployed = false;
     public List<Station> stops = new List<Station>();
     public List<Train> trains = new List<Train>();

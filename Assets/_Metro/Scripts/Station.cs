@@ -17,11 +17,9 @@ public enum StationType {
 public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedRealityFocusHandler
 {
 
+    public int id;
     public StationType type;
-    public Vector3 position {
-        get { return transform.position; }
-        set { transform.position = value;}
-    }
+    public Vector3 position;
     public float timer = 0.0f; // max 45 seconds for animation + 2s grace period
 
     public List<Passenger> passengers = new List<Passenger>();
@@ -50,6 +48,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     // Update is called once per frame
     void Update()
     {
+        position = transform.position;
         cooldown -= Time.deltaTime;
 
         // show passengers

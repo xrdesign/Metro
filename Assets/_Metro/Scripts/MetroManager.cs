@@ -61,13 +61,13 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     // Start is called before the first frame update
     void Start()
     {
+        gameObject.AddComponent<Server>();
+
         gameSpeed = 0.0f;
         lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
         StartGame();
     }
 
-    void OnLevelWasLoaded(){
-    }
 
     public static void StartGame(){
         Debug.Log("Start Game");
@@ -120,6 +120,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         for(int i = 0; i < lines.Count; i++){
             lineUIs[i].SetLine(lines[i]);
         }
+        paused = false;
         gameSpeed = 1.0f;
         // Debug.Log(lines[0]);
         // Debug.Log(stations[0]);
@@ -143,7 +144,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     }
 
     public void GameOver(){
-        Debug.Log("TODO: Game Over!");
+        // Debug.Log("TODO: Game Over!");
         // SceneManager.LoadScene(0);
         gameSpeed = 0.0f;
         metroUI.SetActive(false);
@@ -193,7 +194,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         var go = new GameObject();
         go.name = "TransportLine";
         var line = go.AddComponent<TransportLine>();
-        line.color = color;        
+        line.color = color;
+        line.id = lines.Count;        
         lines.Add(line);
     }
 
@@ -249,6 +251,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         obj.transform.position = pos;
         obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
+        station.id = Instance.stations.Count;
         Instance.stations.Add(station);   
     }
 
@@ -370,6 +373,81 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData){
     
     }
+
+
+
+    public static JSONObject SerializeGameState(){
+
+        // JSONObject json = new JSONObject(JsonUtility.ToJson(Instance));
+        JSONObject json = new JSONObject();
+
+        json.AddField("score", Instance.score);
+        json.AddField("time", Instance.time);
+        json.AddField("freeTrains", Instance.freeTrains);
+        
+        json.AddField("stations", SerializeStations());
+        json.AddField("lines", SerializeTransportLines());
+
+        return json;
+    }
+
+    public static JSONObject SerializeStations(){
+        JSONObject json = new JSONObject();
+        foreach( var s in Instance.stations){
+            JSONObject sjson = new JSONObject();
+            sjson.AddField("type", s.type.ToString());
+            sjson.AddField("x", s.position.x);
+            sjson.AddField("y", s.position.y);
+            sjson.AddField("z", s.position.z);
+            sjson.AddField("timer", s.timer);
+            sjson.AddField("passengers", SerializePassengers(s.passengers));
+
+            json.AddField(s.id.ToString(), sjson);
+        }
+        return json;
+    }
+
+    public static JSONObject SerializeTransportLines(){
+        JSONObject json = new JSONObject();
+        foreach( var l in Instance.lines){
+            JSONObject ljson = new JSONObject();
+            ljson.AddField("isDeployed", l.isDeployed);
+            
+            JSONObject stops_json = new JSONObject(JSONObject.Type.ARRAY);
+            foreach(var s in l.stops)
+                stops_json.Add(s.id);
+            ljson.AddField("stops", stops_json);
+            
+            ljson.AddField("trains", SerializeTrains(l.trains));
+
+            json.AddField(l.id.ToString(), ljson);        
+        }
+        return json;
+    }
+
+    public static JSONObject SerializePassengers(List<Passenger> passengers){
+        JSONObject json = new JSONObject();
+        foreach( var p in passengers){
+            json.AddField("destination", p.destination.ToString());
+        }
+        return json;
+    }
+
+    public static JSONObject SerializeTrains(List<Train> trains){
+        JSONObject json = new JSONObject();
+        foreach( var t in trains){
+            json.AddField("position", t.position);
+            json.AddField("speed", t.speed);
+            json.AddField("direction", t.direction);
+            json.AddField("passengers", SerializePassengers(t.passengers));
+        }
+        return json;
+    }
+
+
+
+
+
 
     
 }

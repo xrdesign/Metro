@@ -245,6 +245,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.weibellab.comms": {
+      "version": "https://github.com/WeibelLab/Comms-Unity.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "bd624f6458161f1a8c899066dc15fd473e27ccd1"
+    },
     "com.unity.modules.ai": {
       "version": "1.0.0",
       "depth": 0,
