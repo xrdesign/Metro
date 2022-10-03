@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -46,6 +48,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     public GameObject metroUI;
     TransportLineUI[] lineUIs;
 
+    private static Queue ActionQueue = Queue.Synchronized(new Queue());
+
     private void Awake(){
         if (Instance is null) Instance = this;
         else Destroy(this);
@@ -76,10 +80,25 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     }
 
+    public static void QueueAction(Action action){
+        lock(ActionQueue.SyncRoot){
+            ActionQueue.Enqueue(action);
+        }
+    }
+
 
     // Update is called once per frame
     void Update()
     {
+        // Execute Server Actions
+        while(ActionQueue.Count > 0){
+            Action action;
+            lock(ActionQueue.SyncRoot){
+                action = (Action)ActionQueue.Dequeue();
+            }
+            action();
+        }
+
         // Time progression
         CheckStationTimers(); // check for lose condition
         UpdateClock(); // update clock, grant weekly reward
@@ -201,7 +220,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     public void SpawnPassengers(){
         foreach(Station station in stations){
-            var p = Random.value;
+            var p = UnityEngine.Random.value;
             if(p < 0.15f){
                 station.SpawnRandomPassenger();
             }
@@ -209,7 +228,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     }
 
     public void SpawnStations(){
-        var p = Random.value;
+        var p = UnityEngine.Random.value;
         if(p < 0.8f){
             SpawnRandomStation();
         }
@@ -242,7 +261,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         var offset = new Vector3(0f,0f,2f);
         var pos = new Vector3(0f,1.0f,0f) + offset;
         while(StationTooClose(pos)){
-            pos = Random.insideUnitSphere * radius + offset;
+            pos = UnityEngine.Random.insideUnitSphere * radius + offset;
             radius += 0.02f;
             if(pos.y < 0.5f) pos.Set(pos.x, 0.5f, pos.z);
             if(pos.y > 2.0f) pos.Set(pos.x, 2.0f, pos.z);
@@ -256,7 +275,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     }
 
     public static void SpawnRandomStation(){
-        var p = Random.value;
+        var p = UnityEngine.Random.value;
         var type = StationType.Sphere;
         if( p < 0.45f)
             type = StationType.Sphere;
@@ -376,6 +395,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
 
 
+
+
+
     public static JSONObject SerializeGameState(){
 
         // JSONObject json = new JSONObject(JsonUtility.ToJson(Instance));
@@ -426,9 +448,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     }
 
     public static JSONObject SerializePassengers(List<Passenger> passengers){
-        JSONObject json = new JSONObject();
+        JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
         foreach( var p in passengers){
-            json.AddField("destination", p.destination.ToString());
+            json.Add(p.destination.ToString());
         }
         return json;
     }
