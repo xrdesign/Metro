@@ -50,7 +50,7 @@ public class TransportLine : MonoBehaviour
         if(!station.lines.Contains(this)) station.lines.Add(this);
         isDeployed = true;
         if(stops.Count >= 2 && trains.Count == 0){
-            AddTrain(0.0f,1.0f,station.lines[id].color);
+            AddTrain(0.0f,1.0f,this.color);
         }
         tracks.needsUpdate = true;
     }
