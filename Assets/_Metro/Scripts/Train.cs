@@ -12,6 +12,7 @@ public class Train : MonoBehaviour
     public int cars = 0;
     public int nextStop = 0;
     public List<Passenger> passengers = new List<Passenger>();
+    public Color color;
 
     private Image[] seats;
     
@@ -23,7 +24,19 @@ public class Train : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        prefab = Resources.Load("Prefabs/Train") as GameObject;
+        if(this.color == Color.red)
+        {
+            prefab = Resources.Load("Prefabs/Train") as GameObject;
+        }
+        else if(this.color == Color.blue)
+        {
+            prefab = Resources.Load("Prefabs/Train_Blue") as GameObject;
+        }
+        else if(this.color == Color.yellow)
+        {
+            prefab = Resources.Load("Prefabs/Train_Yellow") as GameObject;
+        }
+        //prefab = Resources.Load("Prefabs/Train") as GameObject;
         train = GameObject.Instantiate(prefab, new Vector3(0,0,0), prefab.transform.rotation) as GameObject;
         train.transform.SetParent(this.gameObject.transform, false);
 
