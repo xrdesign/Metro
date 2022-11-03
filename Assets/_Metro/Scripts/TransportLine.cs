@@ -7,6 +7,7 @@ using Microsoft.MixedReality.Toolkit.UI;
 public class TransportLine : MonoBehaviour
 {
     public int id;
+    public int uuid;
     public bool isDeployed = false;
     public List<Station> stops = new List<Station>();
     public List<Train> trains = new List<Train>();
@@ -87,6 +88,7 @@ public class TransportLine : MonoBehaviour
         t.direction = direction;
         t.speed = 0.0f;
         t.line = this;
+        t.uuid = MetroManager.Instance.GetInstanceID();
 
         trains.Add(t);
     }

@@ -214,7 +214,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         go.name = "TransportLine";
         var line = go.AddComponent<TransportLine>();
         line.color = color;
-        line.id = lines.Count;        
+        line.id = lines.Count;
+        line.uuid = Instance.GetInstanceID();        
         lines.Add(line);
     }
 
@@ -271,6 +272,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
         station.id = Instance.stations.Count;
+        station.uuid = Instance.GetInstanceID();
         Instance.stations.Add(station);   
     }
 
@@ -394,76 +396,92 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     }
 
 
-
-
-
-
     public static JSONObject SerializeGameState(){
-
         // JSONObject json = new JSONObject(JsonUtility.ToJson(Instance));
         JSONObject json = new JSONObject();
 
         json.AddField("score", Instance.score);
         json.AddField("time", Instance.time);
         json.AddField("freeTrains", Instance.freeTrains);
-        
         json.AddField("stations", SerializeStations());
         json.AddField("lines", SerializeTransportLines());
-
+        json.AddField("trains", SerializeTrains());
         return json;
     }
 
     public static JSONObject SerializeStations(){
-        JSONObject json = new JSONObject();
+        JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
         foreach( var s in Instance.stations){
             JSONObject sjson = new JSONObject();
-            sjson.AddField("type", s.type.ToString());
+            sjson.AddField("unique_id", s.uuid);
+            sjson.AddField("type", "station");
+            sjson.AddField("shape", s.type.ToString());
             sjson.AddField("x", s.position.x);
             sjson.AddField("y", s.position.y);
             sjson.AddField("z", s.position.z);
             sjson.AddField("timer", s.timer);
-            sjson.AddField("passengers", SerializePassengers(s.passengers));
-
-            json.AddField(s.id.ToString(), sjson);
+            var passenger_counts = GetPassengerCounts(s.passengers);
+            foreach(var destination in passenger_counts.Keys) {
+                sjson.AddField("cnt_" + destination.ToLower(), passenger_counts[destination]);
+            }
+            json.Add(sjson);
         }
         return json;
     }
 
     public static JSONObject SerializeTransportLines(){
-        JSONObject json = new JSONObject();
+        JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
         foreach( var l in Instance.lines){
             JSONObject ljson = new JSONObject();
-            ljson.AddField("isDeployed", l.isDeployed);
-            
-            JSONObject stops_json = new JSONObject(JSONObject.Type.ARRAY);
-            foreach(var s in l.stops)
-                stops_json.Add(s.id);
-            ljson.AddField("stops", stops_json);
-            
-            ljson.AddField("trains", SerializeTrains(l.trains));
-
-            json.AddField(l.id.ToString(), ljson);        
+            ljson.AddField("unique_id", l.uuid);
+            ljson.AddField("type", "line");
+            json.Add(ljson);        
         }
         return json;
     }
 
-    public static JSONObject SerializePassengers(List<Passenger> passengers){
+    public static JSONObject SerializeSegments(){
         JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
-        foreach( var p in passengers){
-            json.Add(p.destination.ToString());
+        foreach( var l in Instance.lines){            
+            JSONObject segment_json = new JSONObject();
+            foreach(var s in l.stops)
+                segment_json.Add(s.id);        
         }
         return json;
     }
 
-    public static JSONObject SerializeTrains(List<Train> trains){
-        JSONObject json = new JSONObject();
-        foreach( var t in trains){
-            json.AddField("position", t.position);
-            json.AddField("speed", t.speed);
-            json.AddField("direction", t.direction);
-            json.AddField("passengers", SerializePassengers(t.passengers));
+    public static Dictionary<string, int> GetPassengerCounts(List<Passenger> passengers){
+        Dictionary<string, int> counts = new Dictionary<string, int>();
+        foreach(var p in passengers) {
+            try {
+                counts[p.destination.ToString()] += 1;
+            } catch (KeyNotFoundException) {
+                counts.Add(p.destination.ToString(), 1);
+            }
         }
-        return json;
+        return counts;
+    }
+
+    public static JSONObject SerializeTrains(){
+        JSONObject trains_json = new JSONObject(JSONObject.Type.ARRAY);
+        foreach(var l in Instance.lines) {
+            JSONObject json = new JSONObject();
+            foreach( var t in l.trains){
+                json.AddField("unique_id", t.uuid);
+                json.AddField("type", "train");
+                json.AddField("position", t.position);
+                json.AddField("speed", t.speed);
+                json.AddField("direction", t.direction);
+                json.AddField("line_id", l.uuid);
+                // is there currently no capacity limit?
+                var passenger_counts = GetPassengerCounts(t.passengers);
+                foreach(var destination in passenger_counts.Keys) {
+                    json.AddField("cnt_" + destination.ToLower(), passenger_counts[destination]);
+                }
+            }
+            trains_json.Add(json);
+        }
+        return trains_json;
     }
 
 
