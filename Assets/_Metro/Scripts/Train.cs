@@ -16,7 +16,7 @@ public class Train : MonoBehaviour
 
     private Image[] seats;
     
-    public TransportLine line;
+    public TransportLine line = null;
 
     private GameObject prefab;
     private GameObject train;
@@ -24,21 +24,11 @@ public class Train : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        if(this.color == Color.red)
-        {
-            prefab = Resources.Load("Prefabs/Train") as GameObject;
-        }
-        else if(this.color == Color.blue)
-        {
-            prefab = Resources.Load("Prefabs/Train_Blue") as GameObject;
-        }
-        else if(this.color == Color.yellow)
-        {
-            prefab = Resources.Load("Prefabs/Train_Yellow") as GameObject;
-        }
-        //prefab = Resources.Load("Prefabs/Train") as GameObject;
+        prefab = Resources.Load("Prefabs/Train") as GameObject;
         train = GameObject.Instantiate(prefab, new Vector3(0,0,0), prefab.transform.rotation) as GameObject;
         train.transform.SetParent(this.gameObject.transform, false);
+
+        SetColor(color);
 
         // seat[0] is image frame..
         seats = train.GetComponentsInChildren<Image>(true);
@@ -47,6 +37,12 @@ public class Train : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        if(line == null){
+
+            return;
+        }
+
 
         this.gameObject.transform.position = line.tracks.GetPosition(position);
         var v = line.tracks.GetVelocity(position);
@@ -147,6 +143,11 @@ public class Train : MonoBehaviour
 
     }
 
+    public void SetColor(Color color){
+        var material = train.transform.Find("train").GetComponent<Renderer>().materials[0];
+        // material.color = color;
+        material.SetColor("_BaseColor", color);
+    }
 
     
 }

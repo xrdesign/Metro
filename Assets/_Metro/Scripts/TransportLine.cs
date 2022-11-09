@@ -50,7 +50,7 @@ public class TransportLine : MonoBehaviour
         if(!station.lines.Contains(this)) station.lines.Add(this);
         isDeployed = true;
         if(stops.Count >= 2 && trains.Count == 0){
-            AddTrain(0.0f,1.0f,this.color);
+            AddTrain(0.0f,1.0f);
         }
         tracks.needsUpdate = true;
     }
@@ -76,7 +76,7 @@ public class TransportLine : MonoBehaviour
         isDeployed = false;
     }
 
-    public void AddTrain(float position, float direction, Color color){
+    public void AddTrain(float position, float direction){
         if(MetroManager.Instance.freeTrains == 0) return;
         MetroManager.Instance.freeTrains -= 1;
 
