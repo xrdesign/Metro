@@ -89,6 +89,7 @@ public class TransportLine : MonoBehaviour
         t.speed = 0.0f;
         t.line = this;
         t.uuid = t.GetInstanceID();
+        t.color = color;
 
         trains.Add(t);
     }

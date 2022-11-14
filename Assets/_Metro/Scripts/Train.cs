@@ -12,10 +12,11 @@ public class Train : MonoBehaviour
     public int cars = 0;
     public int nextStop = 0;
     public List<Passenger> passengers = new List<Passenger>();
+    public Color color;
 
     private Image[] seats;
     
-    public TransportLine line;
+    public TransportLine line = null;
 
     private GameObject prefab;
     private GameObject train;
@@ -27,6 +28,8 @@ public class Train : MonoBehaviour
         train = GameObject.Instantiate(prefab, new Vector3(0,0,0), prefab.transform.rotation) as GameObject;
         train.transform.SetParent(this.gameObject.transform, false);
 
+        SetColor(color);
+
         // seat[0] is image frame..
         seats = train.GetComponentsInChildren<Image>(true);
     }
@@ -34,6 +37,12 @@ public class Train : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        if(line == null){
+
+            return;
+        }
+
 
         this.gameObject.transform.position = line.tracks.GetPosition(position);
         var v = line.tracks.GetVelocity(position);
@@ -134,6 +143,11 @@ public class Train : MonoBehaviour
 
     }
 
+    public void SetColor(Color color){
+        var material = train.transform.Find("train").GetComponent<Renderer>().materials[0];
+        // material.color = color;
+        material.SetColor("_BaseColor", color);
+    }
 
     
 }
