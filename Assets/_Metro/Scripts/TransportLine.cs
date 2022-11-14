@@ -88,7 +88,7 @@ public class TransportLine : MonoBehaviour
         t.direction = direction;
         t.speed = 0.0f;
         t.line = this;
-        t.uuid = MetroManager.Instance.GetInstanceID();
+        t.uuid = t.GetInstanceID();
 
         trains.Add(t);
     }

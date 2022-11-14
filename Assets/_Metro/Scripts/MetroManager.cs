@@ -215,7 +215,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         var line = go.AddComponent<TransportLine>();
         line.color = color;
         line.id = lines.Count;
-        line.uuid = Instance.GetInstanceID();        
+        line.uuid = line.GetInstanceID();        
         lines.Add(line);
     }
 
@@ -272,7 +272,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
         station.id = Instance.stations.Count;
-        station.uuid = Instance.GetInstanceID();
+        station.uuid = station.GetInstanceID();
         Instance.stations.Add(station);   
     }
 
@@ -406,6 +406,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         json.AddField("stations", SerializeStations());
         json.AddField("lines", SerializeTransportLines());
         json.AddField("trains", SerializeTrains());
+        json.AddField("segments", SerializeSegments());
         return json;
     }
 
@@ -444,8 +445,16 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
         foreach( var l in Instance.lines){            
             JSONObject segment_json = new JSONObject();
-            foreach(var s in l.stops)
-                segment_json.Add(s.id);        
+            for (int i=0; i<l.stops.Count-1; i++) {
+                var s = l.stops[i];
+                var next_s = l.stops[i+1];
+                segment_json.AddField("type", "segment");
+                segment_json.AddField("length", 20);
+                segment_json.AddField("which_line", l.uuid);
+                segment_json.AddField("from_station", s.uuid);
+                segment_json.AddField("to_station", next_s.uuid);
+            }
+            json.Add(segment_json);
         }
         return json;
     }
