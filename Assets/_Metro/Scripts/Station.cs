@@ -18,6 +18,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 {
 
     public int id;
+    public int uuid;
     public StationType type;
     public Vector3 position;
     public float timer = 0.0f; // max 45 seconds for animation + 2s grace period

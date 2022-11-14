@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class Train : MonoBehaviour
 {
-
+    public int uuid;
     public float position; // index position along line
     public float speed;
     public float direction;
