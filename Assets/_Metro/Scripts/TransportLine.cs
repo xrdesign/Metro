@@ -18,7 +18,6 @@ public class TransportLine : MonoBehaviour
     public int nextIndex = 0;
 
 
-
     // Start is called before the first frame update
     void Start()
     {
@@ -76,6 +75,7 @@ public class TransportLine : MonoBehaviour
         isDeployed = false;
     }
 
+    //add train at a specific location
     public void AddTrain(float position, float direction){
         if(MetroManager.Instance.freeTrains == 0) return;
         MetroManager.Instance.freeTrains -= 1;

@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Microsoft.MixedReality.Toolkit.Input;
 
-public class Train : MonoBehaviour
+public class Train : MonoBehaviour, IMixedRealityPointerHandler
 {
 
     public float position; // index position along line
@@ -149,5 +150,37 @@ public class Train : MonoBehaviour
         material.SetColor("_BaseColor", color);
     }
 
-    
+    public void IsClicked()
+    {
+        Debug.Log("Train clicked");
+    }
+
+
+    void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData)
+    {
+        Debug.Log("Train pointer down");
+        Debug.Log(eventData.Pointer.Position);
+
+    }
+
+    void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData)
+    {
+        Debug.Log("Train pointer up");
+
+    }
+
+    void IMixedRealityPointerHandler.OnPointerDragged(MixedRealityPointerEventData eventData)
+    {
+        Debug.Log("Train pointer dragging");
+
+    }
+    void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData)
+    {
+        Debug.Log("Train pointer clicked");
+        //speed = 0;
+
+    }
+
+
+
 }
