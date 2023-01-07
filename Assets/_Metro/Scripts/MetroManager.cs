@@ -10,6 +10,7 @@ using Microsoft.MixedReality.Toolkit.Utilities;
 using Microsoft.MixedReality.Toolkit.Physics;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit;
+using UnityEngine.UI;
 
 
 /**
@@ -32,6 +33,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     public List<TransportLine> lines = new List<TransportLine>();
     
     public bool paused = false;
+    public bool Ai_paused = false;
     public float clockTime;
     public int hour;
     public int day;
@@ -80,8 +82,37 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     }
 
+    public static void TogglePause(Image button)
+    {
+        Instance.paused = !Instance.paused;
+        //Instance.Ai_paused = true;
+        if (Instance.paused)
+        {
+            button.color = Color.red;
+        }
+        else
+        {
+            button.color = Color.green;
+        }
+    }
+
+    public static void ToggleAI(Image button)
+    {
+        Instance.Ai_paused = !Instance.Ai_paused;
+        if (Instance.Ai_paused)
+        {
+            button.color = Color.red;
+        }
+        else
+        {
+            button.color = Color.green;
+        }
+    }
+
     public static void QueueAction(Action action){
-        lock(ActionQueue.SyncRoot){
+        if (Instance.Ai_paused) return; // don't accept actions from AI if AI is paused
+        if (Instance.paused) return; // don't accept actions if game is paused
+        lock (ActionQueue.SyncRoot){
             ActionQueue.Enqueue(action);
         }
     }
@@ -171,10 +202,17 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     }
 
-    public void UpdateClock(){
+    public void UpdateClock()
+    {
         float lengthOfDay = 20.0f; // 1 day 20 seconds
 
-        if(paused) gameSpeed = 0.0f;
+        if (paused) {
+            gameSpeed = 0.0f;
+        }
+        else
+        {
+            gameSpeed = 1.0f;
+        }
 
         dt = Time.deltaTime * gameSpeed;
 
