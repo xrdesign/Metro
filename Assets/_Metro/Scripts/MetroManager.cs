@@ -151,6 +151,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
             action();
         }
 
+        // Update Passenger's route
+        UpdatePassengerRoute();
+
         // Time progression
         CheckStationTimers(); // check for lose condition
         UpdateClock(); // update clock, grant weekly reward
@@ -422,6 +425,179 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         // 
     }
 
+    public void UpdatePassengerRoute()
+    {
+        // for all station
+        for (int i = 0; i < stations.Count; i++)
+        {
+            Station currentStation = stations[i];
+            // for all passenger in the station
+            for (int j = 0; j < currentStation.passengers.Count; j++)
+            {
+                Passenger currentPassenger = currentStation.passengers[j];
+                
+                // if passenger is not on a route
+                if (currentPassenger.route == null)
+                {
+                    // find a route
+                    currentPassenger.route = FindRouteClosest(currentStation, currentPassenger.destination);
+
+                    // Debug print
+                    string routeString = "";
+                    for (int k = 0; k < currentPassenger.route.Count; k++)
+                    {
+                        routeString += currentPassenger.route[k].id + " ";
+                    }
+                    Debug.Log("Passenger is going from " + currentStation.uuid + " to " + currentPassenger.destination + " via [ " + routeString + "]");
+                }
+                else
+                {
+                    // if passenger is current at the end of the route, null it
+                    if (currentPassenger.route[currentPassenger.route.Count - 1] == currentStation)
+                    {
+                        currentPassenger.route = null;
+                        //continue;
+                    }
+                }
+            }
+        }
+    }
+
+    public List<Station> ReconstructRoute(Station start, Station end, Dictionary<Station, Station> cameFrom)
+    {
+        List<Station> route = new List<Station>();
+        Station current = end;
+        while (current != start)
+        {
+            route.Add(current);
+            current = cameFrom[current];
+        }
+        route.Add(current);
+        route.Reverse();
+        return route;
+    }
+
+    public List<Station> FindRouteClosest(Station start, StationType goal)
+    {
+        var result = FindRoute(start, (x) => x.type == goal);
+        if (result.Item1.Count == 0)
+        {
+            // Failed to find a connected route, find the closest station to the closet goal station
+            // Find the closest station that is goal type
+            float minDist = Single.PositiveInfinity;
+            int minIndex = -1;
+            for (int i = 0; i < stations.Count; i++)
+            {
+                if (stations[i].type == goal)
+                {
+                    float dist = Vector3.Distance(start.transform.position, stations[i].transform.position);
+                    if (dist < minDist)
+                    {
+                        minDist = dist;
+                        minIndex = i;
+                    }
+                }
+            }
+
+            // Find the station in closedset that is closest to the goal station
+            Station closest = stations[minIndex];
+            minDist = Single.PositiveInfinity;
+            Station closestConnected = null;
+            foreach(var item in result.Item2)
+            {
+                float dist = Vector3.Distance(closest.transform.position, item.Key.transform.position) + item.Value; // TODO: weight the fScore and distance
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closestConnected = item.Key;
+                }
+            }
+            result = FindRoute(start, (x) => x == closestConnected);
+        }
+
+        return result.Item1;
+    }
+
+    // pass in a functor for criteria
+    public Tuple<List<Station>, Dictionary<Station, float>> FindRoute(Station start, Func<Station, bool> criteria)
+    {
+        // use A * to find a shortest route, if no route found, find the route to the closest station to the target
+        List<Station> route = new List<Station>();
+        List<Station> closedSet = new List<Station>();
+        // openSet is a sorted List with fScore as priority, lowest fScore is the first element
+        SortedList<float, Station> openSet = new SortedList<float, Station>();
+        Dictionary<Station, Station> cameFrom = new Dictionary<Station, Station>();
+        Dictionary<Station, float> gScore = new Dictionary<Station, float>();
+        Dictionary<Station, float> fScore = new Dictionary<Station, float>();
+        gScore.Add(start, 0);
+        fScore.Add(start, HeuristicCostEstimate(start, start));
+
+        openSet.Add(fScore[start], start);
+
+        while (openSet.Count > 0)
+        {
+            // get first station in the openSet
+            Station current = openSet.Values[0];
+            if (criteria(current))
+            {
+                // if the station is the goal, reconstruct the route
+                route = ReconstructRoute(start, current, cameFrom);
+                break;
+            }
+
+            openSet.RemoveAt(0);
+            closedSet.Add(current);
+            // for all neighbor of the current station
+            // Find all neighboring stations
+            List<KeyValuePair<Station, int>> neighbors = current.GetNeighbors();
+
+            for (int i = 0; i < neighbors.Count; i++)
+            {
+                Station neighbor = neighbors[i].Key;
+                int lineId = neighbors[i].Value;
+                // if the neighbor is in the closedSet, skip
+                if (closedSet.Contains(neighbor))
+                {
+                    continue;
+                }
+                // if the new path to the neighbor is shorter, update the path
+                float tentative_gScore = gScore[current] + Vector3.Distance(current.transform.position, neighbor.transform.position);
+
+                float neighborgScore = Single.PositiveInfinity;
+                if (gScore.ContainsKey(neighbor))
+                {
+                    neighborgScore = gScore[neighbor];
+                }
+                if (tentative_gScore < neighborgScore)
+                {
+                    cameFrom[neighbor] = current;
+                    gScore[neighbor] = tentative_gScore;
+                    fScore[neighbor] = gScore[neighbor] + HeuristicCostEstimate(start, neighbor);
+                    if (!openSet.ContainsValue(neighbor))
+                    {
+                        openSet.Add(fScore[neighbor], neighbor);
+                    }
+                }
+            }
+        }
+
+        return new Tuple<List<Station>, Dictionary<Station, float>>(route, fScore);
+    }
+    public float HeuristicCostEstimate(Station start, Station goal)
+    {
+        // TODO for more complicated weighting
+        // currently favor crowd to less crowd
+        int left = start.passengers.Count;
+        int right = goal.passengers.Count;
+        if (left > right)
+        {
+            return 1.0f; // penalty on stops
+        }
+        else
+        {
+            return 3.0f;
+        }
+    }
 
     void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
         Debug.Log("Pointer Clicked");
