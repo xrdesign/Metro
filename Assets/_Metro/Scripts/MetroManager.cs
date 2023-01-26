@@ -12,6 +12,9 @@ using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit;
 using UnityEngine.UI;
 
+using LSL;
+using UnityEngine.InputSystem.EnhancedTouch;
+
 
 /**
 * SpaceMetro aims to clone mini metro in VR
@@ -52,6 +55,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     private static Queue ActionQueue = Queue.Synchronized(new Queue());
 
+    private liblsl.StreamOutlet markerStream;
     private void Awake(){
         if (Instance is null) Instance = this;
         else Destroy(this);
@@ -72,8 +76,19 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         gameSpeed = 0.0f;
         lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
         StartGame();
+
+        liblsl.StreamInfo inf =
+            new liblsl.StreamInfo("EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
+        markerStream = new liblsl.StreamOutlet(inf);
+        
     }
 
+    public void SendEvent(string eventString)
+    {
+        string[] tempSample;
+        tempSample = new string[] { eventString };
+        markerStream.push_sample(tempSample);
+    }
 
     public static void StartGame(){
         Debug.Log("Start Game");
@@ -94,6 +109,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         {
             button.color = Color.green;
         }
+
+        // send toggling event
+        Instance.SendEvent(Instance.paused ? "Game Paused": "Game Resumed");
     }
 
     public static void ToggleAI(Image button)
@@ -107,6 +125,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         {
             button.color = Color.green;
         }
+
+        // send toggling event
+        Instance.SendEvent(Instance.Ai_paused ? "Ai Paused" : "Ai Resumed");
     }
 
     public static void QueueAction(Action action){
@@ -200,6 +221,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         paused = true;
         metroUI.SetActive(false);
         menuUI.SetActive(true);
+
+        SendEvent("Game Over");
 
     }
 
@@ -401,7 +424,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
 
     void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
-
+        Debug.Log("Pointer Clicked");
+        SendEvent("Controller clicked");
     }
     
     void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData){
