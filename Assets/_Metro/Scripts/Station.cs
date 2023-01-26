@@ -127,6 +127,16 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
             Debug.Log("station down");
             line.AddStation(this);
 
+            MetroManager.Instance.SendEvent("Select Station: " + new Dictionary<string, object> {
+                {"station", id},
+                {"line", line.id}
+            });
+            Debug.Log("Select Station: " + new Dictionary<string, object>
+            {
+                { "station", id },
+                { "line", line.id }
+            });
+
             var dist = eventData.Pointer.Result.Details.RayDistance;
             MetroManager.StartEditingLine(line, 0, dist, false);
 
@@ -173,8 +183,19 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         var insert = MetroManager.editingInsert;
 
         if( line != null){
+            // TODO: 
+            MetroManager.Instance.SendEvent("Add Station: " + new Dictionary<string, object> {
+                {"station", id},
+                {"line", line.id},
+            });
+            Debug.Log("Add Station: " + new Dictionary<string, object>
+            {
+                { "station", id },
+                { "line", line.id },
+            });
+
             // add if not in line (unless closing loop TODO)
-            if(!line.stops.Contains(this)){
+            if (!line.stops.Contains(this)){
                 line.InsertStation(index+1, this);
                 var insrt = index+1 < line.stops.Count-1;
                 MetroManager.StartEditingLine(line, index+1, dist, insrt);
