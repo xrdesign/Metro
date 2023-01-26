@@ -197,6 +197,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         // Debug.Log("TODO: Game Over!");
         // SceneManager.LoadScene(0);
         gameSpeed = 0.0f;
+        paused = true;
         metroUI.SetActive(false);
         menuUI.SetActive(true);
 
