@@ -40,7 +40,6 @@ public class AddTrainUI : MonoBehaviour,
         
         ghostTrain.transform.position = LeftPose.Position;
         this.ghostTrain.SetActive(false);
-        //trainComponent.Hide();
 
     }
 
@@ -83,11 +82,6 @@ public class AddTrainUI : MonoBehaviour,
 
         //prevent adding multiple trains when the player only clicks UI once
         MetroManager.Instance.addedTrain = false;
-
-        //creates visual reference of the added train
-        bool canPlaceTrain = CanPlaceTrain();
-        Debug.Log("canPlaceTrain: " + canPlaceTrain);
-        Debug.Log("freeTrains: " + MetroManager.Instance.freeTrains);
 
         //check if there is available trains
         if (MetroManager.Instance.freeTrains > 0)
