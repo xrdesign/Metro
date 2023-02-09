@@ -8,6 +8,8 @@ public class Passenger {
     public float waitTime;
     public float travelTime;
 
+    public List<Station> route = null;
+
     // Start is called before the first frame update
     void Start()
     {
