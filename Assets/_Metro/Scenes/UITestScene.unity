@@ -345,11 +345,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af8de540fcd4fa54e93bcfe362d2082c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hasGenerated: 0
   hasAdded: 0
-  train: {fileID: 0}
+  ghostTrain: {fileID: 0}
   trackID: 0
   trackLineID: 0
+  LeftPose:
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
+  RightPose:
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &143954424
 GameObject:
   m_ObjectHideFlags: 0
@@ -671,7 +676,7 @@ PrefabInstance:
     - target: {fileID: 6718849251617842520, guid: 1606a7868b13138479f1a52f92cd0511, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1217433240}
     - target: {fileID: 6718849251617842520, guid: 1606a7868b13138479f1a52f92cd0511, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
@@ -804,8 +809,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87fd6f611ea84e543b4cc41646185dab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scoreLabel: {fileID: 0}
-  menuUI: {fileID: 0}
+  scoreLabel: {fileID: 1369367004}
+  menuUI: {fileID: 1028372360}
 --- !u!4 &267991470
 Transform:
   m_ObjectHideFlags: 0
@@ -1475,6 +1480,81 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &946406846
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 946406847}
+  - component: {fileID: 946406849}
+  - component: {fileID: 946406848}
+  m_Layer: 0
+  m_Name: LController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &946406847
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 946406846}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.008498728, y: 0.45293105, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 11
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &946406848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 946406846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14c3d8a4208d4b649529822e217623d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  updateLinkedTransform: 0
+  moveLerpTime: 0.1
+  rotateLerpTime: 0.1
+  scaleLerpTime: 0
+  maintainScaleOnInitialization: 1
+  smoothing: 1
+  lifetime: 0
+  orientationType: 0
+  localOffset: {x: 0, y: 0, z: 0}
+  worldOffset: {x: 0, y: 0, z: 0}
+  useAngleStepping: 0
+  tetherAngleSteps: 6
+--- !u!114 &946406849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 946406846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b55691ad5b034fe6966763a6e23818d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  trackedTargetType: 5
+  trackedHandedness: 1
+  trackedHandJoint: 2
+  transformOverride: {fileID: 0}
+  additionalOffset: {x: 0, y: 0, z: 0}
+  additionalRotation: {x: 0, y: 0, z: 0}
+  updateSolvers: 1
 --- !u!1 &958103124
 GameObject:
   m_ObjectHideFlags: 0
@@ -1595,7 +1675,7 @@ PrefabInstance:
     - target: {fileID: 893984527726990380, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 267991469}
     - target: {fileID: 893984527726990380, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: QuitGame
@@ -1603,7 +1683,7 @@ PrefabInstance:
     - target: {fileID: 893984529113815029, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 267991469}
     - target: {fileID: 893984529113815029, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: StartGame
@@ -1626,7 +1706,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4634074218418852067, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
       propertyPath: m_RootOrder
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4634074218418852067, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1781,6 +1861,8 @@ MonoBehaviour:
   totalTrackLength: 0
   menuUI: {fileID: 1028372360}
   metroUI: {fileID: 212840025}
+  addTrainUI: {fileID: 0}
+  LController: {fileID: 946406846}
 --- !u!4 &1217433241
 Transform:
   m_ObjectHideFlags: 0
@@ -2057,6 +2139,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventsToReceive: 0
   debounceThreshold: 0.01
+--- !u!114 &1369367004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3651782118202392890, guid: b81b21bf859d2a144910d7ee02df43c3, type: 3}
+  m_PrefabInstance: {fileID: 4634074220103432539}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1509256898
 GameObject:
   m_ObjectHideFlags: 0
@@ -2476,11 +2569,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af8de540fcd4fa54e93bcfe362d2082c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hasGenerated: 0
   hasAdded: 0
-  train: {fileID: 0}
+  ghostTrain: {fileID: 0}
   trackID: 0
   trackLineID: 0
+  LeftPose:
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
+  RightPose:
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &1719641043
 GameObject:
   m_ObjectHideFlags: 0
@@ -2583,11 +2681,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af8de540fcd4fa54e93bcfe362d2082c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hasGenerated: 0
   hasAdded: 0
-  train: {fileID: 0}
+  ghostTrain: {fileID: 7563097340645357892, guid: d3015f382e0feaf4fb6317441128109a, type: 3}
   trackID: 0
   trackLineID: 0
+  LeftPose:
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
+  RightPose:
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!114 &1849016851
 MonoBehaviour:
   m_ObjectHideFlags: 0

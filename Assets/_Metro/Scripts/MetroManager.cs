@@ -51,6 +51,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     public GameObject menuUI;
     public GameObject metroUI;
+    public GameObject addTrainUI;
+    public GameObject LController;
     TransportLineUI[] lineUIs;
 
     private static Queue ActionQueue = Queue.Synchronized(new Queue());
@@ -174,6 +176,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         gameSpeed = 0.0f;
         metroUI.SetActive(false);
         menuUI.SetActive(true);
+        addTrainUI.SetActive(false);
 
     }
 

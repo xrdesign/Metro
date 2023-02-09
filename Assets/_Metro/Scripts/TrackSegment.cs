@@ -114,6 +114,7 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler
             Debug.Log("addedTrain: " + addedTrain);
             this.line.AddTrain(addPosition, 1.0f);
             MetroManager.Instance.addedTrain = true;
+            MetroManager.Instance.addingTrain = false;
             Debug.Log("addedTrain: " + addedTrain);
         } 
         
