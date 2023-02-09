@@ -18,11 +18,14 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 {
 
     public int id;
+    public int uuid;
     public StationType type;
     public Vector3 position;
     public float timer = 0.0f; // max 45 seconds for animation + 2s grace period
 
     public List<Passenger> passengers = new List<Passenger>();
+
+    public string[] passengersRoutes; // Debug purpose
 
     // Reference to attached Lines for easier pathfinding along lines
     public List<TransportLine> lines;
@@ -80,6 +83,20 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         }
         timerImage.enabled = true;
         timerImage.fillAmount = timer / 45.0f;
+
+        // Update passenger routes
+        // passengersRoutes = new string[passengers.Count];
+        // for (int i = 0; i < passengers.Count; i++)
+        // {
+        //     passengersRoutes[i] = "";
+        //     if (passengers[i].route != null)
+        //     {
+        //         foreach (var s in passengers[i].route)
+        //         {
+        //             passengersRoutes[i] += s.id + " ";
+        //         }
+        //     }
+        // }
     }
 
     public void SpawnRandomPassenger(){
@@ -118,6 +135,26 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 
     }
 
+    public List<KeyValuePair<Station, int>> GetNeighbors()
+    {
+        // for each transport line, find the index of this station on the line
+        // store the ref to previous and next station if exists, in the format <ref, line.id>
+        List<KeyValuePair<Station, int>> neighbors = new List<KeyValuePair<Station, int>>();
+        foreach (var line in lines)
+        {
+            var index = line.stops.IndexOf(this);
+            if (index > 0)
+            {
+                neighbors.Add(new KeyValuePair<Station, int>(line.stops[index - 1], line.id));
+            }
+            if (index < line.stops.Count - 1)
+            {
+                neighbors.Add(new KeyValuePair<Station, int>(line.stops[index + 1], line.id));
+            }
+        }
+        return neighbors;
+    }
+
 
     void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
     
@@ -125,6 +162,9 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         if( line != null){
             Debug.Log("station down");
             line.AddStation(this);
+
+            MetroManager.Instance.SendEvent("Select Station: " + "station - " + id + ";line - " + line.id);
+            Debug.Log("Select Station: " + "station - " + id + ";line - " + line.id);
 
             var dist = eventData.Pointer.Result.Details.RayDistance;
             MetroManager.StartEditingLine(line, 0, dist, false);
@@ -172,8 +212,12 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         var insert = MetroManager.editingInsert;
 
         if( line != null){
+            // TODO: 
+            MetroManager.Instance.SendEvent("Add Station: " + "station - " + id + ";line - " + line.id);
+            Debug.Log("Add Station: " + "station - " + id + ";line - " + line.id);
+
             // add if not in line (unless closing loop TODO)
-            if(!line.stops.Contains(this)){
+            if (!line.stops.Contains(this)){
                 line.InsertStation(index+1, this);
                 var insrt = index+1 < line.stops.Count-1;
                 MetroManager.StartEditingLine(line, index+1, dist, insrt);
