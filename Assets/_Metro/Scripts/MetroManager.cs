@@ -10,6 +10,10 @@ using Microsoft.MixedReality.Toolkit.Utilities;
 using Microsoft.MixedReality.Toolkit.Physics;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit;
+using UnityEngine.UI;
+
+using LSL;
+using UnityEngine.InputSystem.EnhancedTouch;
 
 
 /**
@@ -32,8 +36,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     public List<TransportLine> lines = new List<TransportLine>();
     
     public bool paused = false;
+
     public bool addingTrain = false;
     public bool addedTrain = false;
+
+    public bool Ai_paused = false;
+
     public float clockTime;
     public int hour;
     public int day;
@@ -57,6 +65,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     private static Queue ActionQueue = Queue.Synchronized(new Queue());
 
+    private liblsl.StreamOutlet markerStream;
     private void Awake(){
         if (Instance is null) Instance = this;
         else Destroy(this);
@@ -77,8 +86,19 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         gameSpeed = 0.0f;
         lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
         StartGame();
+
+        liblsl.StreamInfo inf =
+            new liblsl.StreamInfo("EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
+        markerStream = new liblsl.StreamOutlet(inf);
+        
     }
 
+    public void SendEvent(string eventString)
+    {
+        string[] tempSample;
+        tempSample = new string[] { eventString };
+        markerStream.push_sample(tempSample);
+    }
 
     public static void StartGame(){
         Debug.Log("Start Game");
@@ -88,8 +108,43 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     }
 
+    public static void TogglePause(Image button)
+    {
+        Instance.paused = !Instance.paused;
+        //Instance.Ai_paused = true;
+        if (Instance.paused)
+        {
+            button.color = Color.red;
+        }
+        else
+        {
+            button.color = Color.green;
+        }
+
+        // send toggling event
+        Instance.SendEvent(Instance.paused ? "Game Paused": "Game Resumed");
+    }
+
+    public static void ToggleAI(Image button)
+    {
+        Instance.Ai_paused = !Instance.Ai_paused;
+        if (Instance.Ai_paused)
+        {
+            button.color = Color.red;
+        }
+        else
+        {
+            button.color = Color.green;
+        }
+
+        // send toggling event
+        Instance.SendEvent(Instance.Ai_paused ? "Ai Paused" : "Ai Resumed");
+    }
+
     public static void QueueAction(Action action){
-        lock(ActionQueue.SyncRoot){
+        if (Instance.Ai_paused) return; // don't accept actions from AI if AI is paused
+        if (Instance.paused) return; // don't accept actions if game is paused
+        lock (ActionQueue.SyncRoot){
             ActionQueue.Enqueue(action);
         }
     }
@@ -106,6 +161,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
             }
             action();
         }
+
+        // Update Passenger's route
+        UpdatePassengerRoute();
 
         // Time progression
         CheckStationTimers(); // check for lose condition
@@ -174,16 +232,26 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         // Debug.Log("TODO: Game Over!");
         // SceneManager.LoadScene(0);
         gameSpeed = 0.0f;
+        paused = true;
         metroUI.SetActive(false);
         menuUI.SetActive(true);
         addTrainUI.SetActive(false);
 
+        SendEvent("Game Over");
+
     }
 
-    public void UpdateClock(){
+    public void UpdateClock()
+    {
         float lengthOfDay = 20.0f; // 1 day 20 seconds
 
-        if(paused) gameSpeed = 0.0f;
+        if (paused) {
+            gameSpeed = 0.0f;
+        }
+        else
+        {
+            gameSpeed = 1.0f;
+        }
 
         dt = Time.deltaTime * gameSpeed;
 
@@ -223,7 +291,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         go.name = "TransportLine";
         var line = go.AddComponent<TransportLine>();
         line.color = color;
-        line.id = lines.Count;        
+        line.id = lines.Count;
+        line.uuid = line.GetInstanceID();        
         lines.Add(line);
     }
 
@@ -280,6 +349,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
         station.id = Instance.stations.Count;
+        station.uuid = station.GetInstanceID();
         Instance.stations.Add(station);   
     }
 
@@ -367,9 +437,183 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         // 
     }
 
+    public void UpdatePassengerRoute()
+    {
+        // for all station
+        for (int i = 0; i < stations.Count; i++)
+        {
+            Station currentStation = stations[i];
+            // for all passenger in the station
+            for (int j = 0; j < currentStation.passengers.Count; j++)
+            {
+                Passenger currentPassenger = currentStation.passengers[j];
+                
+                // if passenger is not on a route
+                if (currentPassenger.route == null)
+                {
+                    // find a route
+                    currentPassenger.route = FindRouteClosest(currentStation, currentPassenger.destination);
+
+                    // Debug print
+                    string routeString = "";
+                    for (int k = 0; k < currentPassenger.route.Count; k++)
+                    {
+                        routeString += currentPassenger.route[k].id + " ";
+                    }
+                    Debug.Log("Passenger is going from " + currentStation.uuid + " to " + currentPassenger.destination + " via [ " + routeString + "]");
+                }
+                else
+                {
+                    // if passenger is current at the end of the route, null it
+                    if (currentPassenger.route[currentPassenger.route.Count - 1] == currentStation)
+                    {
+                        currentPassenger.route = null;
+                        //continue;
+                    }
+                }
+            }
+        }
+    }
+
+    public List<Station> ReconstructRoute(Station start, Station end, Dictionary<Station, Station> cameFrom)
+    {
+        List<Station> route = new List<Station>();
+        Station current = end;
+        while (current != start)
+        {
+            route.Add(current);
+            current = cameFrom[current];
+        }
+        route.Add(current);
+        route.Reverse();
+        return route;
+    }
+
+    public List<Station> FindRouteClosest(Station start, StationType goal)
+    {
+        var result = FindRoute(start, (x) => x.type == goal);
+        if (result.Item1.Count == 0)
+        {
+            // Failed to find a connected route, find the closest station to the closet goal station
+            // Find the closest station that is goal type
+            float minDist = Single.PositiveInfinity;
+            int minIndex = -1;
+            for (int i = 0; i < stations.Count; i++)
+            {
+                if (stations[i].type == goal)
+                {
+                    float dist = Vector3.Distance(start.transform.position, stations[i].transform.position);
+                    if (dist < minDist)
+                    {
+                        minDist = dist;
+                        minIndex = i;
+                    }
+                }
+            }
+
+            // Find the station in closedset that is closest to the goal station
+            Station closest = stations[minIndex];
+            minDist = Single.PositiveInfinity;
+            Station closestConnected = null;
+            foreach(var item in result.Item2)
+            {
+                float dist = Vector3.Distance(closest.transform.position, item.Key.transform.position) + item.Value; // TODO: weight the fScore and distance
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closestConnected = item.Key;
+                }
+            }
+            result = FindRoute(start, (x) => x == closestConnected);
+        }
+
+        return result.Item1;
+    }
+
+    // pass in a functor for criteria
+    public Tuple<List<Station>, Dictionary<Station, float>> FindRoute(Station start, Func<Station, bool> criteria)
+    {
+        // use A * to find a shortest route, if no route found, find the route to the closest station to the target
+        List<Station> route = new List<Station>();
+        List<Station> closedSet = new List<Station>();
+        // openSet is a sorted List with fScore as priority, lowest fScore is the first element
+        SortedList<float, Station> openSet = new SortedList<float, Station>();
+        Dictionary<Station, Station> cameFrom = new Dictionary<Station, Station>();
+        Dictionary<Station, float> gScore = new Dictionary<Station, float>();
+        Dictionary<Station, float> fScore = new Dictionary<Station, float>();
+        gScore.Add(start, 0);
+        fScore.Add(start, HeuristicCostEstimate(start, start));
+
+        openSet.Add(fScore[start], start);
+
+        while (openSet.Count > 0)
+        {
+            // get first station in the openSet
+            Station current = openSet.Values[0];
+            if (criteria(current))
+            {
+                // if the station is the goal, reconstruct the route
+                route = ReconstructRoute(start, current, cameFrom);
+                break;
+            }
+
+            openSet.RemoveAt(0);
+            closedSet.Add(current);
+            // for all neighbor of the current station
+            // Find all neighboring stations
+            List<KeyValuePair<Station, int>> neighbors = current.GetNeighbors();
+
+            for (int i = 0; i < neighbors.Count; i++)
+            {
+                Station neighbor = neighbors[i].Key;
+                int lineId = neighbors[i].Value;
+                // if the neighbor is in the closedSet, skip
+                if (closedSet.Contains(neighbor))
+                {
+                    continue;
+                }
+                // if the new path to the neighbor is shorter, update the path
+                float tentative_gScore = gScore[current] + Vector3.Distance(current.transform.position, neighbor.transform.position);
+
+                float neighborgScore = Single.PositiveInfinity;
+                if (gScore.ContainsKey(neighbor))
+                {
+                    neighborgScore = gScore[neighbor];
+                }
+                if (tentative_gScore < neighborgScore)
+                {
+                    cameFrom[neighbor] = current;
+                    gScore[neighbor] = tentative_gScore;
+                    fScore[neighbor] = gScore[neighbor] + HeuristicCostEstimate(start, neighbor);
+                    if (!openSet.ContainsValue(neighbor))
+                    {
+                        openSet.Add(fScore[neighbor], neighbor);
+                    }
+                }
+            }
+        }
+
+        return new Tuple<List<Station>, Dictionary<Station, float>>(route, fScore);
+    }
+    public float HeuristicCostEstimate(Station start, Station goal)
+    {
+        // TODO for more complicated weighting
+        // currently favor crowd to less crowd
+        int left = start.passengers.Count;
+        int right = goal.passengers.Count;
+        if (left > right)
+        {
+            return 1.0f; // penalty on stops
+        }
+        else
+        {
+            return 3.0f;
+        }
+    }
 
     void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
-
+        Debug.Log("Pointer Clicked");
+        SendEvent("Controller clicked");
     }
     
     void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData){
@@ -403,76 +647,101 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     }
 
 
-
-
-
-
     public static JSONObject SerializeGameState(){
-
         // JSONObject json = new JSONObject(JsonUtility.ToJson(Instance));
         JSONObject json = new JSONObject();
 
         json.AddField("score", Instance.score);
         json.AddField("time", Instance.time);
         json.AddField("freeTrains", Instance.freeTrains);
-        
         json.AddField("stations", SerializeStations());
         json.AddField("lines", SerializeTransportLines());
-
+        json.AddField("trains", SerializeTrains());
+        json.AddField("segments", SerializeSegments());
         return json;
     }
 
     public static JSONObject SerializeStations(){
-        JSONObject json = new JSONObject();
+        JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
         foreach( var s in Instance.stations){
             JSONObject sjson = new JSONObject();
-            sjson.AddField("type", s.type.ToString());
+            sjson.AddField("unique_id", s.uuid);
+            sjson.AddField("type", "station");
+            sjson.AddField("shape", s.type.ToString());
             sjson.AddField("x", s.position.x);
             sjson.AddField("y", s.position.y);
             sjson.AddField("z", s.position.z);
             sjson.AddField("timer", s.timer);
-            sjson.AddField("passengers", SerializePassengers(s.passengers));
-
-            json.AddField(s.id.ToString(), sjson);
+            var passenger_counts = GetPassengerCounts(s.passengers);
+            foreach(var destination in passenger_counts.Keys) {
+                sjson.AddField("cnt_" + destination.ToLower(), passenger_counts[destination]);
+            }
+            json.Add(sjson);
         }
         return json;
     }
 
     public static JSONObject SerializeTransportLines(){
-        JSONObject json = new JSONObject();
+        JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
         foreach( var l in Instance.lines){
             JSONObject ljson = new JSONObject();
-            ljson.AddField("isDeployed", l.isDeployed);
-            
-            JSONObject stops_json = new JSONObject(JSONObject.Type.ARRAY);
-            foreach(var s in l.stops)
-                stops_json.Add(s.id);
-            ljson.AddField("stops", stops_json);
-            
-            ljson.AddField("trains", SerializeTrains(l.trains));
-
-            json.AddField(l.id.ToString(), ljson);        
+            ljson.AddField("unique_id", l.uuid);
+            ljson.AddField("type", "line");
+            json.Add(ljson);        
         }
         return json;
     }
 
-    public static JSONObject SerializePassengers(List<Passenger> passengers){
+    public static JSONObject SerializeSegments(){
         JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
-        foreach( var p in passengers){
-            json.Add(p.destination.ToString());
+        foreach( var l in Instance.lines){            
+            JSONObject segment_json = new JSONObject();
+            for (int i=0; i<l.stops.Count-1; i++) {
+                var s = l.stops[i];
+                var next_s = l.stops[i+1];
+                segment_json.AddField("type", "segment");
+                segment_json.AddField("length", 20);
+                segment_json.AddField("which_line", l.uuid);
+                segment_json.AddField("from_station", s.uuid);
+                segment_json.AddField("to_station", next_s.uuid);
+            }
+            json.Add(segment_json);
         }
         return json;
     }
 
-    public static JSONObject SerializeTrains(List<Train> trains){
-        JSONObject json = new JSONObject();
-        foreach( var t in trains){
-            json.AddField("position", t.position);
-            json.AddField("speed", t.speed);
-            json.AddField("direction", t.direction);
-            json.AddField("passengers", SerializePassengers(t.passengers));
+    public static Dictionary<string, int> GetPassengerCounts(List<Passenger> passengers){
+        Dictionary<string, int> counts = new Dictionary<string, int>();
+        foreach(var p in passengers) {
+            try {
+                counts[p.destination.ToString()] += 1;
+            } catch (KeyNotFoundException) {
+                counts.Add(p.destination.ToString(), 1);
+            }
         }
-        return json;
+        return counts;
+    }
+
+    public static JSONObject SerializeTrains(){
+        JSONObject trains_json = new JSONObject(JSONObject.Type.ARRAY);
+        foreach(var l in Instance.lines) {
+            JSONObject json = new JSONObject();
+            foreach( var t in l.trains){
+                json.AddField("unique_id", t.uuid);
+                json.AddField("type", "train");
+                json.AddField("position", t.position);
+                json.AddField("speed", t.speed);
+                json.AddField("direction", t.direction);
+                json.AddField("line_id", l.uuid);
+                // is there currently no capacity limit?
+                var passenger_counts = GetPassengerCounts(t.passengers);
+                foreach(var destination in passenger_counts.Keys) {
+                    json.AddField("cnt_" + destination.ToLower(), passenger_counts[destination]);
+                }
+            }
+            trains_json.Add(json);
+        }
+        return trains_json;
     }
 
 
