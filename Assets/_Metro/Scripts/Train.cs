@@ -6,7 +6,7 @@ using Microsoft.MixedReality.Toolkit.Input;
 
 public class Train : MonoBehaviour, IMixedRealityPointerHandler
 {
-
+    public int uuid;
     public float position; // index position along line
     public float speed;
     public float direction;
