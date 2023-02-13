@@ -460,7 +460,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
                     {
                         routeString += currentPassenger.route[k].id + " ";
                     }
-                    Debug.Log("Passenger is going from " + currentStation.uuid + " to " + currentPassenger.destination + " via [ " + routeString + "]");
+                    //Debug.Log("Passenger is going from " + currentStation.uuid + " to " + currentPassenger.destination + " via [ " + routeString + "]");
                 //}
                 //else
                 //{
