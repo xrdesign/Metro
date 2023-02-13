@@ -36,7 +36,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     public List<TransportLine> lines = new List<TransportLine>();
     
     public bool paused = false;
+
+    public bool addingTrain = false;
+    public bool addedTrain = false;
+
     public bool Ai_paused = false;
+
     public float clockTime;
     public int hour;
     public int day;
@@ -49,8 +54,13 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     public static int editingIndex = 0;
     public static float editingDist = 1.0f;
 
+    public List<float> trackLengths = new List<float>();
+    public float totalTrackLength;
+
     public GameObject menuUI;
     public GameObject metroUI;
+    public GameObject addTrainUI;
+    public GameObject LController;
     TransportLineUI[] lineUIs;
 
     private static Queue ActionQueue = Queue.Synchronized(new Queue());
@@ -92,6 +102,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
     public static void StartGame(){
         Debug.Log("Start Game");
+        Debug.Log("freeTrains: " + MetroManager.Instance.freeTrains);
         Instance.ResetGameState();
         Instance.InitializeGameState();
 
@@ -224,6 +235,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         paused = true;
         metroUI.SetActive(false);
         menuUI.SetActive(true);
+        addTrainUI.SetActive(false);
 
         SendEvent("Game Over");
 
@@ -605,7 +617,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     }
     
     void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData){
-        Debug.Log("MetroManager pointer up");
+        //Debug.Log("MetroManager pointer up");
         DeselectLine();
      
     }

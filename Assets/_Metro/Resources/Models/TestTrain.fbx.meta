@@ -1,9 +1,19 @@
 fileFormatVersion: 2
-guid: fae5d70c167526040ade4938dda91209
+guid: 18dad06ddb4489d4e99974ca2575b751
 ModelImporter:
   serializedVersion: 20200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.005
+    second: {fileID: 2100000, guid: 3b7c51bbf234498499630c3a27f09c9e, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Train_textureYellow
+    second: {fileID: 2800000, guid: c3c4ab84ded97164c867ec47edbcbb5d, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
