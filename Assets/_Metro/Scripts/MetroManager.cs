@@ -436,9 +436,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
             {
                 Passenger currentPassenger = currentStation.passengers[j];
                 
-                // if passenger is not on a route
-                if (currentPassenger.route == null)
-                {
+                // TODO: should not always update
+                //if (currentPassenger.route == null)
+                //{
                     // find a route
                     currentPassenger.route = FindRouteClosest(currentStation, currentPassenger.destination);
 
@@ -449,16 +449,16 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
                         routeString += currentPassenger.route[k].id + " ";
                     }
                     Debug.Log("Passenger is going from " + currentStation.uuid + " to " + currentPassenger.destination + " via [ " + routeString + "]");
-                }
-                else
-                {
-                    // if passenger is current at the end of the route, null it
-                    if (currentPassenger.route[currentPassenger.route.Count - 1] == currentStation)
-                    {
-                        currentPassenger.route = null;
-                        //continue;
-                    }
-                }
+                //}
+                //else
+                //{
+                    // // if passenger is current at the end of the route, null it
+                    // if (currentPassenger.route[currentPassenger.route.Count - 1] == currentStation)
+                    // {
+                    //     currentPassenger.route = null;
+                    //     //continue;
+                    // }
+                //}
             }
         }
     }
@@ -472,7 +472,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
             route.Add(current);
             current = cameFrom[current];
         }
-        route.Add(current);
+        //route.Add(current);
         route.Reverse();
         return route;
     }
@@ -591,7 +591,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         int right = goal.passengers.Count;
         if (left > right)
         {
-            return 1.0f; // penalty on stops
+            return 1.0f; 
         }
         else
         {
@@ -648,6 +648,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         json.AddField("segments", SerializeSegments());
         return json;
     }
+    
 
     public static JSONObject SerializeStations(){
         JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
