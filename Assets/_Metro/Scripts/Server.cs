@@ -52,6 +52,22 @@ public class MetroService : WebSocketBehavior
     *       station: 1,
     *       index: 0
     *   }
+     * {
+     *  command: "take_action",
+     *  arguments: {
+     *      action: "remove_station",
+     *      line: 0,
+     *      station: 1
+     * }
+     * }
+     * * {
+     *  command: "take_action",
+     *  arguments: {
+     *      action: "remove_track", // remove entire line
+     *      line: 0
+     * }
+     * }
+     *
     */
     protected override void OnMessage (MessageEventArgs e)
     {
@@ -67,8 +83,19 @@ public class MetroService : WebSocketBehavior
 
             case "take_action":
                 var args = json["arguments"];
-                res = QueueAction(args);                
-                
+                res = QueueAction(args);              
+                break;
+            case "get_actions":
+                // TODO: I don't know what this is for.
+                JSONObject actions = new JSONObject(JSONObject.Type.ARRAY);
+                actions.Add("insert_station");
+                actions.Add("remove_station");
+                actions.Add("remove_track");
+                res = actions.ToString();
+                break;
+            case "reset_game":
+                MetroManager.StartGame();
+                res = MetroManager.SerializeGameState().ToString();
                 break;
             default:
                 Debug.LogError("[Server][Metro Service] Received: " + e.Data);
@@ -96,9 +123,27 @@ public class MetroService : WebSocketBehavior
                 });
                 
                 break;
+            case "remove_station":
+                lineIndex = (int)args["line"].n;
+                stationIndex = (int)args["station"].n;
+                MetroManager.QueueAction(() =>
+                {
+                    var line = MetroManager.Instance.lines[lineIndex];
+                    var station = line.stops[stationIndex];
+                    line.RemoveStation(station);
+                });
+                break;
+            case "remove_track":
+                lineIndex = (int)args["line"].n;
+                MetroManager.QueueAction(() =>
+                {
+                    var line = MetroManager.Instance.lines[lineIndex];
+                    line.RemoveAll();
+                });
+                break;
+
             default:
                 return "Error, action didn't match any valid actions.";
-                break;
         }
         return "";
     }
