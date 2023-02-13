@@ -23,7 +23,8 @@ public class Tracks : MonoBehaviour
 
     public bool needsUpdate = true;
 
-    
+    //total length of tracks
+    public float totalLength;
 
     // Start is called before the first frame update
     void Start()
@@ -50,15 +51,25 @@ public class Tracks : MonoBehaviour
         UpdateLengths();
 
         needsUpdate = false;
+        //makes a shallow copy of track lengths
+        MetroManager.Instance.trackLengths = this.lengths;
     }
 
     void UpdateLengths(){
         lengths.Clear();
+        totalLength = 0;
+
         for(int i = 0; i < line.stops.Count - 1; i++){
             var p0 = line.stops[i].transform.position;
             var p1 = line.stops[i+1].transform.position;
 
             lengths.Add(Vector3.Distance(p0,p1));
+
+            Debug.Log("tracks length: " + this.lengths[i]);
+            this.totalLength += this.lengths[i];
+            Debug.Log("total tracks length update: " + this.totalLength);
+            
+            MetroManager.Instance.totalTrackLength = this.totalLength;           
         }
     }
 
