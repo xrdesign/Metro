@@ -94,8 +94,8 @@ public class MetroService : WebSocketBehavior
                 res = actions.ToString();
                 break;
             case "reset_game":
-                MetroManager.StartGame();
                 res = MetroManager.SerializeGameState().ToString();
+                MetroManager.ScheduleReset();
                 break;
             default:
                 Debug.LogError("[Server][Metro Service] Received: " + e.Data);

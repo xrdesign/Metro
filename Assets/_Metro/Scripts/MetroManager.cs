@@ -70,7 +70,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         if (Instance is null) Instance = this;
         else Destroy(this);
     }
-
+    
+    private volatile bool needReset = false;
+    
     void OnEnable(){
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(this);
     }
@@ -162,6 +164,14 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
             action();
         }
 
+        if (needReset)
+        {
+            needReset = false;
+            StartGame();
+            // End this Update step early
+            return;
+        }
+
         // Update Passenger's route
         UpdatePassengerRoute();
 
@@ -171,6 +181,11 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
         UpdatePointerState();
 
+    }
+
+    public static void ScheduleReset()
+    {
+        Instance.needReset = true;
     }
 
     void ResetGameState(){
