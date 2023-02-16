@@ -99,7 +99,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     {
         string[] tempSample;
         tempSample = new string[] { eventString };
-        markerStream.push_sample(tempSample);
+        markerStream.push_sample(tempSample); // 
     }
 
     public static void StartGame(){
