@@ -90,15 +90,85 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
             // Debug.Log("stop " + nextStop);
 
             var station = line.stops[nextStop];
-            PassengerDrop(station);
-            PassengerPickup(station);
 
             if(closestStopIndex == line.stops.Count - 1) nextStop -= 1;
             else if(closestStopIndex == 0) nextStop += 1;
             else nextStop += (int)direction;
 
+            var nextStation = line.stops[nextStop];
+
+            PassengerDropWithRoute(station, nextStation);
+            PassengerPickupWithRoute(station, nextStation);
 
         }
+    }
+
+    int PassengerDropWithRoute(Station station, Station nextStation)
+    {
+        var count = 0;
+        var scoreCount = 0;
+        for (int i = passengers.Count - 1; i >= 0; i--)
+        {
+            var p = passengers[i];
+
+            // if destination, drop (delete) the passenger
+            if (p.destination == station.type)
+            {
+                passengers.RemoveAt(i);
+                count += 1;
+                // only this get score
+                scoreCount += 1;
+                continue;
+            }
+
+            // if station is on route, but the next Station is not, drop the passenger (add back to station!)
+            if (p.route != null)
+            {
+                if (p.route.Contains(station) && !p.route.Contains(nextStation)) // this should always be index 0 and index 1 though if no error
+                {
+                    passengers.RemoveAt(i);
+                    station.passengers.Add(p); // add back
+                    // remove the station from the route
+                    p.route.Remove(station); // this should be at index 0 (hopefully)
+                    count += 1;
+                    continue;
+                }
+            }
+        }
+
+        MetroManager.AddScore(scoreCount);
+
+        return count;
+    }
+
+    void PassengerPickupWithRoute(Station station, Station nextStation)
+    {
+        var newList = new List<Passenger>();
+
+        foreach (var p in station.passengers)
+        {
+            if (passengers.Count < 6 + 6 * cars) // TODO: should use a better way to manage capacity check
+            {
+                
+                // if the nextStation is in route, pick up the passenger
+                if (p.route != null)
+                {
+
+                    // TODO: if the train can arrive one of the station onroute, we should try it as well
+                    // especially when closest route is so full (wait after certain time)
+                    if (p.route.Contains(nextStation))
+                    {
+                        passengers.Add(p);
+                        continue;
+                    }
+                }
+            }
+
+            // if not pickup, then throw back to station
+            newList.Add(p);
+        }
+
+        station.passengers = newList;
     }
 
     int PassengerDrop(Station station){
