@@ -36,6 +36,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     public List<TransportLine> lines = new List<TransportLine>();
     
     public bool paused = false;
+    public bool isGameover = false;
 
     public bool addingTrain = false;
     public bool addedTrain = false;
@@ -222,6 +223,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         }
         paused = false;
         gameSpeed = 1.0f;
+        isGameover = false;
         // Debug.Log(lines[0]);
         // Debug.Log(stations[0]);
 
@@ -253,6 +255,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         addTrainUI.SetActive(false);
 
         SendEvent("Game Over");
+        isGameover = true;
 
     }
 
@@ -668,6 +671,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
 
         json.AddField("score", Instance.score);
         json.AddField("time", Instance.time);
+        json.AddField("isPause", Instance.paused);
+        json.AddField("isGameover", Instance.isGameover);
         json.AddField("freeTrains", Instance.freeTrains);
         json.AddField("stations", SerializeStations());
         json.AddField("lines", SerializeTransportLines());
