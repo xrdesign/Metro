@@ -252,7 +252,10 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
         paused = true;
         metroUI.SetActive(false);
         menuUI.SetActive(true);
-        addTrainUI.SetActive(false);
+        if (addTrainUI)
+        { 
+            addTrainUI.SetActive(false); 
+        }
 
         SendEvent("Game Over");
         isGameover = true;
