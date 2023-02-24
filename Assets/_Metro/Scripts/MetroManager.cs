@@ -719,8 +719,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
     public static JSONObject SerializeSegments(){
         JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
         foreach( var l in Instance.lines){            
-            JSONObject segment_json = new JSONObject();
             for (int i=0; i<l.stops.Count-1; i++) {
+                JSONObject segment_json = new JSONObject();
                 var s = l.stops[i];
                 var next_s = l.stops[i+1];
                 segment_json.AddField("type", "segment");
@@ -728,8 +728,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityPointerHandler
                 segment_json.AddField("which_line", l.uuid);
                 segment_json.AddField("from_station", s.uuid);
                 segment_json.AddField("to_station", next_s.uuid);
+                json.Add(segment_json);
             }
-            json.Add(segment_json);
         }
         return json;
     }
