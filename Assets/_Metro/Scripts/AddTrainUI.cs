@@ -77,9 +77,6 @@ public class AddTrainUI : MonoBehaviour,
     
     public void AddTrain()
     {   
-        //get positin of the UI element
-        var UIpos = GameObject.Find("TestButton").transform.position;
-
         //prevent adding multiple trains when the player only clicks UI once
         MetroManager.Instance.addedTrain = false;
 
