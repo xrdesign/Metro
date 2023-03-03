@@ -39,8 +39,6 @@ public class GhostTrain : MonoBehaviour
 
         // seat[0] is image frame..
         seats = train.GetComponentsInChildren<Image>(true);
-
-        //this.Hide();
     }
 
     // Update is called once per frame
