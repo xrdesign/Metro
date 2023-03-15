@@ -17,6 +17,8 @@ public class TransportLine : MonoBehaviour
 
     public Color color;
     public int nextIndex = 0;
+    
+    public MetroGame gameInstance;
 
 
     // Start is called before the first frame update
@@ -71,15 +73,15 @@ public class TransportLine : MonoBehaviour
         foreach(var t in trains){
             Destroy(t.gameObject);
         }
-        MetroManager.Instance.freeTrains += trains.Count;
+        gameInstance.freeTrains += trains.Count;
         trains.Clear();
         isDeployed = false;
     }
 
     //add train at a specific location
     public void AddTrain(float position, float direction){
-        if(MetroManager.Instance.freeTrains == 0) return;
-        MetroManager.Instance.freeTrains -= 1;
+        if(gameInstance.freeTrains == 0) return;
+        gameInstance.freeTrains -= 1;
 
         var go = new GameObject();
         go.name = "Train";
