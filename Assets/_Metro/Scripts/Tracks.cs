@@ -4,8 +4,8 @@ using UnityEngine;
 using Microsoft.MixedReality.Toolkit.UI;
 
 
-public class Tracks : MonoBehaviour
-{
+public class Tracks : MonoBehaviour {
+    public MetroGame gameInstance;
 
     public TransportLine line;
 
@@ -52,7 +52,7 @@ public class Tracks : MonoBehaviour
 
         needsUpdate = false;
         //makes a shallow copy of track lengths
-        MetroManager.Instance.trackLengths = this.lengths;
+        gameInstance.trackLengths = this.lengths;
     }
 
     void UpdateLengths(){
@@ -69,7 +69,7 @@ public class Tracks : MonoBehaviour
             this.totalLength += this.lengths[i];
             Debug.Log("total tracks length update: " + this.totalLength);
             
-            MetroManager.Instance.totalTrackLength = this.totalLength;           
+            gameInstance.totalTrackLength = this.totalLength;           
         }
     }
 

@@ -18,10 +18,12 @@ public class SceneLoader : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
-    {
-        if(MetroManager.Instance.score > 0)
-            scoreLabel.text = "Last game score: " + MetroManager.Instance.score;
+    void Update() {
+        var game = MetroManager.GetSelectedGame();
+        if (!game) return;
+        
+        if(MetroManager.GetSelectedGame().score > 0)
+            scoreLabel.text = "Last game score: " + MetroManager.GetSelectedGame().score;
         
     }
 
@@ -29,7 +31,7 @@ public class SceneLoader : MonoBehaviour
     {
         // SceneManager.LoadScene(1);
         menuUI.SetActive(false);
-        MetroManager.StartGame();
+        MetroManager.StartGames();
     }
 
     public void QuitGame()

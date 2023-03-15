@@ -30,8 +30,8 @@ public class AddTrainUI : MonoBehaviour,
     {     
         this.transform.SetParent(this.gameObject.transform, false);
         trainCountTxt = this.transform.Find("Train_count").GetComponent<TMP_Text>();
-        trainCountTxt.text = MetroManager.Instance.freeTrains.ToString();
-        Debug.Log("freeTrains: " + MetroManager.Instance.freeTrains);
+        trainCountTxt.text = MetroManager.GetSelectedGame().freeTrains.ToString();
+        Debug.Log("freeTrains: " + MetroManager.GetSelectedGame().freeTrains);
         
         //generate a ghostTrain for visual representation      
         ghostTrain = new GameObject();
@@ -46,20 +46,20 @@ public class AddTrainUI : MonoBehaviour,
     // Update is called once per frame
     void Update()
     {
-        trainCountTxt.text = MetroManager.Instance.freeTrains.ToString();
+        trainCountTxt.text = MetroManager.GetSelectedGame().freeTrains.ToString();
         //update the ghostTrain's position to match that of left controller
-        ghostTrain.transform.position = MetroManager.Instance.LController.transform.position;
+        ghostTrain.transform.position = MetroManager.GetSelectedGame().LController.transform.position;
         //ghostTrain.transform.position = LeftPose.Position;
         
 
         
         //check if the ghostTrain should be placed and make it Hide/show      
-        if (ghostTrain!= null && MetroManager.Instance.addedTrain)
+        if (ghostTrain!= null && MetroManager.GetSelectedGame().addedTrain)
         {
             this.ghostTrain.SetActive(false);
 
             //GhostTrain trainComponent = this.ghostTrain.GetComponent<GhostTrain>();
-        } else if (MetroManager.Instance.addingTrain)
+        } else if (MetroManager.GetSelectedGame().addingTrain)
         {
             this.ghostTrain.SetActive(true);
         }
@@ -72,18 +72,18 @@ public class AddTrainUI : MonoBehaviour,
 
     public bool CanPlaceTrain()
     {
-        return MetroManager.Instance.freeTrains > 0;
+        return MetroManager.GetSelectedGame().freeTrains > 0;
     }
     
     public void AddTrain()
     {   
         //prevent adding multiple trains when the player only clicks UI once
-        MetroManager.Instance.addedTrain = false;
+        MetroManager.GetSelectedGame().addedTrain = false;
 
         //check if there is available trains
-        if (MetroManager.Instance.freeTrains > 0)
+        if (MetroManager.GetSelectedGame().freeTrains > 0)
         {
-            MetroManager.Instance.addingTrain = true;
+            MetroManager.GetSelectedGame().addingTrain = true;
         }
 
     }

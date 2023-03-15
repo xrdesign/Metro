@@ -21,6 +21,8 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
 
     private GameObject prefab;
     private GameObject train;
+    
+    public MetroGame gameInstance;
 
     // Start is called before the first frame update
     void Start()
@@ -71,7 +73,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
 
         // var factor = v.magnitude;
         // if(factor == 0.0f) factor = 1.0f;
-        speed = 0.15f * MetroManager.dt; /// 60.0f; // / factor;
+        speed = 0.15f * MetroGame.dt; /// 60.0f; // / factor;
 
         position += direction * speed;
         if(position <= 0.0f){
@@ -136,7 +138,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
             }
         }
 
-        MetroManager.AddScore(scoreCount);
+        gameInstance.AddScore(scoreCount);
 
         return count;
     }
@@ -184,7 +186,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         }
 
         passengers = newList;
-        MetroManager.AddScore(dropCount);
+        gameInstance.AddScore(dropCount);
 
         return 0; //todo animate?
     }

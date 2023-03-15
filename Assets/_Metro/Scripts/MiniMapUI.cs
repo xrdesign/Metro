@@ -22,8 +22,8 @@ public class MiniMapUI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        passengerCountTxt.text = MetroManager.Instance.score.ToString();
-        dayCount = MetroManager.Instance.day;
+        passengerCountTxt.text = MetroManager.GetSelectedGame().score.ToString();
+        dayCount = MetroManager.GetSelectedGame().day;
 
         switch (dayCount)
         {
