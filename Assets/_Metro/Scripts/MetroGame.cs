@@ -10,6 +10,7 @@ using Microsoft.MixedReality.Toolkit.Utilities;
 using Microsoft.MixedReality.Toolkit.Physics;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 using UnityEngine.InputSystem.EnhancedTouch;
@@ -56,11 +57,19 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public List<float> trackLengths = new List<float>();
     public float totalTrackLength;
 
-    public GameObject menuUI;
-    public GameObject metroUI;
-    public GameObject addTrainUI;
-    public GameObject LController;
-    TransportLineUI[] lineUIs;
+
+    #region Delegates
+
+    #region UI
+
+    // Invoke this to tell Manager to update UI if this game is selected.
+    public Action uiUpdateDelegate;
+
+    #endregion
+
+    #endregion
+
+    
 
     #region Action Queue
 
@@ -84,17 +93,15 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     // Start is called before the first frame update
     void Start()
     {
-        gameObject.AddComponent<Server>();
-
         gameSpeed = 0.0f;
-        lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
+        
         StartGame();
     }
 
  
 
     public void StartGame(){
-        Debug.Log("Start Game");
+        Debug.Log("Start Game " + gameId);
         Debug.Log("freeTrains: " + this.freeTrains);
         this.ResetGameState();
         this.InitializeGameState();
@@ -162,7 +169,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     }
 
     void ResetGameState(){
-        Debug.Log("reset");
+        Debug.Log("Resetting game state for " + gameObject.name);
         foreach(var s in stations){
             Destroy(s.gameObject);
         }
@@ -174,14 +181,14 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             Destroy(t.gameObject);
         }
         lines.Clear();
-
-        foreach(var l in lineUIs){
-            l.SetLine(null);
-        }
+        
+        // It looks like delegates are only instantiated when methods are assigned to them, so all but one of the games will have null here.
+        if (uiUpdateDelegate != null) 
+            uiUpdateDelegate.Invoke();
     }
-
+    
     void InitializeGameState(){
-        metroUI.SetActive(true);
+        print("Initializing game state for " + gameObject.name);
         SpawnStation(StationType.Cube);
         SpawnStation(StationType.Cone);
         SpawnStation(StationType.Sphere);
@@ -189,10 +196,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         AddTransportLine(Color.red);
         AddTransportLine(Color.blue);
         AddTransportLine(Color.yellow);
-
-        for(int i = 0; i < lines.Count; i++){
-            lineUIs[i].SetLine(lines[i]);
-        }
+        
         paused = false;
         gameSpeed = 1.0f;
         isGameover = false;
@@ -222,12 +226,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         // SceneManager.LoadScene(0);
         gameSpeed = 0.0f;
         paused = true;
-        metroUI.SetActive(false);
-        menuUI.SetActive(true);
-        if (addTrainUI)
-        { 
-            addTrainUI.SetActive(false); 
-        }
+        
 
         MetroManager.SendEvent("Game Over: " + gameId);
         isGameover = true;
@@ -285,7 +284,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         var line = go.AddComponent<TransportLine>();
         line.color = color;
         line.id = lines.Count;
-        line.uuid = line.GetInstanceID();        
+        line.uuid = line.GetInstanceID();
+        line.gameInstance = this;
         lines.Add(line);
     }
 
@@ -306,6 +306,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     }
 
     public void SpawnStation(StationType type){
+        print(this.gameObject.name + " spawning station of type " + type.ToString());
         GameObject obj;
         switch(type){
             case StationType.Sphere:
@@ -503,6 +504,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
                         minIndex = i;
                     }
                 }
+            }
+
+            if (minIndex == -1) {
+                print("Failure to find path:\nStart Station Type: " + start.type.ToString() + "\nGoal: " + goal.ToString() + "Available Types: " + stations.ToString());
             }
 
             // Find the station in closedset that is closest to the goal station

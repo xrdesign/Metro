@@ -27,6 +27,7 @@ public class TransportLine : MonoBehaviour
         var go = new GameObject();
         go.name = "Tracks";
         tracks = go.AddComponent<Tracks>();
+        tracks.gameInstance = gameInstance; // Pass down game instance reference.
         tracks.line = this;
     }
 
