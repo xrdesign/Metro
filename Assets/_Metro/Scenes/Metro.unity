@@ -1401,6 +1401,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63da03afa1f13c2449894934fe7aa5db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  numGamesToSpawn: 2
+  menuUI: {fileID: 0}
+  metroUI: {fileID: 1941911333}
+  addTrainUI: {fileID: 0}
+  LController: {fileID: 142235710}
 --- !u!4 &1277933883
 Transform:
   m_ObjectHideFlags: 0

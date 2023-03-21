@@ -22,7 +22,7 @@ public class MetroManager : MonoBehaviour
 
     #region Set In Editor
 
-    private uint numGamesToSpawn = 1;
+    public uint numGamesToSpawn = 1;
 
     #endregion
 
@@ -32,15 +32,28 @@ public class MetroManager : MonoBehaviour
     private List<MetroGame> games = new List<MetroGame>();
     
     // Used for UI stuff. The game that the player is currently "selecting". I.E. what they can interact with, add to, change, etc.
+    // todo: Decide how to select. Should it just be nearest game? Should there be some UI for it? ETC. For now just select first game.
     private MetroGame selectedGame = null;
 
     #endregion
     
-    
-    
+    #region UIs
+
+    public GameObject menuUI;
+    public GameObject metroUI;
+    public GameObject addTrainUI;
+    public GameObject LController;
+    TransportLineUI[] lineUIs;
+
+    #endregion
+
+
+
     // Start is called before the first frame update
     void Start()
     {
+        gameObject.AddComponent<Server>();
+        
         liblsl.StreamInfo inf =
             new liblsl.StreamInfo("EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
         markerStream = new liblsl.StreamOutlet(inf);
@@ -49,15 +62,48 @@ public class MetroManager : MonoBehaviour
             Debug.LogError("No games set to spawn!");
         }
         
-        for (int i = 0; i < numGamesToSpawn; i++) {
-            var newMetroGame = Instantiate(new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
+        for (uint i = 0; i < numGamesToSpawn; i++) {
+            var newMetroGame = (new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
+            newMetroGame.gameId = i;
             games.Add(newMetroGame);
             
             // todo: Change later so that we can switch between games we want to control.
             if (i == 0) {
-                selectedGame = newMetroGame;
+                SelectGame(newMetroGame);
             }
         }
+        
+        lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
+    }
+
+    // Refresh the UI. EX: When selected game is reset or when switching the selected game.
+    private void RefreshUI() {
+        foreach(var l in lineUIs){
+            l.SetLine(null);
+        }
+        
+        metroUI.SetActive(!selectedGame.isGameover);
+        
+        for(int i = 0; i < selectedGame.lines.Count; i++){
+            lineUIs[i].SetLine(selectedGame.lines[i]);
+        }
+        
+        if (addTrainUI)
+        { 
+            addTrainUI.SetActive(!selectedGame.isGameover); 
+        }
+        
+    }
+
+    // Only change selected game through this function, so that delegates are properly assigned.
+    private void SelectGame(MetroGame game) {
+        if (selectedGame) {
+            selectedGame.uiUpdateDelegate -= RefreshUI;
+            selectedGame = null;
+        }
+
+        selectedGame = game;
+        selectedGame.uiUpdateDelegate += RefreshUI;
     }
     
     public static void SendEvent(string eventString)
