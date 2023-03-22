@@ -25,9 +25,10 @@ public class TransportLine : MonoBehaviour
     void Start()
     {
         var go = new GameObject();
-        go.name = "Tracks";
+        go.name = "Tracks (Game " + gameInstance.gameId + ", Transport Line " + color.ToString();
         tracks = go.AddComponent<Tracks>();
         tracks.gameInstance = gameInstance; // Pass down game instance reference.
+        tracks.transform.SetParent(this.transform);
         tracks.line = this;
     }
 
@@ -87,6 +88,7 @@ public class TransportLine : MonoBehaviour
         var go = new GameObject();
         go.name = "Train";
         var t = go.AddComponent<Train>();
+        t.gameInstance = gameInstance;
         t.position = position;
         t.direction = direction;
         t.speed = 0.0f;

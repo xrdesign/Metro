@@ -3,10 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using LSL;
 using Oculus.Platform.Models;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class MetroManager : MonoBehaviour
 {
+    #region Fields
+
     #region Singleton
     
     public static MetroManager Instance;
@@ -18,15 +21,13 @@ public class MetroManager : MonoBehaviour
     private liblsl.StreamOutlet markerStream;
 
     #endregion
-
-
+    
     #region Set In Editor
 
     public uint numGamesToSpawn = 1;
 
     #endregion
-
-
+    
     #region Privates
 
     private List<MetroGame> games = new List<MetroGame>();
@@ -47,8 +48,9 @@ public class MetroManager : MonoBehaviour
 
     #endregion
 
-
-
+    #endregion
+    
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -58,6 +60,9 @@ public class MetroManager : MonoBehaviour
             new liblsl.StreamInfo("EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
         markerStream = new liblsl.StreamOutlet(inf);
 
+        
+        // Spawn in the games.
+        
         if (numGamesToSpawn <= 0) {
             Debug.LogError("No games set to spawn!");
         }
@@ -66,6 +71,7 @@ public class MetroManager : MonoBehaviour
             var newMetroGame = (new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
             newMetroGame.gameId = i;
             games.Add(newMetroGame);
+            newMetroGame.transform.position = GetGameLocation(newMetroGame.gameId);
             
             // todo: Change later so that we can switch between games we want to control.
             if (i == 0) {
@@ -74,6 +80,19 @@ public class MetroManager : MonoBehaviour
         }
         
         lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
+    }
+    
+    // Get the transform of the game with a certain id. This should space them apart so that there is sufficient distance between each game.
+    private Vector3 GetGameLocation(uint gameID) {
+        float distanceBetweenGames = 10.0f; //todo: This is arbitrary right now. Radius in which stations can spawn grows with time, so we need some way to deal with that eventually.
+        
+        // Using a grid pattern.
+        // todo: Will not work if games instances are added while program is running rather than just at spawn.
+
+        uint maxX = (uint)math.floor(math.sqrt(numGamesToSpawn));
+        uint x = gameID % maxX;
+        uint z = (uint)math.floor((float)gameID / maxX);
+        return new Vector3(x * distanceBetweenGames, 0.0f, z * distanceBetweenGames);
     }
 
     // Refresh the UI. EX: When selected game is reset or when switching the selected game.

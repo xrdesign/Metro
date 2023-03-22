@@ -146,11 +146,12 @@ public class Tracks : MonoBehaviour {
 
     TrackSegment CreateSegment(int index){
         var go = new GameObject();
-        go.name = "Track";
-        go.transform.SetParent(line.gameObject.transform);
+        go.name = "Track Segment";
+        go.transform.SetParent(this.transform);
         var track = go.AddComponent<TrackSegment>();
         track.line = line;
         track.index = index;
+        track.gameInstance = gameInstance;
         return track;
     }
 
