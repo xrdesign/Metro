@@ -16,6 +16,7 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler
     public bool needsUpdate = true;
     public int lengthOfLine = 20;
 
+
     public float segmentLengthSum;
     public float addPosition;
 
@@ -33,7 +34,6 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler
     public LineRenderer lineRenderer;
     MeshCollider meshCollider;
     
-
     // Start is called before the first frame update
     void Start()
     {
@@ -93,6 +93,17 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler
     }
     
     void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
+        if(RemoveTrackUI.inRemovalMode) {
+            Debug.Log("track removed");
+        
+            Debug.Log("line id: " + this.line.id);
+            Debug.Log("trackSegment index: " + this.index);
+
+            line.RemoveAll();
+            return;
+        }
+
+
         Debug.Log("track down");
         
         Debug.Log("line id: " + this.line.id);
@@ -139,7 +150,7 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler
     }
 
     void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData){
-
+        
     }
 
     
