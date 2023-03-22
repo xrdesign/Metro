@@ -58,6 +58,16 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public float totalTrackLength;
 
 
+    #region Organizational Scene Objects
+
+    private GameObject stationsOrganizer;
+    private GameObject transportLinesOrganizer;
+
+    #endregion
+    
+    
+
+
     #region Delegates
 
     #region UI
@@ -91,8 +101,12 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     }
 
     // Start is called before the first frame update
-    void Start()
-    {
+    void Start() {
+        stationsOrganizer = new GameObject("Stations");
+        stationsOrganizer.transform.SetParent(this.transform, false);
+        transportLinesOrganizer = new GameObject("Transport Lines");
+        transportLinesOrganizer.transform.SetParent(this.transform, false);
+        
         gameSpeed = 0.0f;
         
         StartGame();
@@ -282,6 +296,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         var go = new GameObject();
         go.name = "TransportLine";
         var line = go.AddComponent<TransportLine>();
+        go.transform.SetParent(transportLinesOrganizer.transform);
         line.color = color;
         line.id = lines.Count;
         line.uuid = line.GetInstanceID();
@@ -338,8 +353,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             if(pos.y < 0.5f) pos.Set(pos.x, 0.5f, pos.z);
             if(pos.y > 2.0f) pos.Set(pos.x, 2.0f, pos.z);
         }
-
-        obj.transform.position = pos;
+        obj.transform.SetParent(stationsOrganizer.transform);
+        obj.transform.localPosition = pos;
         obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
         station.id = this.stations.Count;
@@ -364,7 +379,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     public bool StationTooClose(Vector3 pos){
         foreach(var station in this.stations){
-            var d = Vector3.Distance(pos, station.transform.position);
+            var d = Vector3.Distance(pos, station.transform.localPosition);
             if(d < 0.5f) return true;
         }
         return false;
@@ -612,7 +627,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
         Debug.Log("Pointer Clicked");
-        MetroManager.SendEvent("Controller clicked: " + gameId); // todo: What is this doing, and how is the game instance related to the controller?
+        MetroManager.SendEvent("Controller clicked: " + gameId);
     }
     
     void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData){
