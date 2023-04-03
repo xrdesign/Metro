@@ -16,6 +16,8 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem.EnhancedTouch;
 
 
+public delegate void GameSelectionDelegateDef(bool selected);
+
 /**
 * SpaceMetro aims to clone mini metro in VR
 * This singleton object initializes and handles global game state and events
@@ -77,6 +79,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     #endregion
 
+    public GameSelectionDelegateDef GameSelectionDelegate;
+    
     #endregion
 
     
@@ -121,6 +125,28 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         this.InitializeGameState();
 
     }
+
+    #region Notifications
+
+    // Only called from MetroManager when the selected game has changed.
+    public void OnSelectionChange(bool selected) {
+        // All we do is invoke our delegate for other objects atm.
+        if (GameSelectionDelegate != null) {  // Delegate is null unless assigned to a method.
+            GameSelectionDelegate.Invoke(selected);
+        }
+    }
+
+    #endregion
+
+
+    // Getters. Mostly for info that needs to poll other objects.
+    #region Getters
+
+    public bool IsGameSelected() {
+        return this == MetroManager.GetSelectedGame();
+    }
+
+    #endregion
 
     public void SetPaused(bool shouldPause) {
         this.paused = shouldPause;

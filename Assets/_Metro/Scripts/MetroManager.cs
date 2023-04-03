@@ -118,11 +118,13 @@ public class MetroManager : MonoBehaviour
     private void SelectGame(MetroGame game) {
         if (selectedGame) {
             selectedGame.uiUpdateDelegate -= RefreshUI;
+            selectedGame.OnSelectionChange(false);
             selectedGame = null;
         }
 
         selectedGame = game;
         selectedGame.uiUpdateDelegate += RefreshUI;
+        selectedGame.OnSelectionChange(true);
     }
     
     public static void SendEvent(string eventString)
