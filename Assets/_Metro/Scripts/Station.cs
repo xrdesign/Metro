@@ -56,6 +56,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     // Update is called once per frame
     void Update()
     {
+        // TODO: Why have a position variable defined like this?
         position = transform.position;
         cooldown -= Time.deltaTime;
 
