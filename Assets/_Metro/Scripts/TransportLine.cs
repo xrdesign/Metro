@@ -17,14 +17,18 @@ public class TransportLine : MonoBehaviour
 
     public Color color;
     public int nextIndex = 0;
+    
+    public MetroGame gameInstance;
 
 
     // Start is called before the first frame update
     void Start()
     {
         var go = new GameObject();
-        go.name = "Tracks";
+        go.name = "Tracks (Game " + gameInstance.gameId + ", Transport Line " + color.ToString();
         tracks = go.AddComponent<Tracks>();
+        tracks.gameInstance = gameInstance; // Pass down game instance reference.
+        tracks.transform.SetParent(this.transform);
         tracks.line = this;
     }
 
@@ -71,19 +75,20 @@ public class TransportLine : MonoBehaviour
         foreach(var t in trains){
             Destroy(t.gameObject);
         }
-        MetroManager.Instance.freeTrains += trains.Count;
+        gameInstance.freeTrains += trains.Count;
         trains.Clear();
         isDeployed = false;
     }
 
     //add train at a specific location
     public void AddTrain(float position, float direction){
-        if(MetroManager.Instance.freeTrains == 0) return;
-        MetroManager.Instance.freeTrains -= 1;
+        if(gameInstance.freeTrains == 0) return;
+        gameInstance.freeTrains -= 1;
 
         var go = new GameObject();
         go.name = "Train";
         var t = go.AddComponent<Train>();
+        t.gameInstance = gameInstance;
         t.position = position;
         t.direction = direction;
         t.speed = 0.0f;
