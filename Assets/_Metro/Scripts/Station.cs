@@ -16,12 +16,17 @@ public enum StationType {
 
 public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedRealityFocusHandler
 {
-
+    // The station ID is "per game", meaning that stations from different games can have the same ID.
     public int id;
+    
+    // This will be unique because it's set to its unity instance ID.
     public int uuid;
     public StationType type;
     public Vector3 position;
     public float timer = 0.0f; // max 45 seconds for animation + 2s grace period
+    
+    // todo: Change to delegates in the future?
+    public MetroGame gameInstance;
 
     public List<Passenger> passengers = new List<Passenger>();
 
@@ -51,6 +56,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     // Update is called once per frame
     void Update()
     {
+        // TODO: Why have a position variable defined like this?
         position = transform.position;
         cooldown -= Time.deltaTime;
 
@@ -75,10 +81,10 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 
         // Update overcrowding status
         if(passengers.Count > 6){ 
-            timer += MetroManager.dt;
+            timer += MetroGame.dt;
 
         } else {
-            timer -= MetroManager.dt;
+            timer -= MetroGame.dt;
             if(timer < 0f) timer = 0f;
         }
         timerImage.enabled = true;
@@ -158,16 +164,16 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 
     void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
     
-        var line = MetroManager.SelectFreeLine();
+        var line = gameInstance.SelectFreeLine();
         if( line != null){
             Debug.Log("station down");
             line.AddStation(this);
 
-            MetroManager.Instance.SendEvent("Select Station: " + "station - " + id + ";line - " + line.id);
+            MetroManager.SendEvent("Select Station: " + "station - " + id + ";line - " + line.id);
             Debug.Log("Select Station: " + "station - " + id + ";line - " + line.id);
 
             var dist = eventData.Pointer.Result.Details.RayDistance;
-            MetroManager.StartEditingLine(line, 0, dist, false);
+            MetroGame.StartEditingLine(line, 0, dist, false);
 
             eventData.Pointer.IsFocusLocked = false;
             eventData.Pointer.IsTargetPositionLockedOnFocusLock = false;
@@ -206,33 +212,33 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         if(cooldown > 0.0f) return;
         firstDrag = false;
 
-        var line = MetroManager.editingLine;
-        var index = MetroManager.editingIndex;
+        var line = MetroGame.editingLine;
+        var index = MetroGame.editingIndex;
         var dist = eventData.Pointer.Result.Details.RayDistance;
-        var insert = MetroManager.editingInsert;
+        var insert = MetroGame.editingInsert;
 
         if( line != null){
             // TODO: 
-            MetroManager.Instance.SendEvent("Add Station: " + "station - " + id + ";line - " + line.id);
+            MetroManager.SendEvent("Add Station: " + "station - " + id + ";line - " + line.id);
             Debug.Log("Add Station: " + "station - " + id + ";line - " + line.id);
 
             // add if not in line (unless closing loop TODO)
             if (!line.stops.Contains(this)){
                 line.InsertStation(index+1, this);
                 var insrt = index+1 < line.stops.Count-1;
-                MetroManager.StartEditingLine(line, index+1, dist, insrt);
+                MetroGame.StartEditingLine(line, index+1, dist, insrt);
             
             // remove if adjacent to editingIndex
             } else if(line.stops.Count > 1){
                 if (line.stops[index] == this){
                     line.RemoveStation(this);
                     var insrt = index-1 >= 0 && index-1 < line.stops.Count-1;
-                    MetroManager.StartEditingLine(line, index-1, dist, insrt);
+                    MetroGame.StartEditingLine(line, index-1, dist, insrt);
 
                 }else if(insert && line.stops[index+1] == this){
                     line.RemoveStation(this);
                     var insrt = index < line.stops.Count-1;
-                    MetroManager.StartEditingLine(line, index, dist, insrt);
+                    MetroGame.StartEditingLine(line, index, dist, insrt);
 
                 } 
             }

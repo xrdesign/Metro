@@ -3,11 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using Microsoft.MixedReality.Toolkit.UI;
 
+/// <summary>
+/// Container behavior for TrackSegments. Coupled to TransportLine such that each TransportLine has a Tracks child that manages TrackSegments.
+/// </summary>
+public class Tracks : MonoBehaviour {
 
-public class Tracks : MonoBehaviour
-{
-
+    #region Parent References
+    
+    public MetroGame gameInstance;
     public TransportLine line;
+
+    #endregion
 
     // public List<Vector3> points = new List<Vector3>();
     public List<Vector3> cp = new List<Vector3>();
@@ -52,7 +58,7 @@ public class Tracks : MonoBehaviour
 
         needsUpdate = false;
         //makes a shallow copy of track lengths
-        MetroManager.Instance.trackLengths = this.lengths;
+        gameInstance.trackLengths = this.lengths;
     }
 
     void UpdateLengths(){
@@ -69,7 +75,7 @@ public class Tracks : MonoBehaviour
             this.totalLength += this.lengths[i];
             Debug.Log("total tracks length update: " + this.totalLength);
             
-            MetroManager.Instance.totalTrackLength = this.totalLength;           
+            gameInstance.totalTrackLength = this.totalLength;           
         }
     }
 
@@ -146,11 +152,12 @@ public class Tracks : MonoBehaviour
 
     TrackSegment CreateSegment(int index){
         var go = new GameObject();
-        go.name = "Track";
-        go.transform.SetParent(line.gameObject.transform);
+        go.name = "Track Segment";
+        go.transform.SetParent(this.transform);
         var track = go.AddComponent<TrackSegment>();
         track.line = line;
         track.index = index;
+        track.gameInstance = gameInstance;
         return track;
     }
 

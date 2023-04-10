@@ -7,8 +7,9 @@ using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Physics;
 
 
-public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler
-{
+public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
+    public MetroGame gameInstance;
+    
     public TransportLine line;
     //track segment id
     public int index; 
@@ -87,7 +88,7 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler
         float sum = 0;
         for(int i = 0; i < id; i++)
         {
-            sum += MetroManager.Instance.trackLengths[i];
+            sum += gameInstance.trackLengths[i];
         }
         return sum;
     }
@@ -101,10 +102,10 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler
         this.segmentLengthSum = this.getLengthSum(this.index);
         Debug.Log("trackSegment length sum: " + this.segmentLengthSum);
         //calculates the position of train 
-        addPosition = this.segmentLengthSum / MetroManager.Instance.totalTrackLength;
+        addPosition = this.segmentLengthSum / gameInstance.totalTrackLength;
 
-        isAddingTrain = MetroManager.Instance.addingTrain;
-        addedTrain = MetroManager.Instance.addedTrain;
+        isAddingTrain = gameInstance.addingTrain;
+        addedTrain = gameInstance.addedTrain;
         
         //check if the player has clicked the addTrainUI
         //if yes, add a train on the segment where the player clicks
@@ -113,15 +114,15 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler
             Debug.Log("isAddingTrain: " + isAddingTrain);
             Debug.Log("addedTrain: " + addedTrain);
             this.line.AddTrain(addPosition, 1.0f);
-            MetroManager.Instance.addedTrain = true;
-            MetroManager.Instance.addingTrain = false;
+            gameInstance.addedTrain = true;
+            gameInstance.addingTrain = false;
             Debug.Log("addedTrain: " + addedTrain);
         } 
         
         
         var dist = eventData.Pointer.Result.Details.RayDistance;
         var insert = index >= 0 && index < line.stops.Count-1;
-        MetroManager.StartEditingLine(line, index, dist, insert);
+        MetroGame.StartEditingLine(line, index, dist, insert);
 
         eventData.Pointer.IsFocusLocked = false;
         eventData.Pointer.IsTargetPositionLockedOnFocusLock = false;

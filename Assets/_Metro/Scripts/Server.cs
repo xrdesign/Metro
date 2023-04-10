@@ -34,6 +34,7 @@ public class MetroService : WebSocketBehavior
         Debug.Log("[Server][Metro Service] Client disconnected.");
     }
 
+    // Old API (Pre Instanced Games)
     /**
     * Receives json command structure
     * {
@@ -78,12 +79,14 @@ public class MetroService : WebSocketBehavior
         // 
         switch(command){
             case "get_state":
-                res = MetroManager.SerializeGameState().ToString();
+                uint gameIDGetState = (uint)json["game_id"].i;
+                res = MetroManager.SerializeGame(gameIDGetState).ToString();
                 break;
 
             case "take_action":
+                uint gameIDTakeAction = (uint)json["game_id"].i;
                 var args = json["arguments"];
-                res = QueueAction(args);              
+                res = QueueAction(args, gameIDTakeAction);              
                 break;
             case "get_actions":
                 // TODO: I don't know what this is for.
@@ -93,9 +96,10 @@ public class MetroService : WebSocketBehavior
                 actions.Add("remove_track");
                 res = actions.ToString();
                 break;
-            case "reset_game":
-                res = MetroManager.SerializeGameState().ToString();
-                MetroManager.ScheduleReset();
+            case "reset_game":  // TODO: Maybe this should an option for take_action?
+                uint gameIDResetGame = (uint)json["game_id"].i;
+                res = MetroManager.SerializeGame(gameIDResetGame).ToString();
+                MetroManager.ResetGame(gameIDResetGame);
                 break;
             default:
                 Debug.LogError("[Server][Metro Service] Received: " + e.Data);
@@ -106,7 +110,8 @@ public class MetroService : WebSocketBehavior
         Send(res);
     }
 
-    protected string QueueAction(JSONObject args)
+    // Queues an action for a specific game instance.
+    protected string QueueAction(JSONObject args, uint gameID)
     {
         var action = args["action"].str;        
         Debug.Log("[Server][Metro Service] take action: " + action);
@@ -116,30 +121,30 @@ public class MetroService : WebSocketBehavior
                 var lineIndex = (int)args["line"].n;
                 var stationIndex = (int)args["station"].n;
                 var index = (int)args["index"].n;
-                MetroManager.QueueAction(() => {
-                    var line = MetroManager.Instance.lines[lineIndex];
-                    var station = MetroManager.Instance.stations[stationIndex];
+                MetroManager.QueueGameAction((game) => {
+                    var line = game.lines[lineIndex];
+                    var station = game.stations[stationIndex];
                     line.InsertStation(index, station);
-                });
+                }, gameID);
                 
                 break;
             case "remove_station":
                 lineIndex = (int)args["line"].n;
                 stationIndex = (int)args["station"].n;
-                MetroManager.QueueAction(() =>
+                MetroManager.QueueGameAction((game) =>
                 {
-                    var line = MetroManager.Instance.lines[lineIndex];
+                    var line = game.lines[lineIndex];
                     var station = line.stops[stationIndex];
                     line.RemoveStation(station);
-                });
+                }, gameID);
                 break;
             case "remove_track":
                 lineIndex = (int)args["line"].n;
-                MetroManager.QueueAction(() =>
+                MetroManager.QueueGameAction((game) =>
                 {
-                    var line = MetroManager.Instance.lines[lineIndex];
+                    var line = game.lines[lineIndex];
                     line.RemoveAll();
-                });
+                }, gameID);
                 break;
 
             default:
