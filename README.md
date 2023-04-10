@@ -3,6 +3,10 @@
 
 This is the unity project for the Human-AI Teaming mini metro clone for VR.
 
+## API
+
+API Documentation is available in [API.md](https://github.com/xrdesign/Metro/blob/main/API.md).
+
 ## Getting Started
 
 Install Unity, this project is using Unity version 2020.3.28f1.
