@@ -34,6 +34,7 @@ public class MetroService : WebSocketBehavior
         Debug.Log("[Server][Metro Service] Client disconnected.");
     }
 
+    // Old API (Pre Instanced Games)
     /**
     * Receives json command structure
     * {
@@ -95,7 +96,7 @@ public class MetroService : WebSocketBehavior
                 actions.Add("remove_track");
                 res = actions.ToString();
                 break;
-            case "reset_game":
+            case "reset_game":  // TODO: Maybe this should an option for take_action?
                 uint gameIDResetGame = (uint)json["game_id"].i;
                 res = MetroManager.SerializeGame(gameIDResetGame).ToString();
                 MetroManager.ResetGame(gameIDResetGame);

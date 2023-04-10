@@ -3,11 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using Microsoft.MixedReality.Toolkit.UI;
 
-
+/// <summary>
+/// Container behavior for TrackSegments. Coupled to TransportLine such that each TransportLine has a Tracks child that manages TrackSegments.
+/// </summary>
 public class Tracks : MonoBehaviour {
-    public MetroGame gameInstance;
 
+    #region Parent References
+    
+    public MetroGame gameInstance;
     public TransportLine line;
+
+    #endregion
 
     // public List<Vector3> points = new List<Vector3>();
     public List<Vector3> cp = new List<Vector3>();

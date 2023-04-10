@@ -708,6 +708,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
         foreach( var s in this.stations){
             JSONObject sjson = new JSONObject();
+            sjson.AddField("id", s.id);
             sjson.AddField("unique_id", s.uuid);
             sjson.AddField("type", "station");
             sjson.AddField("shape", s.type.ToString());
@@ -728,6 +729,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
         foreach( var l in this.lines){
             JSONObject ljson = new JSONObject();
+            ljson.AddField("id", l.id);
             ljson.AddField("unique_id", l.uuid);
             ljson.AddField("type", "line");
             json.Add(ljson);        
