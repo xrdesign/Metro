@@ -7,6 +7,7 @@ using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Physics;
+using UnityEngine.Serialization;
 
 public enum StationType {
     Sphere,
@@ -16,12 +17,23 @@ public enum StationType {
 
 public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedRealityFocusHandler
 {
+    #region Identifiers
+
     // The station ID is "per game", meaning that stations from different games can have the same ID.
     public int id;
     
     // This will be unique because it's set to its unity instance ID.
     public int uuid;
     public StationType type;
+
+    
+    // This is a randomly generated human recognizable name.
+    public string stationName;
+
+    #endregion
+    
+    
+    
     public Vector3 position;
     public float timer = 0.0f; // max 45 seconds for animation + 2s grace period
     
@@ -36,8 +48,15 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     public List<TransportLine> lines;
 
 
+    #region Canvas References
+    
     // public List<GameObject> passengerObject;
     private Image[] seats;
+
+    private Text _stationText;
+
+    #endregion
+
 
 
     static bool dragging = false; 
@@ -51,6 +70,15 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     void Start()
     {
         seats = gameObject.GetComponentsInChildren<Image>(true);
+
+        _stationText = gameObject.GetComponentInChildren<Text>(true);
+        
+        
+        // Get random station name from manager.
+        stationName = MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
+
+        _stationText.text = stationName;
+
     }
 
     // Update is called once per frame
