@@ -109,10 +109,10 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 
         // Update overcrowding status
         if(passengers.Count > 6){ 
-            timer += MetroGame.dt;
+            timer += gameInstance.dt;
 
         } else {
-            timer -= MetroGame.dt;
+            timer -= gameInstance.dt;
             if(timer < 0f) timer = 0f;
         }
         timerImage.enabled = true;

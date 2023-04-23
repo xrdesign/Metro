@@ -420,11 +420,15 @@ public class MetroManager : MonoBehaviour {
         }
         else {
             if (random.NextDouble() > 0.5) {
-                station = StationPrefixes[random.Next(0, StationPrefixes.Length)];
+                station = StationPrefixes[random.Next(0, StationPrefixes.Length)] + " ";
             }
-            station += " " + StationWords[random.Next(0, StationWords.Length)] + " " + StationSuffixes[random.Next(0, StationSuffixes.Length)];
+            station += StationWords[random.Next(0, StationWords.Length)] + " " + StationSuffixes[random.Next(0, StationSuffixes.Length)];
         }
-
+        
+        // Encase of weirdly generated whitespace at beginning and end.
+        station = station.TrimStart();
+        station = station.TrimEnd();
+        
         return station;
     }
 
