@@ -149,6 +149,15 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         return this == MetroManager.GetSelectedGame();
     }
 
+    public Station GetStationFromName(string stationName) {
+        foreach (var station in stations) {
+            if (station.stationName == stationName)
+                return station;
+        }
+
+        return null;
+    }
+
     #endregion
 
     public void SetPaused(bool shouldPause) {
