@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using System.Linq;
 using LSL;
+using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Teleport;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = System.Random;
 
-public class MetroManager : MonoBehaviour {
+public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     #region Fields
 
     #region Singleton
@@ -53,8 +56,10 @@ public class MetroManager : MonoBehaviour {
 
     #endregion
 
+    #region Methods
 
-    // Start is called before the first frame update
+
+    #region Monobehavior Overrides
     void Start() {
         gameObject.AddComponent<Server>();
 
@@ -84,14 +89,79 @@ public class MetroManager : MonoBehaviour {
         lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
     }
 
-    // Get the transform of the game with a certain id. This should space them apart so that there is sufficient distance between each game.
+    
+    private void Awake() {
+        if (Instance is null) Instance = this;
+        else {
+            Destroy(this);
+            Debug.LogError("More than one MetroManager initialized!");
+        }
+    }
+    
+    private void OnEnable() {
+        CoreServices.TeleportSystem.RegisterHandler<IMixedRealityTeleportHandler>(this);
+    }
+
+    private void OnDisable() {
+        CoreServices.TeleportSystem.UnregisterHandler<IMixedRealityTeleportHandler>(this);
+    }
+    
+    #endregion
+
+    #region Teleportation Handling
+    // Teleportation used for selecting game based on player teleportation location.
+    // Mostly just overrides
+    
+    public void OnTeleportRequest(TeleportEventData eventData) {
+        
+    }
+
+    public void OnTeleportStarted(TeleportEventData eventData) {
+        
+    }
+
+    public void OnTeleportCompleted(TeleportEventData eventData) {
+        var closestGame = FindNearestMetroGameToPosition(eventData.Pointer.Position);
+        if (!closestGame) return;
+        MetroManager.Instance.SelectGame(closestGame);
+    }
+
+    public void OnTeleportCanceled(TeleportEventData eventData) {
+        
+    }
+
+    
+    #endregion
+
+
+    #region Utility
+
+    /// <summary>
+    /// Find the nearest game to supplied world position.
+    /// </summary>
+    /// <param name="position">Position to compare against</param>
+    /// <returns>Closest <see cref="MetroGame"/></returns>
+    public MetroGame FindNearestMetroGameToPosition(Vector3 position) {
+        var games = FindObjectsOfType<MetroGame>();
+
+        if (games.Length <= 0) return null;
+
+        var sorted = games.OrderBy(obj => (position - obj.transform.position).sqrMagnitude);
+        return sorted.First();
+    }
+    
+    /// <summary>
+    /// Get what the transform of the game with a certain id should be. This should space them apart so that there is sufficient distance between each game.
+    /// </summary>
+    /// <param name="gameID">Game ID to find desired spaced position of</param>
+    /// <returns>Position of game</returns>
     private Vector3 GetGameLocation(uint gameID) {
         float
             distanceBetweenGames =
                 10.0f; //todo: This is arbitrary right now. Radius in which stations can spawn grows with time, so we need some way to deal with that eventually.
 
         // Using a grid pattern.
-        // todo: Will not work if games instances are added while program is running rather than just at spawn.
+        // NOTE: Will not work if games instances are added while program is running rather than just at spawn.
 
         uint maxX = (uint)math.floor(math.sqrt(numGamesToSpawn));
         uint x = gameID % maxX;
@@ -99,7 +169,38 @@ public class MetroManager : MonoBehaviour {
         return new Vector3(x * distanceBetweenGames, 0.0f, z * distanceBetweenGames);
     }
 
-    // Refresh the UI. EX: When selected game is reset or when switching the selected game.
+    /// <summary>
+    /// Serialize the game state into json.
+    /// </summary>
+    /// <param name="gameID">ID of game to serialize</param>
+    /// <returns><see cref="JSONObject"/> containing formatted game state</returns>
+    public static JSONObject SerializeGame(uint gameID) {
+        return GetGameWithID(gameID).SerializeGameState();
+    }
+
+    /// <summary>
+    /// Get <see cref="MetroGame"/> from its ID
+    /// </summary>
+    /// <param name="gameID">ID of game to return</param>
+    /// <returns><see cref="MetroGame"/> component</returns>
+    private static MetroGame GetGameWithID(uint gameID) {
+        return Instance.games.Find(game => game.gameId == gameID);
+    }
+    
+    /// <summary>
+    /// Get the currently selected <see cref="MetroGame"/>
+    /// </summary>
+    /// <returns>Currently selected <see cref="MetroGame"/></returns>
+    public static MetroGame GetSelectedGame() {
+        return Instance.selectedGame;
+    }
+    
+    #endregion
+    
+
+    /// <summary>
+    /// Refresh the UI. EX: When selected game is reset or when switching the selected game.
+    /// </summary>
     private void RefreshUI() {
         foreach (var l in lineUIs) {
             l.SetLine(null);
@@ -117,8 +218,12 @@ public class MetroManager : MonoBehaviour {
 
     }
 
-    // Only change selected game through this function, so that delegates are properly assigned.
-    private void SelectGame(MetroGame game) {
+    /// <summary>
+    /// Selects a specific game. Used for UI and such (don't want to display all those canvases for performance reasons).
+    /// Only change selected game through this function, so that delegates are properly assigned.
+    /// </summary>
+    /// <param name="game">Game to select</param>
+    public void SelectGame(MetroGame game) {
         if (selectedGame) {
             selectedGame.uiUpdateDelegate -= RefreshUI;
             selectedGame.OnSelectionChange(false);
@@ -136,37 +241,13 @@ public class MetroManager : MonoBehaviour {
         Instance.markerStream.push_sample(tempSample);
     }
 
-    // Update is called once per frame
-    void Update() { }
-
-    private void Awake() {
-        if (Instance is null) Instance = this;
-        else {
-            Destroy(this);
-            Debug.LogError("More than one MetroManager initialized!");
-        }
-    }
-
     public static void ResetGame(uint gameID) {
         GetGameWithID(gameID).ScheduleReset();
     }
-
-    public static JSONObject SerializeGame(uint gameID) {
-        return GetGameWithID(gameID).SerializeGameState();
-    }
-
-    private static MetroGame GetGameWithID(uint gameID) {
-        return Instance.games.Find(game => game.gameId == gameID);
-    }
-
+    
     public static void QueueGameAction(MetroGame.MetroGameAction action, uint gameID) {
         GetGameWithID(gameID).QueueAction(action);
     }
-
-    public static MetroGame GetSelectedGame() {
-        return Instance.selectedGame;
-    }
-
 
     // Starts every game simultaneously.
     public static void StartGames() {
@@ -503,4 +584,6 @@ public class MetroManager : MonoBehaviour {
     
     #endregion
     
+    
+    #endregion
 }
