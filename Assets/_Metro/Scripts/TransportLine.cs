@@ -95,6 +95,7 @@ public class TransportLine : MonoBehaviour
         t.line = this;
         t.uuid = t.GetInstanceID();
         t.color = color;
+        t.transform.SetParent(gameInstance.trainOrganizer.transform);
 
         trains.Add(t);
     }

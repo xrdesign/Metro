@@ -72,40 +72,46 @@ public class MetroService : WebSocketBehavior
     */
     protected override void OnMessage (MessageEventArgs e)
     {
+        
         var res = "";
         var json = new JSONObject(e.Data);
         var command = json["command"].str;
 
-        // 
-        switch(command){
-            case "get_state":
-                uint gameIDGetState = (uint)json["game_id"].i;
-                res = MetroManager.SerializeGame(gameIDGetState).ToString();
-                break;
+        try {
+            switch (command) {
+                case "get_state":
+                    uint gameIDGetState = (uint)json["game_id"].i;
+                    res = MetroManager.SerializeGame(gameIDGetState).ToString();
+                    break;
 
-            case "take_action":
-                uint gameIDTakeAction = (uint)json["game_id"].i;
-                var args = json["arguments"];
-                res = QueueAction(args, gameIDTakeAction);              
-                break;
-            case "get_actions":
-                // TODO: I don't know what this is for.
-                JSONObject actions = new JSONObject(JSONObject.Type.ARRAY);
-                actions.Add("insert_station");
-                actions.Add("remove_station");
-                actions.Add("remove_track");
-                res = actions.ToString();
-                break;
-            case "reset_game":  // TODO: Maybe this should an option for take_action?
-                uint gameIDResetGame = (uint)json["game_id"].i;
-                res = MetroManager.SerializeGame(gameIDResetGame).ToString();
-                MetroManager.ResetGame(gameIDResetGame);
-                break;
-            default:
-                Debug.LogError("[Server][Metro Service] Received: " + e.Data);
-                res = "Error, I don't understand your command.";
-                break;
+                case "take_action":
+                    uint gameIDTakeAction = (uint)json["game_id"].i;
+                    var args = json["arguments"];
+                    res = QueueAction(args, gameIDTakeAction);
+                    break;
+                case "get_actions":
+                    // TODO: I don't know what this is for.
+                    JSONObject actions = new JSONObject(JSONObject.Type.ARRAY);
+                    actions.Add("insert_station");
+                    actions.Add("remove_station");
+                    actions.Add("remove_track");
+                    res = actions.ToString();
+                    break;
+                case "reset_game": // TODO: Maybe this should an option for take_action?
+                    uint gameIDResetGame = (uint)json["game_id"].i;
+                    res = MetroManager.SerializeGame(gameIDResetGame).ToString();
+                    MetroManager.ResetGame(gameIDResetGame);
+                    break;
+                default:
+                    Debug.LogError("[Server][Metro Service] Received: " + e.Data);
+                    res = "Error, I don't understand your command.";
+                    break;
+            }
         }
+        catch (Exception exception) {
+            res = "ERROR: " + exception;
+        }
+
 
         Send(res);
     }
@@ -115,31 +121,103 @@ public class MetroService : WebSocketBehavior
     {
         var action = args["action"].str;        
         Debug.Log("[Server][Metro Service] take action: " + action);
+        Debug.Log("[Server][Metro Service] full action: " + args);
         
         switch(action){
             case "insert_station":
-                var lineIndex = (int)args["line"].n;
-                var stationIndex = (int)args["station"].n;
-                var index = (int)args["index"].n;
+                // Validating Arguments
+                if (!args.HasField("line_index"))
+                    throw new Exception("insert_station action missing required input: line_index");
+                
+                if (!(args.HasField("station_name") || args.HasField("station_index")))
+                    throw new Exception("insert_station action missing required input: station_name or station_index");
+                
+                if (!args.HasField("insert_index"))
+                    throw new Exception("insert_station action missing required input: insert_index");
+                
+
+                
+                bool useStationNameInsert = true;
+                string stationNameInsert = "";
+                int stationIndexInsert = -1;
+                
+                if (args.HasField("station_name")) {
+                    useStationNameInsert = true;
+                    stationNameInsert = args["station_name"].str;
+                }
+                else {  // Must include station_index due to above checks.
+                    useStationNameInsert = false;
+                    stationIndexInsert = (int)args["station_index"].i;
+                }
+                
+                var lineIndex = (int)args["line_index"].i;
+                var index = (int)args["insert_index"].i;
                 MetroManager.QueueGameAction((game) => {
                     var line = game.lines[lineIndex];
-                    var station = game.stations[stationIndex];
+                    Station station = null;
+                    if (useStationNameInsert) {
+                        station = game.GetStationFromName(stationNameInsert);
+                        if (!station) throw new Exception("Unable to retrieve station with station name: " + stationNameInsert);
+                    }
+                    else {
+                        station = game.stations[stationIndexInsert];
+                        if (!station) throw new Exception("Unable to retrieve station with station index: " + stationIndexInsert);
+                    }
+
                     line.InsertStation(index, station);
                 }, gameID);
                 
+                
+                
                 break;
             case "remove_station":
-                lineIndex = (int)args["line"].n;
-                stationIndex = (int)args["station"].n;
+                // Validating Arguments
+                if (!args.HasField("line_index"))
+                    throw new Exception("insert_station action missing required input: line_index");
+                
+                if (!(args.HasField("station_name") || args.HasField("station_index")))
+                    throw new Exception("insert_station action missing required input: station_name or station_index");
+
+                bool useStationNameRemove = true;
+                string stationNameRemove = "";
+                int stationIndexRemove = -1;
+                
+                if (args.HasField("station_name")) {
+                    useStationNameRemove = true;
+                    stationNameRemove = args["station_name"].str;
+                }
+                else {  // Must include station_index due to above checks.
+                    useStationNameRemove = false;
+                    stationIndexRemove = (int)args["station_index"].i;
+                }
+
+                lineIndex = (int)args["line"].i;
+                stationIndexRemove = (int)args["station"].i;
                 MetroManager.QueueGameAction((game) =>
                 {
                     var line = game.lines[lineIndex];
-                    var station = line.stops[stationIndex];
+                    Station station = null;
+                    if (useStationNameRemove) {
+                        station = game.GetStationFromName(stationNameRemove);
+                        if (!station) throw new Exception("Unable to retrieve station with station name: " + stationNameRemove);
+                    }
+                    else {
+                        station = line.stops[stationIndexRemove];
+                        if (!station) throw new Exception("Unable to retrieve station with station index: " + stationIndexRemove);
+                    }
+                    
                     line.RemoveStation(station);
                 }, gameID);
                 break;
+            
+            
             case "remove_track":
-                lineIndex = (int)args["line"].n;
+                // Validating Arguments
+                if (!args.HasField("line_index"))
+                    throw new Exception("insert_station action missing required input: line_index");
+                
+                
+                lineIndex = (int)args["line_index"].i;
                 MetroManager.QueueGameAction((game) =>
                 {
                     var line = game.lines[lineIndex];
@@ -148,9 +226,9 @@ public class MetroService : WebSocketBehavior
                 break;
 
             default:
-                return "Error, action didn't match any valid actions.";
+                throw new Exception("Error, action didn't match any valid actions.");
         }
-        return "";
+        return "Success";
     }
 
     protected override void OnError (ErrorEventArgs e)
