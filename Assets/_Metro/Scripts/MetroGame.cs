@@ -28,7 +28,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public float score = 0.0f;
     public float time = 0.0f;
     public float gameSpeed = 0.0f;
-    public static float dt = 0f;
+    public float dt = 0f;
 
     public int freeTrains = 3;
     public int freeCars = 0;
@@ -62,8 +62,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     #region Organizational Scene Objects
 
-    private GameObject stationsOrganizer;
-    private GameObject transportLinesOrganizer;
+    public GameObject stationsOrganizer;
+    public GameObject transportLinesOrganizer;
+    public GameObject trainOrganizer;
 
     #endregion
     
@@ -110,6 +111,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         stationsOrganizer.transform.SetParent(this.transform, false);
         transportLinesOrganizer = new GameObject("Transport Lines");
         transportLinesOrganizer.transform.SetParent(this.transform, false);
+        trainOrganizer = new GameObject("Trains");
+        trainOrganizer.transform.SetParent(this.transform, worldPositionStays: false);
         
         gameSpeed = 0.0f;
         
@@ -144,6 +147,15 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     public bool IsGameSelected() {
         return this == MetroManager.GetSelectedGame();
+    }
+
+    public Station GetStationFromName(string stationName) {
+        foreach (var station in stations) {
+            if (station.stationName == stationName)
+                return station;
+        }
+
+        return null;
     }
 
     #endregion
@@ -716,6 +728,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             sjson.AddField("y", s.position.y);
             sjson.AddField("z", s.position.z);
             sjson.AddField("timer", s.timer);
+            sjson.AddField("human_name", s.stationName);
             var passenger_counts = GetPassengerCounts(s.passengers);
             foreach(var destination in passenger_counts.Keys) {
                 sjson.AddField("cnt_" + destination.ToLower(), passenger_counts[destination]);

@@ -63,22 +63,35 @@ Take some specified action on the game.
 #### Inputs
 
 - game_id The game_id of the game to queue an action for.
-- arguments: Arguments of the action to queue
+- arguments: Arguments of the action to queue.
   - action: The action to take. Can currently be "insert_station", "remove_station", or "remove_track" Options laid down below.
-    - insert_station: "arguments" needs to contain the following:
-	  - line: the index of the line to insert the station at.
-	  - station: index of the station.
-	  - index: index to insert at
-	- remove_station: "arguments" needs to contain the following:
-	  - line: index of the line to remove on.
-	  - station: index of the station to remove.
+    - insert_station: "arguments" needs to contain line_index && (station_index || station_name) && insert_index.
+	  - line_index: the index of the line to insert the station at.
+	  - station_index: index of the station.
+	  - station_name: name of the station to remove.
+	  - insert_index: index to insert at
+	- remove_station: "arguments" needs to contain line_index && (station_index || station_name).
+	  - line_index: index of the line to remove on.
+	  - station_index: index of the station to remove.
+	  - station_name: name of the station to remove.
 	- remove_track: "arguments" needs to contain thhe following:
-	  - line: index of the line to remove.
+	  - line_index: index of the line to remove.
 	
 
 #### outputs
 
-Returns back "Error, action didn't match any valid actions.". string. *unless* the action was valid, in which case it returns an empty string.
+Returns back "ERROR: \<Error Message\>". string. *unless* the action was valid, in which case it returns "Success"
+
+
+#### Examples
+
+Sending the following commands:
+```
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":0, "insert_index":0}}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":1, "insert_index":1}}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":2, "insert_index":2}}
+```
+Would result in the first station being connected to the second station, and the second station being connected to the third station, in the first game, on the first line.
 
 ---
 

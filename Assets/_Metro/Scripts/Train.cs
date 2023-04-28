@@ -73,7 +73,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
 
         // var factor = v.magnitude;
         // if(factor == 0.0f) factor = 1.0f;
-        speed = 0.15f * MetroGame.dt; /// 60.0f; // / factor;
+        speed = 0.15f * gameInstance.dt; /// 60.0f; // / factor;
 
         position += direction * speed;
         if(position <= 0.0f){
