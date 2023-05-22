@@ -26,6 +26,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
     public uint numGamesToSpawn = 1;
 
+    #region Game Parameters
+
+    public float timeoutDurationOverride = 45.0f;
+
+    #endregion
+
     #endregion
 
     #region Privates
@@ -35,6 +41,10 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     // Used for UI stuff. The game that the player is currently "selecting". I.E. what they can interact with, add to, change, etc.
     // todo: Decide how to select. Should it just be nearest game? Should there be some UI for it? ETC. For now just select first game.
     private MetroGame selectedGame = null;
+
+    // These are the actions currently being execute by games. Controlled through RequestQueueID and FulfillQueueAction.
+    private List<uint> outstandingActions = new List<uint>();
+    private uint actionIDCounter = 0;
 
     #endregion
 
@@ -194,9 +204,66 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     public static MetroGame GetSelectedGame() {
         return Instance.selectedGame;
     }
-    
+
     #endregion
-    
+
+
+    #region Queueing System
+    /// <summary>
+    /// Queues a game action for the game with the given ID
+    /// </summary>
+    /// <param name="action">Action to queue</param>
+    /// <param name="gameID">ID of game to queue the action for</param>
+    public static uint QueueGameAction(MetroGame.MetroGameAction action, uint gameID)
+    {
+        return GetGameWithID(gameID).QueueAction(action);
+    }
+
+    /// <summary>
+    /// Gives a queue ID to use in MetroGame, and stores the ID as not completed until FulfillQueueAction is called.
+    /// </summary>
+    /// <returns></returns>
+    public static uint RequestQueueID()
+    {
+        MetroManager manager = MetroManager.Instance;
+        uint id = manager.actionIDCounter++;
+        manager.outstandingActions.Add(id);
+        return id;
+    }
+
+    /// <summary>
+    /// Called from MetroGame to mark that an action has been completed.
+    /// </summary>
+    /// <param name="actionID"></param>
+    public static void FulfillQueueAction(uint actionID)
+    {
+        MetroManager manager = MetroManager.Instance;
+        manager.outstandingActions.Remove(actionID);
+    }
+
+    /// <summary>
+    /// Get all actions that are still queued
+    /// </summary>
+    /// <returns></returns>
+    public static List<uint> GetQueuedActions()
+    {
+        MetroManager manager = MetroManager.Instance;
+        return manager.outstandingActions;
+    }
+
+    /// <summary>
+    /// Gives whether an action is not still "outstanding". This could mean that it completed, or that it was never queued.
+    /// </summary>
+    /// <param name="actionID"></param>
+    /// <returns></returns>
+    public static bool IsActionFinished(uint actionID)
+    {
+        MetroManager manager = MetroManager.Instance;
+        return !manager.outstandingActions.Contains(actionID);
+    }
+
+    #endregion
+
 
     /// <summary>
     /// Refresh the UI. EX: When selected game is reset or when switching the selected game.
@@ -245,9 +312,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         GetGameWithID(gameID).ScheduleReset();
     }
     
-    public static void QueueGameAction(MetroGame.MetroGameAction action, uint gameID) {
-        GetGameWithID(gameID).QueueAction(action);
-    }
+    
 
     // Starts every game simultaneously.
     public static void StartGames() {

@@ -5,7 +5,7 @@ This document describes the API for interacting with the game through the websoc
 
 # Commands
 
-Note: All of these commands can return "Error, I don't understand your command". string.
+Note: All of these commands can return Errors, along with the error message and stack trace.
 
 
 ---
@@ -80,7 +80,8 @@ Take some specified action on the game.
 
 #### outputs
 
-Returns back "ERROR: \<Error Message\>". string. *unless* the action was valid, in which case it returns "Success"
+- Status: "Success". String.
+- ActionID: ID of action just queued. Poll for action queue status with get_action_queue and get_action_finished commands. int.
 
 
 #### Examples
@@ -95,7 +96,7 @@ Would result in the first station being connected to the second station, and the
 
 ---
 
-## get_actions
+## get_potential_actions
 
 Get all actions you are allowed to use via take_action
 
@@ -124,3 +125,31 @@ Resets a specific game.
 #### Outputs
 
 For output, it returns the serialized gamestate of the game that was reset. This is identical to the output of the above get_state command.
+
+---
+
+## get_action_queue
+
+Gets the current action queue (for all games, as all share a Action Queue ID pool).
+
+#### Inputs
+
+*NA*
+
+#### Outputs
+
+- All of the IDs in the queue. Array of ints.
+
+---
+
+## get_action_finished
+
+Gets whether the action with the supplied action_id is finished. This could be because the action was actually finished, or that it was never queued in the first place. Internally, it just checks whether the id is in the queue, so if it was never queued, it'll still return that it was "finished"
+
+#### Inputs
+
+- action_id: the id of the action to check. int.
+
+#### Outputs
+
+- Whether the action is still being executed. bool.

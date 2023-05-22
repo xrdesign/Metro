@@ -94,6 +94,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public delegate void MetroGameAction(MetroGame game);
     private static Queue ActionQueue = Queue.Synchronized(new Queue());
 
+    // Used to link an action and id together so we can later indicate to MetroManager when we complete the action.
+    private struct TrackedMetroGameAction
+    {
+        public MetroGameAction action;
+        public uint id;
+    }
+
     #endregion
 
     private volatile bool needReset = false;
@@ -175,12 +182,22 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         MetroManager.SendEvent((this.Ai_paused ? "Ai Paused: " : "Ai Resumed: ") + gameId);
     }
 
-    public void QueueAction(MetroGameAction gameAction){
-        if (this.Ai_paused) return; // don't accept actions from AI if AI is paused
-        if (this.paused) return; // don't accept actions if game is paused
+    /// <summary>
+    /// Queues an action to be executed. Throws exceptions when AI is paused or game is paused.
+    /// </summary>
+    /// <param name="gameAction"></param>
+    /// <returns></returns>
+    public uint QueueAction(MetroGameAction gameAction){
+        if (this.Ai_paused) throw new Exception("Cannot Queue Action, AI is paused"); // don't accept actions from AI if AI is paused
+        if (this.paused) throw new Exception("Cannot Queue Action, Game is paused"); // don't accept actions if game is paused
+        uint newID = MetroManager.RequestQueueID();
+        TrackedMetroGameAction trackedMetroGameAction;
+        trackedMetroGameAction.action = gameAction;
+        trackedMetroGameAction.id = newID;
         lock (ActionQueue.SyncRoot){
-            ActionQueue.Enqueue(gameAction);
+            ActionQueue.Enqueue(trackedMetroGameAction);
         }
+        return newID;
     }
 
 
@@ -189,11 +206,12 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     {
         // Execute Server Actions
         while(ActionQueue.Count > 0){
-            MetroGameAction action;
+            TrackedMetroGameAction action;
             lock(ActionQueue.SyncRoot){
-                action = (MetroGameAction)ActionQueue.Dequeue();
+                action = (TrackedMetroGameAction)ActionQueue.Dequeue();
             }
-            action(this);
+            action.action(this);
+            MetroManager.FulfillQueueAction(action.id);
         }
 
         if (needReset)
@@ -265,9 +283,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     }
 
     public void CheckStationTimers(){
-        float overcrowdedTimerLimit = 45.0f + 2.0f; //45 seconds for animation + 2 second grace period
         foreach(Station station in stations){
-            if(station.timer > overcrowdedTimerLimit){
+            float overcrowdedTimerLimit = station.MaxTimeoutDuration + 2.0f; // MaxTimeoutDuration from station + 2 second grace period
+            if (station.timer > overcrowdedTimerLimit){
                 GameOver();
             }
         }
