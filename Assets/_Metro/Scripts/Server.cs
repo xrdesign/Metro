@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using WebSocketSharp;
 using WebSocketSharp.Server;
@@ -73,7 +74,7 @@ public class MetroService : WebSocketBehavior
     protected override void OnMessage (MessageEventArgs e)
     {
         
-        var res = "";
+        var res = new JSONObject();
         var json = new JSONObject(e.Data);
         var command = json["command"].str;
 
@@ -81,7 +82,23 @@ public class MetroService : WebSocketBehavior
             switch (command) {
                 case "get_state":
                     uint gameIDGetState = (uint)json["game_id"].i;
-                    res = MetroManager.SerializeGame(gameIDGetState).ToString();
+                    res = MetroManager.SerializeGame(gameIDGetState);
+                    break;
+
+                case "get_action_queue":
+                    List<uint> queuedActions = MetroManager.GetQueuedActions();
+                    JSONObject queuedActionsJson= new JSONObject(JSONObject.Type.ARRAY);
+                    foreach (var queuedAction in queuedActions)
+                    {
+                        queuedActionsJson.Add(queuedAction);
+                    }
+                    res = queuedActionsJson;
+                    break;
+
+                case "get_action_finished":
+                    uint actionIDGetActionStatus = (uint)json["action_id"].i;
+                    bool actionFinished = MetroManager.IsActionFinished(actionIDGetActionStatus);
+                    res = new JSONObject(actionFinished);
                     break;
 
                 case "take_action":
@@ -89,39 +106,42 @@ public class MetroService : WebSocketBehavior
                     var args = json["arguments"];
                     res = QueueAction(args, gameIDTakeAction);
                     break;
-                case "get_actions":
-                    // TODO: I don't know what this is for.
+                case "get_potential_actions":
                     JSONObject actions = new JSONObject(JSONObject.Type.ARRAY);
                     actions.Add("insert_station");
                     actions.Add("remove_station");
                     actions.Add("remove_track");
-                    res = actions.ToString();
+                    res = actions;
                     break;
                 case "reset_game": // TODO: Maybe this should an option for take_action?
                     uint gameIDResetGame = (uint)json["game_id"].i;
-                    res = MetroManager.SerializeGame(gameIDResetGame).ToString();
+                    res = MetroManager.SerializeGame(gameIDResetGame);
                     MetroManager.ResetGame(gameIDResetGame);
                     break;
                 default:
                     Debug.LogError("[Server][Metro Service] Received: " + e.Data);
-                    res = "Error, I don't understand your command.";
-                    break;
+                    throw new Exception("Unrecognized Command");
             }
         }
         catch (Exception exception) {
-            res = "ERROR: " + exception;
+            res.Clear();
+            res.AddField("Status", "Error");
+            res.AddField("Error Message", exception.Message);
+            res.AddField("Stack Trace", exception.StackTrace);
         }
 
 
-        Send(res);
+        Send(res.ToString());
     }
 
     // Queues an action for a specific game instance.
-    protected string QueueAction(JSONObject args, uint gameID)
+    protected JSONObject QueueAction(JSONObject args, uint gameID)
     {
         var action = args["action"].str;        
         Debug.Log("[Server][Metro Service] take action: " + action);
         Debug.Log("[Server][Metro Service] full action: " + args);
+
+        uint queueID = 0;
         
         switch(action){
             case "insert_station":
@@ -152,7 +172,7 @@ public class MetroService : WebSocketBehavior
                 
                 var lineIndex = (int)args["line_index"].i;
                 var index = (int)args["insert_index"].i;
-                MetroManager.QueueGameAction((game) => {
+                queueID = MetroManager.QueueGameAction((game) => {
                     var line = game.lines[lineIndex];
                     Station station = null;
                     if (useStationNameInsert) {
@@ -193,7 +213,7 @@ public class MetroService : WebSocketBehavior
 
                 lineIndex = (int)args["line"].i;
                 stationIndexRemove = (int)args["station"].i;
-                MetroManager.QueueGameAction((game) =>
+                queueID = MetroManager.QueueGameAction((game) =>
                 {
                     var line = game.lines[lineIndex];
                     Station station = null;
@@ -218,7 +238,7 @@ public class MetroService : WebSocketBehavior
                 
                 
                 lineIndex = (int)args["line_index"].i;
-                MetroManager.QueueGameAction((game) =>
+                queueID = MetroManager.QueueGameAction((game) =>
                 {
                     var line = game.lines[lineIndex];
                     line.RemoveAll();
@@ -228,7 +248,10 @@ public class MetroService : WebSocketBehavior
             default:
                 throw new Exception("Error, action didn't match any valid actions.");
         }
-        return "Success";
+        JSONObject res = new JSONObject();
+        res.AddField("Status", "Success");
+        res.AddField("ActionID", queueID);
+        return res;
     }
 
     protected override void OnError (ErrorEventArgs e)

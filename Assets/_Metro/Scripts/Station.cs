@@ -27,7 +27,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     public StationType type;
 
     
-    // This is a randomly generated human recognizable name.
+    // This is a randomly generated human recognizable name. Unique within game.
     public string stationName;
 
     #endregion
@@ -46,6 +46,10 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 
     // Reference to attached Lines for easier pathfinding along lines
     public List<TransportLine> lines;
+
+
+    // Placed as instanced parameter here. Maybe later on timeout is a per station thing?
+    public float MaxTimeoutDuration = 45.0f;
 
 
     #region Canvas References
@@ -78,6 +82,9 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         stationName = MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
 
         _stationText.text = stationName;
+
+        // Get timeout override from manager.
+        MaxTimeoutDuration = MetroManager.Instance.timeoutDurationOverride;
 
     }
 
@@ -116,7 +123,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
             if(timer < 0f) timer = 0f;
         }
         timerImage.enabled = true;
-        timerImage.fillAmount = timer / 45.0f;
+        timerImage.fillAmount = timer / MaxTimeoutDuration;
 
         // Update passenger routes
         // passengersRoutes = new string[passengers.Count];
