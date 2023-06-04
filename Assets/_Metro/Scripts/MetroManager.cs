@@ -554,6 +554,19 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// </summary>
     /// <returns></returns>
     private string GenerateSingleStationName() {
+
+        // New, single word generation.
+
+        var station = NounsExtras[random.Next(0, NounsExtras.Length)];
+
+        // Encase of weirdly generated whitespace at beginning and end.
+        station = station.TrimStart();
+        station = station.TrimEnd();
+
+        return station;
+
+
+        /* Old Station Name Generation
         var station = "";
 
         if (random.NextDouble() > 0.5) {
@@ -576,6 +589,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         station = station.TrimEnd();
         
         return station;
+        */
     }
 
     /// <summary>
