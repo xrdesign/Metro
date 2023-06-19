@@ -50,6 +50,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         this.gameObject.transform.position = line.tracks.GetPosition(position);
         var v = line.tracks.GetVelocity(position);
         this.gameObject.transform.rotation = Quaternion.LookRotation(v);
+        float speedMult = line.tracks.GetTrainDistanceSpeedMultiplier(position, 5.0f);
 
 
         // show passengers
@@ -73,7 +74,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
 
         // var factor = v.magnitude;
         // if(factor == 0.0f) factor = 1.0f;
-        speed = 0.15f * gameInstance.dt; /// 60.0f; // / factor;
+        speed = 0.15f * gameInstance.dt * speedMult; /// 60.0f; // / factor;
 
         position += direction * speed;
         if(position <= 0.0f){
