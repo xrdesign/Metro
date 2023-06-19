@@ -191,6 +191,36 @@ public class Tracks : MonoBehaviour {
         return pos;
     }
 
+    /// <summary>
+    /// This function returns the speed multiplier of the train based on the position you give it in the track sequence of tracksegments.
+    /// It takes into account the other segments in the Track.
+    /// </summary>
+    /// <param name="p">0 -> 1 value shared between all the TrackSegments. Check the update function for train.cs to see how this is used.</param>
+    /// <param name="fullSpeedDistance">The unity distance between stations in which the returned multiplier should be 1. It linearly interpolates from there. For example, if the current segment distance is 10, and the fullSpeedDistance passed is 20, the returned speed multiplier would be 2. Since the train only has to cover half the distance, it does so in half the time/twice the speed.</param>
+    /// <returns></returns>
+    public float GetTrainDistanceSpeedMultiplier(float p, float fullSpeedDistance)
+    {
+        if (segments.Count == 0) return 0.0f;
+        var x = p * segments.Count;
+        var i = (int)x;
+        var v = x - i;
+        float totalSegmentDistance = 0;
+
+        for (int w = 0; w < segments.Count; w++)
+        {
+            totalSegmentDistance += segments[w].getRoughSegmentDistance();
+        }
+
+        // The logic here is that the speed on any given segment should be fullSpeedDistance / thatSegmentsDistance, and that should be multiplied by the percentage of the total segment length (addition of all the segment lengths) that that segment's distance is.
+        // That equation would be (fullSpeedDistance / roughSegmentDistance) * (roughSegmentDistance / totalSegmentDistance), shortened to fullSpeedDistance / totalSegmentDistance
+
+
+        float speedMult = fullSpeedDistance / totalSegmentDistance;
+        
+        
+        return speedMult;
+    }
+
     public Vector3 GetVelocity(float p){
         var x = p * segments.Count;
         var i = (int)x;

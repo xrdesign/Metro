@@ -5,7 +5,7 @@ using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Physics;
-
+using System;
 
 public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
     public MetroGame gameInstance;
@@ -64,6 +64,11 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
         lineRenderer.BakeMesh(mesh, true);
         meshCollider.sharedMesh = mesh;
         needsUpdate = false;
+    }
+
+    public float getRoughSegmentDistance()
+    {
+        return Vector3.Distance(cp[0], cp[3]);
     }
 
     public void SetColor(Color c){
