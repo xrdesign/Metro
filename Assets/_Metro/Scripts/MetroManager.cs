@@ -77,7 +77,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             new liblsl.StreamInfo("EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
         markerStream = new liblsl.StreamOutlet(inf);
 
-
         // Spawn in the games.
 
         if (numGamesToSpawn <= 0) {
@@ -87,6 +86,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         for (uint i = 0; i < numGamesToSpawn; i++) {
             var newMetroGame = (new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
             newMetroGame.gameId = i;
+            newMetroGame.transform.parent = this.transform; //less clutter in scene hiearchy
             games.Add(newMetroGame);
             newMetroGame.transform.position = GetGameLocation(newMetroGame.gameId);
 
@@ -269,7 +269,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// Refresh the UI. EX: When selected game is reset or when switching the selected game.
     /// </summary>
     private void RefreshUI() {
-        foreach (var l in lineUIs) {
+        foreach (TransportLineUI l in lineUIs) {
             l.SetLine(null);
         }
 

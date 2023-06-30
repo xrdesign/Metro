@@ -61,8 +61,11 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
             lineRenderer.SetPosition(i, p); 
         }
 
-        lineRenderer.BakeMesh(mesh, true);
-        meshCollider.sharedMesh = mesh;
+        if(line.stops.Count != 0) // Can't bake mesh from line renderer with empty position vector
+        {
+            lineRenderer.BakeMesh(mesh, true);
+            meshCollider.sharedMesh = mesh;
+        }
         needsUpdate = false;
     }
 
