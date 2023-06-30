@@ -165,6 +165,7 @@ public class Tracks : MonoBehaviour {
         // Debug.Log("UpdateUISegment");
         // Debug.Log(i + " " + stopIndex);
         // Debug.Log(uiSegments.Count + " " + cp.Count);
+        if(cp.Count == 0) this.UpdateControlPoints();
         uiSegments[i].gameObject.SetActive(true);
         if(stopIndex == -1) stopIndex = 0;
         uiSegments[i].cp[0] = cp[3*stopIndex];
