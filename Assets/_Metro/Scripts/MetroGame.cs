@@ -144,6 +144,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         if (GameSelectionDelegate != null) {  // Delegate is null unless assigned to a method.
             GameSelectionDelegate.Invoke(selected);
         }
+        if(uiUpdateDelegate != null) uiUpdateDelegate.Invoke();
     }
 
     #endregion
@@ -252,9 +253,6 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         }
         lines.Clear();
         
-        // It looks like delegates are only instantiated when methods are assigned to them, so all but one of the games will have null here.
-        if (uiUpdateDelegate != null) 
-            uiUpdateDelegate.Invoke();
     }
     
     void InitializeGameState(){
@@ -280,6 +278,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         // lines[0].AddStation(stations[4]);
         // lines[0].AddStation(stations[5]);
         // lines[0].AddStation(stations[6]);
+
+        // It looks like delegates are only instantiated when methods are assigned to them, so all but one of the games will have null here.
+        if (uiUpdateDelegate != null) 
+            uiUpdateDelegate.Invoke();
     }
 
     public void CheckStationTimers(){

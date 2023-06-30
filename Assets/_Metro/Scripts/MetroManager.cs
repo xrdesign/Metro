@@ -70,7 +70,13 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
 
     #region Monobehavior Overrides
-    void Start() {
+    void Awake() {
+        if (Instance is null) Instance = this;
+        else {
+            Destroy(this);
+            Debug.LogError("More than one MetroManager initialized!");
+        }
+
         gameObject.AddComponent<Server>();
 
         liblsl.StreamInfo inf =
@@ -82,6 +88,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         if (numGamesToSpawn <= 0) {
             Debug.LogError("No games set to spawn!");
         }
+
+        lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
 
         for (uint i = 0; i < numGamesToSpawn; i++) {
             var newMetroGame = (new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
@@ -96,17 +104,11 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             }
         }
 
-        lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
     }
-
     
-    private void Awake() {
-        if (Instance is null) Instance = this;
-        else {
-            Destroy(this);
-            Debug.LogError("More than one MetroManager initialized!");
-        }
+    private void Start(){
     }
+    
     
     private void OnEnable() {
         CoreServices.TeleportSystem.RegisterHandler<IMixedRealityTeleportHandler>(this);
@@ -136,7 +138,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         MetroManager.Instance.SelectGame(closestGame);
     }
 
-    public void OnTeleportCanceled(TeleportEventData eventData) {
+    public void OnTeleportCanceled(TeleportEventData  eventData) {
         
     }
 

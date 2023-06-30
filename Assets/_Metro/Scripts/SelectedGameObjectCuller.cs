@@ -13,18 +13,23 @@ public class SelectedGameObjectCuller : MonoBehaviour
         EnableWhenSelected,
         DisableWhenSelected,
     }
-
     public SelectedGameObjectCullerOption disabledOption;
     
     void Start()
     {
         var game = GetComponentInParent<MetroGame>();
-        
         game.GameSelectionDelegate += OnGameSelected;
-        // Pretty sure we never need to remove our method.
-        
+        // Pretty sure we never need to remove our method
+        // Edit: when deleting lines or removing trains need to remove
+        // Done in OnDestroy atm 
         
         UpdateComponents(game.IsGameSelected());
+    }
+
+    void OnDestroy(){
+        var game = GetComponentInParent<MetroGame>();
+        if(!game)return;
+        game.GameSelectionDelegate -= OnGameSelected;
     }
     
     void UpdateComponents(bool gameSelected) {

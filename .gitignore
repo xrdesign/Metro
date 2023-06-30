@@ -81,3 +81,5 @@ Assets/StreamingAssets/EmbodyPythonLib.zip.meta
 
 # Firebase android libs
 Assets/Plugins/Android/*
+Assets/Resources/OculusRuntimeSettings.asset
+Assets/Resources/OculusRuntimeSettings.asset.meta
