@@ -211,7 +211,7 @@ public class MetroService : WebSocketBehavior
                     stationIndexRemove = (int)args["station_index"].i;
                 }
 
-                lineIndex = (int)args["line"].i;
+                lineIndex = (int)args["line_index"].i;
                 stationIndexRemove = (int)args["station"].i;
                 queueID = MetroManager.QueueGameAction((game) =>
                 {
