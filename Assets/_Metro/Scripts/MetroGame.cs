@@ -36,6 +36,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public List<Station> stations = new List<Station>();
     public List<TransportLine> lines = new List<TransportLine>();
     
+    public bool containsStarStation = false;
+    public bool containsOtherStation = false;
+
+
     public bool paused = false;
     public bool isGameover = false;
 
@@ -394,6 +398,11 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
                 prefab = Resources.Load("Prefabs/StationCube") as GameObject;
                 obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
                 break;
+            case StationType.Star:
+                prefab = Resources.Load("Prefabs/StationStar") as GameObject;
+                obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
+                containsStarStation = true;
+                break;
             default:
                 prefab = Resources.Load("Prefabs/StationCube") as GameObject;
                 obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
@@ -424,13 +433,14 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public void SpawnRandomStation(){
         var p = UnityEngine.Random.value;
         var type = StationType.Sphere;
-        if( p < 0.45f)
+        if( p < .1f && !containsStarStation) 
+            type = StationType.Star;
+        else if( p < 0.45f)
             type = StationType.Sphere;
         else if(p < 0.85f)
             type = StationType.Cone;
         else if(p < 1.0f)
             type = StationType.Cube;
-
         // todo unique stations..
         SpawnStation(type);
     }

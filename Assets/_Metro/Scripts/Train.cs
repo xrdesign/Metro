@@ -70,6 +70,8 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
                 seats[i+1].sprite = Resources.Load<Sprite>("Images/triangle");
             else if(dest == StationType.Sphere)
                 seats[i+1].sprite = Resources.Load<Sprite>("Images/circle");
+            else if(dest == StationType.Star)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/star");
         }
 
         // var factor = v.magnitude;
