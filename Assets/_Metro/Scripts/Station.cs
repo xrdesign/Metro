@@ -157,7 +157,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         
         var p = Random.value;
         int idx = (int)(p*possibleTypes.Count);
-        if(idx == 3 && gameInstance.gameId == 0) Debug.Log("Should be a star!");
+        if(idx == possibleTypes.Count) idx--;
         SpawnPassenger(possibleTypes[idx]);
     }
 
