@@ -12,7 +12,8 @@ using UnityEngine.Serialization;
 public enum StationType {
     Sphere,
     Cone,
-    Cube
+    Cube,
+    Star
 }
 
 public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedRealityFocusHandler
@@ -112,6 +113,8 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
                 seats[i+1].sprite = Resources.Load<Sprite>("Images/triangle");
             else if(dest == StationType.Sphere)
                 seats[i+1].sprite = Resources.Load<Sprite>("Images/circle");
+            else if(dest == StationType.Star)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/star");
         }
 
         // Update overcrowding status
@@ -142,22 +145,20 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 
     public void SpawnRandomPassenger(){
         // TODO implement better way to set probabilities
+        List<StationType> possibleTypes = new List<StationType>();
+        if(!(type == StationType.Sphere)) possibleTypes.Add(StationType.Sphere);
+        if(!(type == StationType.Cube)) possibleTypes.Add(StationType.Cube);
+        if(!(type == StationType.Cone)) possibleTypes.Add(StationType.Cone);
+        if(!(type == StationType.Star) && gameInstance.containsStarStation) possibleTypes.Add(StationType.Star);
+
         var pSphere = type == StationType.Sphere ? 0.0f : 0.55f;
         var pCone = type == StationType.Cone ? 0.0f : 0.55f;
         var pCube = type == StationType.Cube ? 0.0f : 0.45f;
         
         var p = Random.value;
-
-        if(p < pSphere){
-            SpawnPassenger(StationType.Sphere);
-
-        } else if(p < pSphere + pCone){
-            SpawnPassenger(StationType.Cone);
-
-        } else if(p < pSphere + pCone + pCube){
-            SpawnPassenger(StationType.Cube);
-
-        }
+        int idx = (int)(p*possibleTypes.Count);
+        if(idx == 3 && gameInstance.gameId == 0) Debug.Log("Should be a star!");
+        SpawnPassenger(possibleTypes[idx]);
     }
 
     public void SpawnPassenger(StationType type){
