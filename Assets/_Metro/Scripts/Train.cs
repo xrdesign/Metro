@@ -18,19 +18,23 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
     private Image[] seats;
     
     public TransportLine line = null;
+    public TransportLine nextLine = null;
 
     private GameObject prefab;
     private GameObject train;
+    private GameObject ghost = null;
     
     public MetroGame gameInstance;
 
     // Start is called before the first frame update
     void Start()
     {
+        /*
         prefab = Resources.Load("Prefabs/Train") as GameObject;
         train = GameObject.Instantiate(prefab, new Vector3(0,0,0), prefab.transform.rotation) as GameObject;
         train.transform.SetParent(this.gameObject.transform, false);
-
+        */
+        train = this.gameObject;
         SetColor(color);
 
         // seat[0] is image frame..
@@ -45,6 +49,9 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
 
             return;
         }
+        if(ghost != null)
+            ghost.transform.position = MetroManager.Instance.LController.transform.position;
+
 
 
         this.gameObject.transform.position = line.tracks.GetPosition(position);
@@ -53,26 +60,6 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         float speedMult = line.tracks.GetTrainDistanceSpeedMultiplier(position, 5.0f);
 
 
-        // show passengers
-        foreach(var s in seats) s.enabled = false;
-        if(passengers.Count > 0){
-            seats[0].enabled = true;
-            var dir = Vector3.Normalize(Camera.main.transform.position - transform.position);
-            var quat = Quaternion.LookRotation(dir, Camera.main.transform.up);
-            seats[0].transform.parent.rotation = quat;
-        }
-        for(int i = 0; i < passengers.Count; i++){
-            seats[i+1].enabled = true;
-            var dest = passengers[i].destination;
-            if(dest == StationType.Cube)
-                seats[i+1].sprite = Resources.Load<Sprite>("Images/square");
-            else if(dest == StationType.Cone)
-                seats[i+1].sprite = Resources.Load<Sprite>("Images/triangle");
-            else if(dest == StationType.Sphere)
-                seats[i+1].sprite = Resources.Load<Sprite>("Images/circle");
-            else if(dest == StationType.Star)
-                seats[i+1].sprite = Resources.Load<Sprite>("Images/star");
-        }
 
         // var factor = v.magnitude;
         // if(factor == 0.0f) factor = 1.0f;
@@ -103,8 +90,62 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
             var nextStation = line.stops[nextStop];
 
             PassengerDropWithRoute(station, nextStation);
+            if(nextLine != null){
+                DropAllPassengers(station);
+                SwitchLine(nextLine);
+                return;
+            }
             PassengerPickupWithRoute(station, nextStation);
 
+        }
+    }
+    void DropAllPassengers(Station station){
+        for (int i = passengers.Count - 1; i >= 0; i--)
+        {
+            var p = passengers[i];
+            if (p.destination == station.type)
+            {
+                passengers.RemoveAt(i);
+                continue;
+            }
+            // if station is on route, but the next Station is not, drop the passenger (add back to station!)
+            if (p.route != null)
+            {
+                passengers.RemoveAt(i);
+                station.passengers.Add(p); // add back
+                continue;
+            }
+        }
+    }
+
+    public void SwitchLine(TransportLine nextLine){
+        this.gameInstance.freeTrains++;
+        nextLine.AddTrain(0.0f, 1.0f);
+
+        Destroy(this.gameObject);
+        Destroy(ghost);
+    }
+    
+    void DisplayPickedupPassengers(){
+        // show passengers
+        foreach(var s in seats) s.enabled = false;
+        if(passengers.Count > 0){
+            seats[0].enabled = true;
+            var dir = Vector3.Normalize(Camera.main.transform.position - transform.position);
+            var quat = Quaternion.LookRotation(dir, Camera.main.transform.up);
+            seats[0].transform.parent.rotation = quat;
+        }
+        for(int i = 0; i < passengers.Count; i++){
+            seats[i+1].enabled = true;
+            var dest = passengers[i].destination;
+            if(dest == StationType.Cube)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/square");
+            else if(dest == StationType.Cone)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/triangle");
+            else if(dest == StationType.Sphere)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/circle");
+            else if(dest == StationType.Star)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/star");
         }
     }
 
@@ -174,6 +215,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         }
 
         station.passengers = newList;
+        DisplayPickedupPassengers();
     }
 
     int PassengerDrop(Station station){
@@ -236,6 +278,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         Debug.Log("Train pointer down");
         Debug.Log(eventData.Pointer.Position);
 
+
     }
 
     void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData)
@@ -252,7 +295,10 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
     void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData)
     {
         Debug.Log("Train pointer clicked");
-        //speed = 0;
+        gameInstance.selectedTrain = this;
+        //SpawnGhost Train to follow cursur
+        GameObject prefab = Resources.Load("Prefabs/GhostTrain_v2") as GameObject;
+        ghost = Instantiate(prefab);
 
     }
 

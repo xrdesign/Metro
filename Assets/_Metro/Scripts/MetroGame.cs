@@ -31,6 +31,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public float dt = 0f;
 
     public int freeTrains = 3;
+    public Train selectedTrain = null;
     public int freeCars = 0;
 
     public List<Station> stations = new List<Station>();
@@ -235,6 +236,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         UpdateClock(); // update clock, grant weekly reward
 
         UpdatePointerState();
+
+
 
     }
 

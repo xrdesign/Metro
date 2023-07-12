@@ -85,9 +85,13 @@ public class TransportLine : MonoBehaviour
         if(gameInstance.freeTrains == 0) return;
         gameInstance.freeTrains -= 1;
 
-        var go = new GameObject();
+        var prefab = Resources.Load("Prefabs/Train") as GameObject;
+        var go = GameObject.Instantiate(prefab, new Vector3(0,0,0), prefab.transform.rotation) as GameObject;
         go.name = "Train";
-        var t = go.AddComponent<Train>();
+        var t = go.GetComponent<Train>();
+        //var go = new GameObject();
+        //go.name = "Train";
+        //var t = go.AddComponent<Train>();
         t.gameInstance = gameInstance;
         t.position = position;
         t.direction = direction;
