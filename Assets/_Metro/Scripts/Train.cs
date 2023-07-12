@@ -22,7 +22,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
 
     private GameObject prefab;
     private GameObject train;
-    private GameObject ghost = null;
+    public GameObject ghost = null;
     
     public MetroGame gameInstance;
 
@@ -49,8 +49,6 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
 
             return;
         }
-        if(ghost != null)
-            ghost.transform.position = MetroManager.Instance.LController.transform.position;
 
 
 
@@ -297,8 +295,12 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         Debug.Log("Train pointer clicked");
         gameInstance.selectedTrain = this;
         //SpawnGhost Train to follow cursur
-        GameObject prefab = Resources.Load("Prefabs/GhostTrain_v2") as GameObject;
+        GameObject prefab = Resources.Load("Prefabs/SelectedTrainIndicator") as GameObject;
         ghost = Instantiate(prefab);
+        var indicator = ghost.GetComponent<SelectedTrainIndicator>();
+        indicator.gameInstance = this.gameInstance;
+        indicator.targetTrain = this;
+        indicator.SetColor(this.color);
 
     }
 
