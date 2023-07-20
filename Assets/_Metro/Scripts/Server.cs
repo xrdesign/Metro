@@ -15,6 +15,9 @@ public class Server : MonoBehaviour
         wssv.AddWebSocketService<MetroService> ("/metro");
         wssv.Start();
 
+        //remove timeout
+        wssv.WaitTime = System.Threading.Timeout.InfiniteTimeSpan;
+
         Debug.Log("[Server] WebSocket opened for MetroService at url ws://localhost:3000/metro");
         // wssv.Stop ();
     }
