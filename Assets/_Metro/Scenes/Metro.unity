@@ -1638,7 +1638,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63da03afa1f13c2449894934fe7aa5db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numGamesToSpawn: 100
+  numGamesToSpawn: 99
   timeoutDurationOverride: 45
   menuUI: {fileID: 0}
   metroUI: {fileID: 4500513732196729373}

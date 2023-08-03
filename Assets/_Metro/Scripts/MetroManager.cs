@@ -314,6 +314,11 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         GetGameWithID(gameID).ScheduleReset();
     }
     
+    public static void ResetScene() {
+        foreach(var metroGame in Instance.games){
+            metroGame.ScheduleReset();
+        }
+    }
     
 
     // Starts every game simultaneously.
