@@ -121,6 +121,9 @@ public class MetroService : WebSocketBehavior
                     res = MetroManager.SerializeGame(gameIDResetGame);
                     MetroManager.ResetGame(gameIDResetGame);
                     break;
+                case "reset_scene":
+                    MetroManager.ResetScene();
+                    break;
                 default:
                     Debug.LogError("[Server][Metro Service] Received: " + e.Data);
                     throw new Exception("Unrecognized Command");

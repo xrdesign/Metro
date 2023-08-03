@@ -16,6 +16,9 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem.EnhancedTouch;
 
 
+using TMPro;
+
+
 public delegate void GameSelectionDelegateDef(bool selected);
 
 /**
@@ -126,6 +129,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         trainOrganizer = new GameObject("Trains");
         trainOrganizer.transform.SetParent(this.transform, worldPositionStays: false);
         
+        //Create Display Plane:
+        GameObject floor = GameObject.Instantiate(Resources.Load("Prefabs/GameFloor") as GameObject);
+        floor.transform.SetParent(this.transform, worldPositionStays: false);
+        floor.GetComponent<MeshRenderer>().material.SetInt("_IsEven", (gameId % 2 == 0 || gameId == 0)?1:0);
+        floor.transform.Find("Canvas/ID Display").GetComponent<TMP_Text>().text = $"{gameId}";
+        
+
         gameSpeed = 0.0f;
         
         StartGame();
