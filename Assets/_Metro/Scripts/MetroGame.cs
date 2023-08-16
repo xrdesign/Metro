@@ -261,6 +261,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         foreach(var s in stations){
             Destroy(s.gameObject);
         }
+        containsStarStation = false;
         stations.Clear();
         
         foreach(var t in lines){
@@ -454,7 +455,6 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             type = StationType.Cone;
         else if(p < 1.0f)
             type = StationType.Cube;
-        // todo unique stations..
         SpawnStation(type);
     }
 
@@ -743,6 +743,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
 
     public JSONObject SerializeGameState(){
+        if(needReset)
+            Debug.LogWarning("[Warning] Get_State called while game is still resetting...");
         // JSONObject json = new JSONObject(JsonUtility.ToJson(Instance));
         JSONObject json = new JSONObject();
 
