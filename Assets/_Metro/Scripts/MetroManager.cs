@@ -198,6 +198,10 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     private static MetroGame GetGameWithID(uint gameID) {
         return Instance.games.Find(game => game.gameId == gameID);
     }
+
+    public static uint GetNumGames(){
+        return Instance.numGamesToSpawn;
+    }
     
     /// <summary>
     /// Get the currently selected <see cref="MetroGame"/>

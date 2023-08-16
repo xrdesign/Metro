@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: GameFloor
-  m_Shader: {fileID: -6465566751694194690, guid: bf744e5e8d2535b4c9a26588aa07bc2a, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: de1ea7433944ddc4a9712cbe1b9f30d9, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -104,6 +104,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _IsEven: 0
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005

@@ -128,6 +128,20 @@ For output, it returns the serialized gamestate of the game that was reset. This
 
 ---
 
+## reset_scene
+
+Resets every game.
+
+#### Inputs
+
+N/A
+
+#### Outputs
+
+N/A
+
+---
+
 ## get_action_queue
 
 Gets the current action queue (for all games, as all share a Action Queue ID pool).

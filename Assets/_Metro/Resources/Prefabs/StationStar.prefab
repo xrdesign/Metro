@@ -459,6 +459,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2755426070899745941}
+  - component: {fileID: 3967047551334142979}
   m_Layer: 0
   m_Name: StationStar
   m_TagString: Untagged
@@ -481,6 +482,29 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3967047551334142979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 785373743056474410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef0c2660e410daa4ab4ab382d719c4e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  id: 0
+  uuid: 0
+  type: 3
+  stationName: 
+  position: {x: 0, y: 0, z: 0}
+  timer: 0
+  gameInstance: {fileID: 0}
+  passengersRoutes: []
+  lines: []
+  MaxTimeoutDuration: 45
+  timerImage: {fileID: 4046662979681244081}
 --- !u!1 &847045242506850974
 GameObject:
   m_ObjectHideFlags: 0
@@ -1322,7 +1346,6 @@ GameObject:
   - component: {fileID: 1328032825874102905}
   - component: {fileID: 4029659787513557083}
   - component: {fileID: 3444173859279287961}
-  - component: {fileID: 3128611214413743666}
   - component: {fileID: 8488201090176621607}
   m_Layer: 0
   m_Name: Star
@@ -1408,29 +1431,6 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 0.0032102228
   m_Center: {x: 0.000033598277, y: -4.3655762e-10, z: 0.00030090404}
---- !u!114 &3128611214413743666
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3097314761485233875}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef0c2660e410daa4ab4ab382d719c4e5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  id: 0
-  uuid: 0
-  type: 3
-  stationName: 
-  position: {x: 0, y: 0, z: 0}
-  timer: 0
-  gameInstance: {fileID: 0}
-  passengersRoutes: []
-  lines: []
-  MaxTimeoutDuration: 45
-  timerImage: {fileID: 4046662979681244081}
 --- !u!114 &8488201090176621607
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -122,7 +122,9 @@ public class MetroService : WebSocketBehavior
                     MetroManager.ResetGame(gameIDResetGame);
                     break;
                 case "reset_scene":
-                    MetroManager.ResetScene();
+                    for(uint i = 0; i<MetroManager.GetNumGames(); i++){
+                        MetroManager.ResetGame(i);
+                    }
                     break;
                 default:
                     Debug.LogError("[Server][Metro Service] Received: " + e.Data);
