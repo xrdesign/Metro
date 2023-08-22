@@ -232,8 +232,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
         if (needReset)
         {
-            needReset = false;
             StartGame();
+            needReset = false;
             // End this Update step early
             return;
         }
@@ -743,8 +743,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
 
     public JSONObject SerializeGameState(){
-        if(needReset)
-            Debug.LogWarning("[Warning] Get_State called while game is still resetting...");
+
+        while(needReset){}
+            
+
         // JSONObject json = new JSONObject(JsonUtility.ToJson(Instance));
         JSONObject json = new JSONObject();
 
