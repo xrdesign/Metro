@@ -1640,6 +1640,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   numGamesToSpawn: 99
   timeoutDurationOverride: 45
+  secondsPerLogEntry: 1
   menuUI: {fileID: 0}
   metroUI: {fileID: 4500513732196729373}
   addTrainUI: {fileID: 0}
