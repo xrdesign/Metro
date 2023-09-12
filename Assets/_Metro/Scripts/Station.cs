@@ -29,7 +29,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
 
     
     // This is a randomly generated human recognizable name. Unique within game.
-    public string stationName;
+    public string stationName = "";
 
     #endregion
     
@@ -80,7 +80,8 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         
         
         // Get random station name from manager.
-        stationName = MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
+        if(stationName == "")
+            stationName = $"{gameInstance.stations.Count}"; //MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
 
         _stationText.text = stationName;
 
