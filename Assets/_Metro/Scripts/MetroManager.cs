@@ -6,6 +6,8 @@ using Microsoft.MixedReality.Toolkit.Teleport;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = System.Random;
+using System.IO;
+using System;
 
 public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     #region Fields
@@ -31,6 +33,13 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     public float timeoutDurationOverride = 45.0f;
 
     #endregion
+
+    #endregion
+
+    #region Logging
+    
+    private float _logTimer;
+    public float  secondsPerLogEntry = 10;
 
     #endregion
 
@@ -85,6 +94,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
         // Spawn in the games.
 
+
         if (numGamesToSpawn <= 0) {
             Debug.LogError("No games set to spawn!");
         }
@@ -104,9 +114,19 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             }
         }
 
+        SetupLogs();
     }
     
     private void Start(){
+    }
+
+    private void Update(){
+        _logTimer += Time.deltaTime;
+        float diff = _logTimer - secondsPerLogEntry;
+        if(diff >= 0){
+            LogData();
+            _logTimer = diff;
+        }
     }
     
     
@@ -116,8 +136,39 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
     private void OnDisable() {
         CoreServices.TeleportSystem.UnregisterHandler<IMixedRealityTeleportHandler>(this);
+        sw.Flush();
+        sw.Close();
     }
+
     
+    #endregion
+
+    #region Log Handling
+    
+    private int logStep = 1;
+    void LogData(){
+        Debug.Log("Logging data");
+        sw.WriteLine($"===========Log: {logStep}=============");
+        foreach(MetroGame game in this.games){
+            sw.WriteLine($"----------game: {game.gameId}---------");
+            sw.WriteLine(game.SerializeGameState().ToString());
+        }
+        logStep++;
+
+    }
+
+
+    StreamWriter sw;
+    void SetupLogs(){
+        string filePath = @".\Assets\_Metro\Logs\";
+
+        //backup previous log
+        File.Copy(filePath+"Latest.txt", filePath+"Previous.txt", true);
+
+        //start new log
+        sw = new StreamWriter(filePath+"Latest.txt");
+    }
+
     #endregion
 
     #region Teleportation Handling
