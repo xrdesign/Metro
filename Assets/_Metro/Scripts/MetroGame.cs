@@ -279,6 +279,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         SpawnStation(StationType.Cone);
         SpawnStation(StationType.Sphere);
 
+        stations[0].stationName = "1";
+        stations[1].stationName = "2";
+        stations[2].stationName = "3";
+
         AddTransportLine(Color.red);
         AddTransportLine(Color.blue);
         AddTransportLine(Color.yellow);
