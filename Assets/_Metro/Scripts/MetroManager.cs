@@ -40,6 +40,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     
     private float _logTimer;
     public float  secondsPerLogEntry = 10;
+    StreamWriter sw;
 
     #endregion
 
@@ -127,9 +128,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             LogData();
             _logTimer = diff;
         }
+
     }
-    
-    
+
     private void OnEnable() {
         CoreServices.TeleportSystem.RegisterHandler<IMixedRealityTeleportHandler>(this);
     }
@@ -157,8 +158,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
     }
 
-
-    StreamWriter sw;
     void SetupLogs(){
         string filePath = @".\Assets\_Metro\Logs\";
 

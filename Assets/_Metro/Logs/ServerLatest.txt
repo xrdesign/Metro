@@ -1,0 +1,48 @@
+{"command":"get_potential_actions"}
+["insert_station","remove_station","remove_track"]
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":0, "insert_index":0}}
+{"Status":"Success","ActionID":0}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":1, "insert_index":1}}
+{"Status":"Success","ActionID":1}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":2, "insert_index":2}}
+{"Status":"Success","ActionID":2}
+{"command":"get_action_finished", "action_id":2}
+false
+{"command":"get_action_queue"}
+[0,1,2]
+{"command":"get_action_finished", "action_id":2}
+true
+{"command":"get_action_queue"}
+[]
+{"command":"get_potential_actions"}
+["insert_station","remove_station","remove_track"]
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":0, "insert_index":0}}
+{"Status":"Success","ActionID":3}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":1, "insert_index":1}}
+{"Status":"Success","ActionID":4}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":2, "insert_index":2}}
+{"Status":"Success","ActionID":5}
+{"command":"get_action_finished", "action_id":2}
+true
+{"command":"get_action_queue"}
+[4,5]
+{"command":"get_action_finished", "action_id":2}
+true
+{"command":"get_action_queue"}
+[4,5]
+{"command":"get_potential_actions"}
+["insert_station","remove_station","remove_track"]
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":0, "insert_index":0}}
+{"Status":"Success","ActionID":6}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":1, "insert_index":1}}
+{"Status":"Success","ActionID":7}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":2, "insert_index":2}}
+{"Status":"Success","ActionID":8}
+{"command":"get_action_finished", "action_id":2}
+true
+{"command":"get_action_queue"}
+[4,5,7,8]
+{"command":"get_action_finished", "action_id":2}
+true
+{"command":"get_action_queue"}
+[4,5]
