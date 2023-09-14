@@ -1,0 +1,8 @@
+{"command":"get_potential_actions"}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":0, "insert_index":0}}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":1, "insert_index":1}}
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":2, "insert_index":2}}
+{"command":"get_action_finished", "action_id":2}
+{"command":"get_action_queue"}
+{"command":"get_action_finished", "action_id":2}
+{"command":"get_action_queue"}

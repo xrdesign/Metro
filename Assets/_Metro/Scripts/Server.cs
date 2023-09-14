@@ -4,23 +4,38 @@ using UnityEngine;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 
-
+using System.IO;
 
 public class Server : MonoBehaviour
 {
 
     public void Start(){
+        SetupLogs();
         var wssv = new WebSocketServer ("ws://localhost:3000");
 
         wssv.AddWebSocketService<MetroService> ("/metro");
         wssv.Start();
 
         //remove timeout
-        wssv.WaitTime = System.Threading.Timeout.InfiniteTimeSpan;
+        //wssv.WaitTime = System.Threading.Timeout.InfiniteTimeSpan;
 
         Debug.Log("[Server] WebSocket opened for MetroService at url ws://localhost:3000/metro");
         // wssv.Stop ();
     }
+    
+    public static StreamWriter sw;
+    public static void SetupLogs(){
+        string filePath = @".\Assets\_Metro\Logs\";
+
+        //backup previous log
+        File.Copy(filePath+"ServerLatest.txt", filePath+"ServerPrevious.txt", true);
+
+        //start new log
+        sw = new StreamWriter(filePath+"ServerLatest.txt");
+    }
+    //public static async void LogMessage(String msg){
+     //   sw.WriteLineAsync(msg);
+    //}
 
 }
 
@@ -76,7 +91,8 @@ public class MetroService : WebSocketBehavior
     */
     protected override void OnMessage (MessageEventArgs e)
     {
-        
+        Server.sw.WriteLineAsync(e.Data);
+        Server.sw.FlushAsync();
         var res = new JSONObject();
         var json = new JSONObject(e.Data);
         var command = json["command"].str;
@@ -140,6 +156,10 @@ public class MetroService : WebSocketBehavior
 
 
         Send(res.ToString());
+        if(res.ToString().Length > 0){
+            Server.sw.WriteLineAsync(res.ToString());
+            Server.sw.FlushAsync();
+        }
     }
 
     // Queues an action for a specific game instance.
@@ -261,7 +281,7 @@ public class MetroService : WebSocketBehavior
         return res;
     }
 
-    protected override void OnError (ErrorEventArgs e)
+    protected override void OnError (WebSocketSharp.ErrorEventArgs e)
     {
         Debug.LogError(e.Message);
         Debug.LogError(e.Exception);
