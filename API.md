@@ -70,13 +70,15 @@ Take some specified action on the game.
 	  - station_index: index of the station.
 	  - station_name: name of the station insert
 	  - insert_index: index to insert at
-        - Notes:  Inserting a station to an empty line will not create a visual change in the game until the second station is added.  Once two stations are added to a transport line, a train is added and the line begins to function.  When inserting a station at an index that already contains a station, the station at and after that index are moved down the line to make room for the new station.
 	- remove_station: "arguments" needs to contain line_index && (station_index || station_name).
 	  - line_index: index of the line to remove on.
 	  - station_index: index of the station to remove.
 	  - station_name: name of the station to remove.
 	- remove_track: "arguments" needs to contain thhe following:
 	  - line_index: index of the line to remove.
+
+
+- Notes:  Inserting a station to an empty line will not create a visual change in the game until the second station is added.  Once two stations are added to a transport line, a train is added and the line begins to function.  When inserting a station at an index that already contains a station, the station at and after that index are moved down the line to make room for the new station.  If both a station index and station name are provided the station name is used and the index is ignored.
 	
 
 #### outputs
@@ -89,9 +91,14 @@ Take some specified action on the game.
 
 Sending the following commands:
 ```
-{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":0, "insert_index":0}} //Station 0 is added to the beginning of line 0, with only 1 station the line is not yet visible
-{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":1, "insert_index":1}} //Station 1 is added to the end of line 0, now the line is visible and a train is added
-{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":2, "insert_index":1}} //Station 2 is added to line 0 before station 1 and after station 0.
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":0, "insert_index":0}} 
+//Station 0 is added to the beginning of line 0, with only 1 station the line is not yet visible
+
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":1, "insert_index":1}} 
+//Station 1 is added to the end of line 0, now the line is visible and a train is added
+
+{"command":"take_action", "game_id":0, "arguments":{"action":"insert_station", "line_index":0, "station_index":2, "insert_index":1}} 
+//Station 2 is added to line 0 before station 1 and after station 0.
 ```
 Would result in the first station being connected to the second station, and the second station being connected to the third station, in the first game, on the first line.
 
