@@ -33,6 +33,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public float gameSpeed = 0.0f;
     public float dt = 0f;
 
+    public int passengersDelivered = 0;
+    public float totalPassengerWaitTime = 0;
+    public float totalPassengerTravelTime = 0;
+
     public int freeTrains = 3;
     public Train selectedTrain = null;
     public int freeCars = 0;
@@ -112,6 +116,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     #endregion
 
     private volatile bool needReset = false;
+    private bool simGame = false;
+    private float simLength = 0;
     
     void OnEnable(){
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(this);
@@ -121,7 +127,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     }
 
     // Start is called before the first frame update
-    void Start() {
+    void Awake() {
         stationsOrganizer = new GameObject("Stations");
         stationsOrganizer.transform.SetParent(this.transform, false);
         transportLinesOrganizer = new GameObject("Transport Lines");
@@ -137,8 +143,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         
 
         gameSpeed = 0.0f;
-        
-        StartGame();
+    }
+    void Start(){
+        if(!simGame)
+            StartGame();
     }
 
  
@@ -331,12 +339,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     {
         float lengthOfDay = 20.0f; // 1 day 20 seconds
 
+        float gameSpeed = this.gameSpeed;
         if (paused) {
             gameSpeed = 0.0f;
-        }
-        else
-        {
-            gameSpeed = 1.0f;
         }
 
         dt = Time.deltaTime * gameSpeed;
@@ -363,7 +368,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             // new day event
             day = newDay;
 
-            SpawnStations(); // spawn random stations if needed
+            if(!simGame)
+                SpawnStations(); // spawn random stations if needed
 
         }
         if(newWeek != week){
@@ -418,7 +424,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
                 break;
             case StationType.Star:
                 prefab = Resources.Load("Prefabs/StationStar") as GameObject;
-                obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
+                obj = GameObject.Instantiate(prefab) as GameObject;
                 containsStarStation = true;
                 break;
             default:
@@ -440,7 +446,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         }
         obj.transform.SetParent(stationsOrganizer.transform);
         obj.transform.localPosition = pos;
-        obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+        //obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
         station.id = this.stations.Count;
         station.uuid = station.GetInstanceID();
@@ -851,5 +857,127 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             trains_json.Add(json);
         }
         return trains_json;
+    }
+
+    public void StartSimGame(JSONObject gameState, float gameSpeed, float simLength){
+        DeserializeGameState(gameState);
+        this.score = 0;
+        this.gameSpeed = gameSpeed;
+        this.simGame = true;
+        this.simLength = simLength;
+    }
+
+    public void DeserializeGameState(JSONObject gameState){
+        //Reset Game Params
+        ResetGameState();
+        this.time = gameState["time"].f;
+        this.paused = gameState["isPause"].b;
+        this.isGameover = gameState["isGameover"].b;
+        
+        //Spawn Stations
+        var jsonStations = gameState["stations"].list;
+        for(int i = 0; i<jsonStations.Count; i++){
+            var station = jsonStations[i];
+
+            //Create station
+            StationType type = StationType.Cone;
+            if(station["shape"].str == "Sphere")
+                type = StationType.Sphere;
+            else if(station["shape"].str == "Cube")
+                type = StationType.Cube;
+            else if(station["shape"].str == "Star")
+                type = StationType.Star;
+            this.SpawnStation(type);
+
+            //SetupStation params
+            var actualStation = this.stations[i];
+            actualStation.transform.localPosition = new Vector3(station["x"].f, station["y"].f, station["z"].f);
+            actualStation.timer = station["timer"].f;
+            actualStation.id = (int)station["id"].i;
+            actualStation.uuid = (int)station["unique_id"].i;
+
+            if(station["cnt_cone"] != null){
+                Debug.Log(station["cnt_cone"]);
+                int cnt_cone = (int)station["cnt_cone"].i;
+                for(int x = 0; x<cnt_cone; x++)
+                    actualStation.SpawnPassenger(StationType.Cone);
+            }
+            if(station["cnt_sphere"] != null){
+                int cnt_sphere = (int)station["cnt_sphere"].i;
+                for(int x = 0; x<cnt_sphere; x++)
+                    actualStation.SpawnPassenger(StationType.Sphere);
+            }
+            if(station["cnt_cube"] != null){
+                int cnt_cube = (int)station["cnt_cube"].i;
+                for(int x = 0; x<cnt_cube; x++)
+                    actualStation.SpawnPassenger(StationType.Cube);
+            }
+            if(station["cnt_star"] != null){
+                int cnt_star = (int)station["cnt_star"].i;
+                for(int x = 0; x<cnt_star; x++)
+                    actualStation.SpawnPassenger(StationType.Star);
+            }
+        }
+
+        //Recreate Transit Lines
+        this.AddTransportLine(Color.red); 
+        this.AddTransportLine(Color.blue);
+        this.AddTransportLine(Color.yellow);
+
+        var jsonLines = gameState["lines"].list;
+        lines[0].uuid = (int)jsonLines[0]["unique_id"].i;
+        lines[1].uuid = (int)jsonLines[1]["unique_id"].i;
+        lines[2].uuid = (int)jsonLines[2]["unique_id"].i;
+
+        int current_line_id = 0;
+        TransportLine currLine = null;
+        foreach(var segment in gameState["segments"].list){
+            int which_line = (int)segment["which_line"].i;
+            
+            //Check if looking at new line:
+            if(which_line != current_line_id){
+                currLine = lines.Find(l => l.uuid == (int)segment["which_line"].i);
+                if(currLine == null)
+                    continue;
+
+                Station first = this.stations.Find(s => s.uuid == (int)segment["from_station"].i); 
+                Station second = this.stations.Find(s => s.uuid == (int)segment["to_station"].i); 
+
+                currLine.AddStation(first);
+                currLine.AddStation(second);
+            }
+            else{
+                if(currLine == null) continue;
+
+                Station station = this.stations.Find(s => s.uuid == (int)segment["to_station"].i); 
+                currLine.AddStation(station);
+            }
+        }
+        foreach(var line in lines){
+            foreach(var train in line.trains){
+                Destroy(train);
+            }
+            line.trains.Clear();
+        }
+
+        //Arbritary amount of free trains to place
+        this.freeTrains = 1000;
+        var jsonTrains = gameState["trains"].list;
+        foreach(var train in jsonTrains){
+            if(train.IsNull){
+                Debug.Log("Skipping Null Train");
+                continue;
+            }
+            var line = lines.Find( l => l.uuid == (int)train["line_id"].i);
+            if(line == null){
+                Debug.Log("Can't find line");
+                continue;
+            }
+            Debug.Log("Adding train to the " + line.color + "line");
+            line.AddTrain(train["position"].f, train["direction"].f);
+        }
+        //Reset free trains to actual value
+        this.freeTrains = (int)gameState["freeTrains"].i;
+
     }
 }

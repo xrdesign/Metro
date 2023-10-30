@@ -87,7 +87,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             Debug.LogError("More than one MetroManager initialized!");
         }
 
-        gameObject.AddComponent<Server>();
+        if(this.enabled)
+            gameObject.AddComponent<Server>();
 
         liblsl.StreamInfo inf =
             new liblsl.StreamInfo("EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
@@ -102,6 +103,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
         lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
 
+
+        SetupLogs();
+    }
+    
+    private void Start(){
+        //Spawn Games
         for (uint i = 0; i < numGamesToSpawn; i++) {
             var newMetroGame = (new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
             newMetroGame.gameId = i;
@@ -109,24 +116,34 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             games.Add(newMetroGame);
             newMetroGame.transform.position = GetGameLocation(newMetroGame.gameId);
 
-            // todo: Change later so that we can switch between games we want to control.
+            if(jsonGames != null){
+                newMetroGame.StartSimGame(jsonGames[(int)i], this.gameSpeed, this.simLength);
+                Debug.Log("Creating JSON GAMES!");
+            }
+            else{
+                Debug.Log("Not Sim Games");
+            }
+
+            // todo: Change later so that we can switch between games we want to control.MetroManager
             if (i == 0) {
                 SelectGame(newMetroGame);
             }
         }
-
-        SetupLogs();
-    }
-    
-    private void Start(){
     }
 
     private void Update(){
-        _logTimer += Time.deltaTime;
-        float diff = _logTimer - secondsPerLogEntry;
-        if(diff >= 0){
-            LogData();
-            _logTimer = diff;
+        if(jsonGames != null){
+            time += Time.deltaTime * gameSpeed;
+            if(time>=simLength)
+                this.isDone = true;
+        }
+        else{
+            _logTimer += Time.deltaTime;
+            float diff = _logTimer - secondsPerLogEntry;
+            if(diff >= 0){
+                LogData();
+                _logTimer = diff;
+            }
         }
 
     }
@@ -167,6 +184,37 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         //start new log
         sw = new StreamWriter(filePath+"Latest.txt");
     }
+
+    #endregion
+
+    #region Simulation Based Scoring
+    
+    private List<JSONObject> jsonGames = null;
+    float simLength;
+    public bool isDone = false;
+    float gameSpeed;
+    float time = 0;
+    public void SetupSim(List<JSONObject> games, float gameSpeed, float simLength){
+        Debug.Log("setting up sim");
+        jsonGames = games;
+        this.gameSpeed = gameSpeed;
+        this.simLength = simLength;
+    }
+    public JSONObject GetSimScores(){
+        var json = new JSONObject(JSONObject.Type.ARRAY);
+        for(int i = 0; i<games.Count; i++){
+            var game = new JSONObject();
+            game.AddField("index", i);
+            game.AddField("score", games[i].score);
+            game.AddField("passengersDelivered", games[i].passengersDelivered);
+            game.AddField("totalWaitTime", games[i].totalPassengerWaitTime);
+            game.AddField("totalTravelTime", games[i].totalPassengerTravelTime);
+            game.AddField("station_count", games[i].stations.Count);
+            json.Add(game);
+        }
+        return json;
+    }
+
 
     #endregion
 

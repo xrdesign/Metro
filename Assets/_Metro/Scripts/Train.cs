@@ -45,8 +45,10 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
     void Update()
     {
 
+        foreach(var p in passengers){
+            p.travelTime += Time.deltaTime * gameInstance.gameSpeed;
+        }
         if(line == null){
-
             return;
         }
 
@@ -151,6 +153,8 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
     {
         var count = 0;
         var scoreCount = 0;
+        float waitTime = 0;
+        float travelTime = 0;
         for (int i = passengers.Count - 1; i >= 0; i--)
         {
             var p = passengers[i];
@@ -162,6 +166,8 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
                 count += 1;
                 // only this get score
                 scoreCount += 1;
+                waitTime += p.waitTime;
+                travelTime += p.travelTime;
                 continue;
             }
 
@@ -181,6 +187,9 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         }
 
         gameInstance.AddScore(scoreCount);
+        gameInstance.passengersDelivered += scoreCount;
+        gameInstance.totalPassengerWaitTime += waitTime;
+        gameInstance.totalPassengerTravelTime += travelTime;
 
         return count;
     }
@@ -221,15 +230,22 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         // passengers.RemoveAll(p => p.destination == station.type)
         var newList = new List<Passenger>();
         var dropCount = 0;
+        float waitTime = 0;
+        float travelTime = 0;
         foreach(var p in passengers){
-            if(p.destination == station.type)
+            if(p.destination == station.type){
                 dropCount += 1;
+                waitTime += p.waitTime;
+                travelTime += p.travelTime;
+            }
             else
                 newList.Add(p);
         }
 
         passengers = newList;
         gameInstance.AddScore(dropCount);
+        gameInstance.totalPassengerWaitTime += waitTime;
+        gameInstance.totalPassengerTravelTime += travelTime;
 
         return 0; //todo animate?
     }

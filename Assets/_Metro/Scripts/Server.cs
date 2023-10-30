@@ -33,9 +33,6 @@ public class Server : MonoBehaviour
         //start new log
         sw = new StreamWriter(filePath+"ServerLatest.txt");
     }
-    //public static async void LogMessage(String msg){
-     //   sw.WriteLineAsync(msg);
-    //}
 
 }
 
