@@ -22,14 +22,16 @@ public class TransportLine : MonoBehaviour
 
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-        var go = new GameObject();
-        go.name = "Tracks (Game " + gameInstance.gameId + ", Transport Line " + color.ToString();
+        GameObject go  = new GameObject();
+        go.name = "Tracks, Transport Line " + color.ToString();
         tracks = go.AddComponent<Tracks>();
-        tracks.gameInstance = gameInstance; // Pass down game instance reference.
         tracks.transform.SetParent(this.transform);
         tracks.line = this;
+    }
+    void Start(){
+        tracks.gameInstance = gameInstance; // Pass down game instance reference.
     }
 
     // Update is called once per frame

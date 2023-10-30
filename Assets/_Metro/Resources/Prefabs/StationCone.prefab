@@ -660,7 +660,7 @@ Transform:
   m_GameObject: {fileID: 1971895868960281459}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_Children:
   - {fileID: 6338328235026995742}
   m_Father: {fileID: 0}
@@ -750,6 +750,7 @@ MonoBehaviour:
   gameInstance: {fileID: 0}
   passengersRoutes: []
   lines: []
+  MaxTimeoutDuration: 45
   timerImage: {fileID: 8017650841675774296}
 --- !u!114 &239596562292727489
 MonoBehaviour:

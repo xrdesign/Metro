@@ -40,6 +40,7 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
     {
         lineRenderer = gameObject.AddComponent<LineRenderer>();
         meshCollider = gameObject.AddComponent<MeshCollider>();
+        meshCollider.convex = true;
         mesh = new Mesh();
 
         lineRenderer.material = Resources.Load("Materials/MRTKTransparent") as Material;
@@ -63,8 +64,13 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
 
         if(line.stops.Count != 0) // Can't bake mesh from line renderer with empty position vector
         {
-            lineRenderer.BakeMesh(mesh, true);
-            meshCollider.sharedMesh = mesh;
+            try{
+                lineRenderer.BakeMesh(mesh, true);
+                meshCollider.sharedMesh = mesh;
+            }
+            catch{
+                Debug.LogError("MeshCollider Error Here");
+            }
         }
         needsUpdate = false;
     }
@@ -77,7 +83,7 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
     public void SetColor(Color c){
         var block = new MaterialPropertyBlock();
         block.SetColor("_Color", c);
-        Debug.Log("color " + lineRenderer);
+        //Debug.Log("color " + lineRenderer);
         lineRenderer.SetPropertyBlock(block); 
     }
 

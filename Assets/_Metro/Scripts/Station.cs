@@ -94,8 +94,13 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
     void Update()
     {
         // TODO: Why have a position variable defined like this?
-        position = transform.position;
+        // Great question...
+        position = transform.localPosition;
         cooldown -= Time.deltaTime;
+
+        foreach(var p in passengers){
+            p.waitTime += Time.deltaTime * gameInstance.gameSpeed;
+        }
 
         // show passengers
         foreach(var s in seats) s.enabled = false;
@@ -167,6 +172,9 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         if(passengers.Count >= 30) return;
         Passenger p = new Passenger();
         p.destination = type;
+        p.gameInstance = this.gameInstance;
+        p.waitTime = 0;
+        p.travelTime = 0;
         passengers.Add(p);
        
     }
