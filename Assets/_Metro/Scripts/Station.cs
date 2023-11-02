@@ -266,21 +266,26 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
             // TODO: 
             MetroManager.SendEvent("Add Station: " + "station - " + id + ";line - " + line.id);
             Debug.Log("Add Station: " + "station - " + id + ";line - " + line.id);
+            Debug.Log("Index: " + index + ", insert: " + insert);
 
             // add if not in line (unless closing loop TODO)
             if (!line.stops.Contains(this)){
+                Debug.Log("Adding to line");
                 line.InsertStation(index+1, this);
                 var insrt = index+1 < line.stops.Count-1;
                 MetroGame.StartEditingLine(line, index+1, dist, insrt);
             
             // remove if adjacent to editingIndex
             } else if(line.stops.Count > 1){
+                Debug.Log("Removing from line");
                 if (line.stops[index] == this){
+                    Debug.Log("Top");
                     line.RemoveStation(this);
                     var insrt = index-1 >= 0 && index-1 < line.stops.Count-1;
                     MetroGame.StartEditingLine(line, index-1, dist, insrt);
 
                 }else if(insert && line.stops[index+1] == this){
+                    Debug.Log("Bottom");
                     line.RemoveStation(this);
                     var insrt = index < line.stops.Count-1;
                     MetroGame.StartEditingLine(line, index, dist, insrt);
