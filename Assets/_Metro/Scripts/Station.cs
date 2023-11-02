@@ -278,18 +278,27 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
             // remove if adjacent to editingIndex
             } else if(line.stops.Count > 1){
                 Debug.Log("Removing from line");
-                if (line.stops[index] == this){
+                if(index == -1){
+                    Debug.Log("Removing First Station of line");
+                    if(line.stops[0] == this){
+                        line.RemoveStation(this);
+                        if(!line.isDeployed)
+                            MetroGame.DeselectLine();
+                    }
+                }else if (line.stops[index] == this){
                     Debug.Log("Top");
                     line.RemoveStation(this);
                     var insrt = index-1 >= 0 && index-1 < line.stops.Count-1;
                     MetroGame.StartEditingLine(line, index-1, dist, insrt);
-
+                    if(!line.isDeployed)
+                        MetroGame.DeselectLine();
                 }else if(insert && line.stops[index+1] == this){
                     Debug.Log("Bottom");
                     line.RemoveStation(this);
                     var insrt = index < line.stops.Count-1;
                     MetroGame.StartEditingLine(line, index, dist, insrt);
-
+                    if(!line.isDeployed)
+                        MetroGame.DeselectLine();
                 } 
             }
             
