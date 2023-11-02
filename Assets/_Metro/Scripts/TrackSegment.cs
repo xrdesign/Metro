@@ -40,7 +40,6 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
     {
         lineRenderer = gameObject.AddComponent<LineRenderer>();
         meshCollider = gameObject.AddComponent<MeshCollider>();
-        meshCollider.convex = true;
         mesh = new Mesh();
 
         lineRenderer.material = Resources.Load("Materials/MRTKTransparent") as Material;
@@ -54,7 +53,7 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
     // Update is called once per frame
     void Update()
     {   
-        if(!needsUpdate) return;
+        //if(!needsUpdate) return;
 
         for (int i = 0; i <= lengthOfLine; i++)
         {
@@ -62,7 +61,7 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
             lineRenderer.SetPosition(i, p); 
         }
 
-        if(line.stops.Count != 0) // Can't bake mesh from line renderer with empty position vector
+        if(cp[0] != cp[3]) // Can't bake mesh from line renderer with empty position vector
         {
             try{
                 lineRenderer.BakeMesh(mesh, true);
