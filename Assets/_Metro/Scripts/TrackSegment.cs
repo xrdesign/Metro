@@ -80,6 +80,8 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
     }
 
     public void SetColor(Color c){
+        if(c == null)
+            return;
         var block = new MaterialPropertyBlock();
         block.SetColor("_Color", c);
         //Debug.Log("color " + lineRenderer);
@@ -101,7 +103,7 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
         float sum = 0;
         for(int i = 0; i < id; i++)
         {
-            sum += gameInstance.trackLengths[i];
+            sum += this.line.tracks.lengths[i];
         }
         return sum;
     }

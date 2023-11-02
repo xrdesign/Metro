@@ -64,6 +64,8 @@ public class TransportLine : MonoBehaviour
     public void RemoveStation(Station station){
         station.lines.Remove(this);
         stops.Remove(station);
+        if(stops.Count <= 1)
+            this.RemoveAll();
         tracks.needsUpdate = true;
 
     }
