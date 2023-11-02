@@ -266,7 +266,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
             // TODO: 
             MetroManager.SendEvent("Add Station: " + "station - " + id + ";line - " + line.id);
             Debug.Log("Add Station: " + "station - " + id + ";line - " + line.id);
-            Debug.Log("Index: " + index + ", insert: " + insert);
+            Debug.Log("Index: " + index + ", insert: " + insert + "Stops Count: " + line.stops.Count);
 
             // add if not in line (unless closing loop TODO)
             if (!line.stops.Contains(this)){
