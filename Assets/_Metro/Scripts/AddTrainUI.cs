@@ -30,8 +30,8 @@ public class AddTrainUI : MonoBehaviour,
     {     
         this.transform.SetParent(this.gameObject.transform, false);
         trainCountTxt = this.transform.Find("Train_count").GetComponent<TMP_Text>();
-        trainCountTxt.text = MetroManager.GetSelectedGame().freeTrains.ToString();
-        Debug.Log("freeTrains: " + MetroManager.GetSelectedGame().freeTrains);
+        trainCountTxt.text = "0";//MetroManager.GetSelectedGame().freeTrains.ToString();
+        //Debug.Log("freeTrains: " + MetroManager.GetSelectedGame().freeTrains);
         
         //generate a ghostTrain for visual representation      
         ghostTrain = new GameObject();
