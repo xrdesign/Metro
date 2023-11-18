@@ -14,6 +14,7 @@ public class Server : MonoBehaviour
         var wssv = new WebSocketServer ("ws://localhost:3000");
 
         wssv.AddWebSocketService<MetroService> ("/metro");
+        wssv.AddWebSocketService<MetroService> ("/multiplayer");
         wssv.Start();
 
         //remove timeout
@@ -25,13 +26,22 @@ public class Server : MonoBehaviour
     
     public static StreamWriter sw;
     public static void SetupLogs(){
-        string filePath = @".\Assets\_Metro\Logs\";
+        
+
+        string filePath = Path.Combine(Application.persistentDataPath, "Logs/");
+
+        if(!Directory.Exists(filePath))
+            Directory.CreateDirectory(filePath);
+        if(File.Exists(filePath+"ServerLatest.txt"))
+            File.Copy(filePath+"ServerLatest.txt", filePath+"ServerPrevious.txt", true);
 
         //backup previous log
-        File.Copy(filePath+"ServerLatest.txt", filePath+"ServerPrevious.txt", true);
 
         //start new log
         sw = new StreamWriter(filePath+"ServerLatest.txt");
+    }
+    void OnDisable(){
+        sw.Flush();
     }
 
 }
@@ -42,7 +52,7 @@ public class Server : MonoBehaviour
 public class MetroService : WebSocketBehavior
 {
 
-
+    bool enableLogs = false;
     protected override void OnOpen(){
         Debug.Log("[Server][Metro Service] Client connected.");
     }
@@ -88,19 +98,32 @@ public class MetroService : WebSocketBehavior
     */
     protected override void OnMessage (MessageEventArgs e)
     {
-        Server.sw.WriteLineAsync(e.Data);
-        Server.sw.FlushAsync();
+        if(enableLogs)
+            Server.sw.WriteLine(e.Data);
         var res = new JSONObject();
         var json = new JSONObject(e.Data);
         var command = json["command"].str;
 
         try {
             switch (command) {
+                case "enable_logs":
+                    this.enableLogs = true;
+                    res.AddField("Status", "Success");
+                    break;
                 case "get_state":
                     uint gameIDGetState = (uint)json["game_id"].i;
                     res = MetroManager.SerializeGame(gameIDGetState);
                     break;
-
+                case "get_all_states":
+                    var games = new JSONObject(JSONObject.Type.ARRAY);
+                    uint count = MetroManager.GetNumGames();
+                    for(uint i=0; i<count; i++){
+                        games.Add(MetroManager.SerializeGame(i));
+                    }
+                    res.AddField("Status", "Success");
+                    res.AddField("Games", games);
+                    res.AddField("Count", count);
+                    break;
                 case "get_action_queue":
                     List<uint> queuedActions = MetroManager.GetQueuedActions();
                     JSONObject queuedActionsJson= new JSONObject(JSONObject.Type.ARRAY);
@@ -139,6 +162,9 @@ public class MetroService : WebSocketBehavior
                         MetroManager.ResetGame(i);
                     }
                     break;
+                case "noop":
+                    res.AddField("Status", "None");
+                    break;
                 default:
                     Debug.LogError("[Server][Metro Service] Received: " + e.Data);
                     throw new Exception("Unrecognized Command");
@@ -154,8 +180,8 @@ public class MetroService : WebSocketBehavior
 
         Send(res.ToString());
         if(res.ToString().Length > 0){
-            Server.sw.WriteLineAsync(res.ToString());
-            Server.sw.FlushAsync();
+            if(enableLogs)
+                Server.sw.WriteLine(res.ToString());
         }
     }
 

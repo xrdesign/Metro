@@ -176,10 +176,13 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     }
 
     void SetupLogs(){
-        string filePath = @".\Assets\_Metro\Logs\";
+        string filePath = Path.Combine(Application.persistentDataPath, "Logs/");
 
-        //backup previous log
-        File.Copy(filePath+"Latest.txt", filePath+"Previous.txt", true);
+        if(!Directory.Exists(filePath))
+            Directory.CreateDirectory(filePath);
+        if(File.Exists(filePath+"Latest.txt"))
+            File.Copy(filePath+"Latest.txt", filePath+"Previous.txt", true);
+
 
         //start new log
         sw = new StreamWriter(filePath+"Latest.txt");
