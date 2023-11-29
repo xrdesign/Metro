@@ -21,6 +21,10 @@ if __name__ == "__main__":
                 "games":[]
                 }
             }
+    output = {
+            "time_steps":[
+                ]
+            }
 
     command["args"]["games"] = logs[0]["games"]
     ws.send(json.dumps(command))
@@ -84,6 +88,8 @@ if __name__ == "__main__":
 
         if info["Status"] == "Complete":
             pprint(info)
+            output["time_steps"].append(info)
+            #print(output)
             index += 1
             if index >= len(logs):
                 break
@@ -103,4 +109,5 @@ if __name__ == "__main__":
         sleep(2)
 
     print("Done simulating")
-
+    out = open("output.txt","w")
+    out.write(json.dumps(output))
