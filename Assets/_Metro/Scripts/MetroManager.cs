@@ -78,6 +78,14 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
     #region Methods
 
+    public static bool SetAlert(uint gameID, bool value){
+        var game = GetGameWithID(gameID);
+        if(game!=null){
+            game.SetAlert(value);
+            return true;
+        }
+        return false;
+    }
 
     #region Monobehavior Overrides
     void Awake() {
@@ -109,26 +117,25 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     
     private void Start(){
         //Spawn Games
+        SpawnGames();
+        if(games.Count > 0)
+            SelectGame(games[0]);
+    }
+
+    public void SpawnGames(){
         for (uint i = 0; i < numGamesToSpawn; i++) {
-            var newMetroGame = (new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
-            newMetroGame.gameId = i;
-            newMetroGame.transform.parent = this.transform; //less clutter in scene hiearchy
-            games.Add(newMetroGame);
-            newMetroGame.transform.position = GetGameLocation(newMetroGame.gameId);
-
+            if(i >= games.Count){
+                var newMetroGame = (new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
+                newMetroGame.gameId = i;
+                newMetroGame.transform.parent = this.transform; //less clutter in scene hiearchy
+                games.Add(newMetroGame);
+                newMetroGame.transform.position = GetGameLocation(newMetroGame.gameId);
+            }
             if(jsonGames != null){
-                newMetroGame.StartSimGame(jsonGames[(int)i], this.gameSpeed, this.simLength);
-                Debug.Log("Creating JSON GAMES!");
-            }
-            else{
-                Debug.Log("Not Sim Games");
-            }
-
-            // todo: Change later so that we can switch between games we want to control.MetroManager
-            if (i == 0) {
-                SelectGame(newMetroGame);
+                games[(int)i].StartSimGame(jsonGames[(int)i], this.gameSpeed, this.simLength);
             }
         }
+    
     }
 
     private void Update(){
@@ -153,7 +160,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     }
 
     private void OnDisable() {
-        CoreServices.TeleportSystem.UnregisterHandler<IMixedRealityTeleportHandler>(this);
+        //CoreServices.TeleportSystem.UnregisterHandler<IMixedRealityTeleportHandler>(this);
+        sw.Write("]}");
         sw.Flush();
         sw.Close();
     }
@@ -166,16 +174,23 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     private int logStep = 1;
     void LogData(){
         Debug.Log("Logging data");
-        sw.WriteLine($"===========Log: {logStep}=============");
-        foreach(MetroGame game in this.games){
-            sw.WriteLine($"----------game: {game.gameId}---------");
-            sw.WriteLine(game.SerializeGameState().ToString());
+        var log = new JSONObject();
+        var json = new JSONObject(JSONObject.Type.ARRAY);
+        for(int i=0; i<games.Count; i++){
+            MetroGame game = games[i];
+            json.Add(game.SerializeGameState());
         }
+        log.AddField("log_step", logStep);
+        log.AddField("games", json);
+        if(logStep == 1)
+            sw.WriteLine(log.ToString()); 
+        else
+            sw.WriteLine(","+log.ToString());
         logStep++;
-
     }
 
     void SetupLogs(){
+        Debug.Log("Setting up Logs");
         string filePath = Path.Combine(Application.persistentDataPath, "Logs/");
 
         if(!Directory.Exists(filePath))
@@ -186,6 +201,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
         //start new log
         sw = new StreamWriter(filePath+"Latest.txt");
+        sw.Write("{\"time_steps\":[");
     }
 
     #endregion
@@ -202,6 +218,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         jsonGames = games;
         this.gameSpeed = gameSpeed;
         this.simLength = simLength;
+        time = 0;
+        this.isDone = false;
+        SpawnGames();
     }
     public JSONObject GetSimScores(){
         var json = new JSONObject(JSONObject.Type.ARRAY);

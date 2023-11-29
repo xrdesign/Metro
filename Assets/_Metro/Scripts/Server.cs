@@ -110,6 +110,15 @@ public class MetroService : WebSocketBehavior
                     this.enableLogs = true;
                     res.AddField("Status", "Success");
                     break;
+                case "set_alert":
+                    var args = json["arguments"];                    
+                    uint id = (uint)args["game_id"].i;
+                    bool val = args["value"].b;
+                    if(MetroManager.SetAlert(id, val))
+                        res.AddField("Status", "Success");
+                    else
+                        res.AddField("Status", "Failure");
+                    break;
                 case "get_state":
                     uint gameIDGetState = (uint)json["game_id"].i;
                     res = MetroManager.SerializeGame(gameIDGetState);
@@ -142,7 +151,7 @@ public class MetroService : WebSocketBehavior
 
                 case "take_action":
                     uint gameIDTakeAction = (uint)json["game_id"].i;
-                    var args = json["arguments"];
+                    args = json["arguments"];
                     res = QueueAction(args, gameIDTakeAction);
                     break;
                 case "get_potential_actions":

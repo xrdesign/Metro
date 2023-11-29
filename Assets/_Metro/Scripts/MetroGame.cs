@@ -77,6 +77,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public GameObject stationsOrganizer;
     public GameObject transportLinesOrganizer;
     public GameObject trainOrganizer;
+    public GameObject alertCylinder;
+
+    private bool setAlert = false;
+    private bool alertValue = false;
 
     #endregion
     
@@ -135,21 +139,23 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         trainOrganizer = new GameObject("Trains");
         trainOrganizer.transform.SetParent(this.transform, worldPositionStays: false);
         
+        alertCylinder = GameObject.Instantiate(Resources.Load("Prefabs/AlertCylinder") as GameObject, this.transform);
+        alertCylinder.SetActive(false);
+        gameSpeed = 0.0f;
+    }
+
+    void Start(){
         //Create Display Plane:
         GameObject floor = GameObject.Instantiate(Resources.Load("Prefabs/GameFloor") as GameObject);
         floor.transform.SetParent(this.transform, worldPositionStays: false);
         floor.GetComponent<MeshRenderer>().material.SetInt("_IsEven", (gameId % 2 == 0 || gameId == 0)?1:0);
         floor.transform.Find("Canvas/ID Display").GetComponent<TMP_Text>().text = $"{gameId}";
-        
 
-        gameSpeed = 0.0f;
-    }
-    void Start(){
+
+
         if(!simGame)
             StartGame();
     }
-
- 
 
     public void StartGame(){
         Debug.Log("Start Game " + gameId);
@@ -159,10 +165,29 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     }
 
+    public void SetAlert(bool active){
+        Debug.Log("Setting Alert!");
+        setAlert = true;
+        alertValue = true;
+        return;
+
+        /*
+        if(IsGameSelected())
+            alertCylinder.SetActive(false);
+        else
+            alertCylinder.SetActive(active);
+            */
+    }
+
     #region Notifications
 
     // Only called from MetroManager when the selected game has changed.
     public void OnSelectionChange(bool selected) {
+        /*
+        if(selected)
+            SetAlert(false);
+            */
+
         // All we do is invoke our delegate for other objects atm.
         if (GameSelectionDelegate != null) {  // Delegate is null unless assigned to a method.
             GameSelectionDelegate.Invoke(selected);
@@ -228,6 +253,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     // Update is called once per frame
     void Update()
     {
+        if(setAlert)
+            alertCylinder.SetActive(alertValue);
+
         // Execute Server Actions
         while(ActionQueue.Count > 0){
             TrackedMetroGameAction action;
@@ -278,6 +306,11 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             Destroy(t.gameObject);
         }
         lines.Clear();
+        score = 0;
+        passengersDelivered = 0;
+        totalPassengerWaitTime = 0;
+        totalPassengerTravelTime = 0;
+
         
     }
     
@@ -860,11 +893,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     }
 
     public void StartSimGame(JSONObject gameState, float gameSpeed, float simLength){
+        Debug.Log("Starting Sim Game");
         DeserializeGameState(gameState);
         this.score = 0;
         this.gameSpeed = gameSpeed;
         this.simGame = true;
         this.simLength = simLength;
+        Debug.Log("Done");
     }
 
     public void DeserializeGameState(JSONObject gameState){
