@@ -4,9 +4,19 @@ using UnityEngine;
 
 public struct gameStruct{
     public int id;
-    public int cnt_p;
-    public int cnt_t;
-    public int cnt_l;
+
+    public int free_trains;
+    public int free_lines;
+
+    public int p_cube;
+    public int p_sphere;
+    public int p_cone;
+    public int p_star;
+
+    public int s_cube;
+    public int s_sphere;
+    public int s_cone;
+    public int s_star;
 };
 
 
@@ -19,21 +29,23 @@ public class UIManager : MonoBehaviour
     private bool dirtyTable;
     private List<GameObject> gameInstances;
     [SerializeField] private GameObject GameInstancePrefab;
-    [SerializeField] private int GamesPerPage = 16;
-    [SerializeField] private int numGames = 10;
-
+    [SerializeField] private int gamesPerPage = 16;
+    private uint page;
+    private uint pages;
 
     public List<gameStruct> games;
     /* Builtin Methods */
     void Awake(){
+        page = 0;
         dirtyTable = false;
-        gameInstances = new List<GameObject>();
         games = new List<gameStruct>();
-
-        //Obtain references:
         gamesRoot = transform.Find("GamesView").gameObject;
-
-        //@TODO buttons...
+        gameInstances = new List<GameObject>();
+        for(int i = 0; i<gamesPerPage; i++){
+            GameObject inst = GameObject.Instantiate(GameInstancePrefab, gamesRoot.transform);
+            gameInstances.Add(inst);
+            inst.SetActive(false);
+        }
     }
     void Start(){
     }
@@ -45,18 +57,19 @@ public class UIManager : MonoBehaviour
 
     /*Methods*/
     private void PopulateGamesTable(){
-        foreach(var game in gameInstances){
-            Destroy(game);
-        }
-        gameInstances.Clear();
         this.dirtyTable = false;
-        for(int i = 0; i<games.Count; i++){
-            Debug.Log($"Adding game {i} to table");
-            GameObject inst = GameObject.Instantiate(GameInstancePrefab, gamesRoot.transform);
-            gameInstances.Add(inst);
-            var cell = inst.GetComponent<GameCell>();
-            if(cell != null)
-                cell.data = games[i];
+        for(int i = 0; i<gamesPerPage; i++){
+            if(i+(page*gamesPerPage) >= games.Count){
+                gameInstances[i].SetActive(false);
+                break;
+            }
+            gameInstances[i].SetActive(true);
+            Debug.Log($"Adding game {(gamesPerPage)*page + i} to table");
+            var cell = gameInstances[i].GetComponent<GameCell>();
+            if(cell != null){
+                cell.SetData(games[(int)(i+(page*gamesPerPage))]);
+            }
+                
         }
     }
 
@@ -76,10 +89,27 @@ public class UIManager : MonoBehaviour
     public void ScrollGames(bool scrollRight){}
 
     public void SetGameData(gameStruct[] gameList){
+        pages = (uint)(gameList.Length / gamesPerPage);
         Debug.Log("loading games");
         this.games = new List<gameStruct>(gameList);
+        for(int i = 0; i<games.Count; i++){
+            //sort games:
+        }
         this.dirtyTable = true;
     }
 
+
+
+    //Should wrap around?
+    public void nextPage(){
+        page++;
+        if(page >= pages)
+            page = pages - 1;
+    }
+    public void previousPage(){
+        page--;
+        if(page < 0)
+            page = 0;
+    }
 
 }

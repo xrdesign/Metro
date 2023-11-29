@@ -37,15 +37,12 @@ public class SimServer : MonoBehaviour
 
 
     public void SetupGames(JSONObject args){
-        if(alreadySetupGames)
-            return;
-
         Debug.Log("Setting up Games");
         var games = args["games"].list;
         SimServer.metroManager.enabled = true;
         SimServer.metroManager.numGamesToSpawn = (uint)games.Count;
         SimServer.metroManager.SetupSim(games, 10, 120); 
-        SimServer.alreadySetupGames = true;
+        setupGames = false;
         Debug.Log("Finished Setting Up Games");
     }
 }
@@ -71,6 +68,11 @@ public class SimService : WebSocketBehavior
         try {
             switch (command) {
                 case "noop":
+                    if(SimServer.metroManager.isDone){
+                        res.Clear();
+                        res.AddField("Status", "Complete");
+                        res.AddField("Scores", SimServer.metroManager.GetSimScores());
+                    }
                     break;
                 case "set_games":
                     Debug.Log("Setting games");
@@ -79,13 +81,13 @@ public class SimService : WebSocketBehavior
                     res.SetField("Status", "Success");
                     Debug.Log(SimServer.setupGames);
                     break;
+                case "reset_scene":
+                    Debug.Log("Resetting Scene");
+                    MetroManager.ResetScene();
+                    res.SetField("Status", "Reset");
+                    break;
                 default:
                     break;
-            }
-            if(SimServer.metroManager.isDone){
-                res.Clear();
-                res.AddField("Status", "Complete");
-                res.AddField("Scores", SimServer.metroManager.GetSimScores());
             }
         }
         catch (Exception exception) {

@@ -10,6 +10,8 @@ public class ServerConnection : MonoBehaviour
     public UIManager ui;
     public float polling_period;
     private float timer;
+    private bool shouldSendAlert = false;
+    int gameToAlert;
 
 
     // Start is called before the first frame update
@@ -28,11 +30,22 @@ public class ServerConnection : MonoBehaviour
             }
             else{
                 var message = new JSONObject();
-                message.AddField("command", "noop");
+                var args = new JSONObject();
+                if(shouldSendAlert){
+                    shouldSendAlert = false;
+                    message.AddField("command", "set_alert");
+                    args.AddField("value", true);
+                    args.AddField("game_id", gameToAlert);
+                    message.AddField("arguments", args);
+                    Debug.Log("Alert Sent!");
+                }
+                else
+                    message.AddField("command", "noop");
                 ws.Send(message.ToString());
                //Send noop 
             }
             JSONObject json = new JSONObject(e.Data);
+            Debug.Log(json.ToString());
             if(!json.HasField("Games"))
                 return;
 
@@ -43,7 +56,7 @@ public class ServerConnection : MonoBehaviour
             for(int i = 0; i<count; i++){
                 JSONObject gameData = json["Games"][i];
                 games[i] = (ParseGame(gameData)); 
-                Debug.Log("Parsing Game: " + gameData.ToString());
+                games[i].id = i;
             }
             ui.SetGameData(games);
         };
@@ -62,22 +75,27 @@ public class ServerConnection : MonoBehaviour
 
     gameStruct ParseGame(JSONObject data){
         gameStruct game = new gameStruct();
-        game.cnt_p = 0;
         JSONObject stations = data["stations"];
-        Debug.Log(stations);
         foreach(var s  in stations.list){
-            int numPassengers = 0;
             if(s.HasField("cnt_sphere"))
-                numPassengers+=(int)s["cnt_sphere"].i;
+                game.p_sphere+=(int)s["cnt_sphere"].i;
             if(s.HasField("cnt_cone"))
-                numPassengers+=(int)s["cnt_cone"].i;
+                game.p_cone+=(int)s["cnt_cone"].i;
             if(s.HasField("cnt_cube"))
-                numPassengers+=(int)s["cnt_cube"].i;
+                game.p_cube+=(int)s["cnt_cube"].i;
             if(s.HasField("cnt_star"))
-                numPassengers+=(int)s["cnt_star"].i;
-            game.cnt_p = numPassengers > game.cnt_p ? numPassengers : game.cnt_p;
-            Debug.Log(s);
+                game.p_star+=(int)s["cnt_star"].i;
+            
+            string shape = s["shape"].str;
+            switch(shape){
+            case "Sphere": game.s_sphere++; break;
+            case "Cone": game.s_cone++; break;
+            case "Cube": game.s_cube++; break;
+            case "Star": game.s_star++; break;
+            default: Debug.LogError("Unknown shape: " + shape); break;
+            }
         }
+
         List<JSONObject> lines = data["lines"].list;
         JSONObject segments = data["segments"];
         foreach(var s in segments.list){
@@ -92,10 +110,8 @@ public class ServerConnection : MonoBehaviour
             if(lines.Count <= 0)
                 break;
         }
-        game.cnt_l = lines.Count; //free lines
-        game.cnt_t = (int) data["freeTrains"].i;
-        Debug.Log(game.cnt_p);
-        Debug.Log(game.cnt_t);
+        game.free_lines = lines.Count; //free lines
+        game.free_trains = (int) data["freeTrains"].i;
         return game;
     }
 
@@ -107,6 +123,12 @@ public class ServerConnection : MonoBehaviour
     {
         timer += Time.deltaTime;
         
+    }
+
+    public void Alert(int gameID){
+        Debug.Log("Set alert should send");
+        shouldSendAlert = true;
+        gameToAlert = gameID;
     }
 
 
