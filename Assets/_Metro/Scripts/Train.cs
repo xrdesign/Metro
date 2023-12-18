@@ -51,6 +51,10 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         if(line == null){
             return;
         }
+        if(line.stops.Count <= 1){
+            return;
+        }
+        
 
 
 
