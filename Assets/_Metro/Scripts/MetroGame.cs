@@ -108,7 +108,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     // we define the logic for the action. EX: In Server.cs, we can define actions using the delegate parameter MetroGame,
     // and when we invoke here, we simply pass in ourselves. Needed now that we don't have singleton access the game.
     public delegate void MetroGameAction(MetroGame game);
-    private static Queue ActionQueue = Queue.Synchronized(new Queue());
+    private Queue ActionQueue = Queue.Synchronized(new Queue());
 
     // Used to link an action and id together so we can later indicate to MetroManager when we complete the action.
     private struct TrackedMetroGameAction
@@ -239,6 +239,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public uint QueueAction(MetroGameAction gameAction){
         if (this.Ai_paused) throw new Exception("Cannot Queue Action, AI is paused"); // don't accept actions from AI if AI is paused
         if (this.paused) throw new Exception("Cannot Queue Action, Game is paused"); // don't accept actions if game is paused
+        Debug.Log("Action Queued on MetroGame: " + this.gameId );
         uint newID = MetroManager.RequestQueueID();
         TrackedMetroGameAction trackedMetroGameAction;
         trackedMetroGameAction.action = gameAction;
@@ -263,6 +264,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
                 action = (TrackedMetroGameAction)ActionQueue.Dequeue();
             }
             action.action(this);
+            Debug.Log("Fulfilling action on game: " + gameId);
             MetroManager.FulfillQueueAction(action.id);
         }
 
