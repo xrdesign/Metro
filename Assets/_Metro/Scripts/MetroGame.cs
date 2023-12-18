@@ -927,10 +927,14 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             //SetupStation params
             var actualStation = this.stations[i];
             actualStation.transform.localPosition = new Vector3(station["x"].f, station["y"].f, station["z"].f);
-            actualStation.timer = station["timer"].f;
             actualStation.id = (int)station["id"].i;
             actualStation.uuid = (int)station["unique_id"].i;
 
+            //Uncomment to deserialize with passengers aswell.
+            //Don't include passengers for scoring individual states
+            //
+            //actualStation.timer = station["timer"].f; //Gameover Timeout
+            /*
             if(station["cnt_cone"] != null){
                 Debug.Log(station["cnt_cone"]);
                 int cnt_cone = (int)station["cnt_cone"].i;
@@ -952,6 +956,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
                 for(int x = 0; x<cnt_star; x++)
                     actualStation.SpawnPassenger(StationType.Star);
             }
+            */
         }
 
         //Recreate Transit Lines
