@@ -18,7 +18,7 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
     private Image[] seats;
     
     public TransportLine line = null;
-    public TransportLine nextLine = null;
+    public bool shouldRemove  = false;
 
     private GameObject prefab;
     private GameObject train;
@@ -94,9 +94,12 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
             var nextStation = line.stops[nextStop];
 
             PassengerDropWithRoute(station, nextStation);
-            if(nextLine != null){
+            if(shouldRemove){
                 DropAllPassengers(station);
-                SwitchLine(nextLine);
+
+                this.gameInstance.freeTrains++;
+                this.line.trains.Remove(this);
+                Destroy(this.gameObject);
                 return;
             }
             PassengerPickupWithRoute(station, nextStation);
@@ -123,6 +126,9 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
     }
 
     public void SwitchLine(TransportLine nextLine){
+        if(this.line.trains.Count <= 1){
+            return;
+        }
         this.gameInstance.freeTrains++;
         nextLine.AddTrain(0.0f, 1.0f);
 

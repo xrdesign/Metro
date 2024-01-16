@@ -155,10 +155,6 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
     }
 
     void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData){
-        if(gameInstance.selectedTrain != null){
-            gameInstance.selectedTrain.nextLine = this.line;
-            gameInstance.selectedTrain = null;
-        }
     }
 
     

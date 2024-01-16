@@ -107,6 +107,10 @@ public class TransportLine : MonoBehaviour
 
         trains.Add(t);
     }
+    public void RemoveTrain(){
+        if(this.trains.Count <= 0) return;
+        trains[0].shouldRemove = true;
+    }
 
     public Station FindDestination(int from, int direction, StationType type){
         var distance = 999;
