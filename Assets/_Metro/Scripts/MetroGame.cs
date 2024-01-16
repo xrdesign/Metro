@@ -526,13 +526,15 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     public static void DeselectLine(){
         var line = editingLine;
         if( line != null){
-            if(line.stops.Count == 1) line.RemoveAll();
             line.tracks.DisableUISegments();
             var color = line.color;
             color.a = 0.75f;
-            if(editingIndex == -1) line.tracks.head.SetColor(color);
-            else if(editingIndex == line.tracks.segments.Count) line.tracks.tail.SetColor(color);
-            else line.tracks.segments[editingIndex].SetColor(color);
+            if(line.stops.Count == 1) line.RemoveAll();
+            else{
+                if(editingIndex == -1) line.tracks.head.SetColor(color);
+                else if(editingIndex == line.tracks.segments.Count) line.tracks.tail.SetColor(color);
+                else line.tracks.segments[editingIndex].SetColor(color);
+            }
         }
         editingLine = null;
     }

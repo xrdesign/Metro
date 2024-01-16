@@ -13,6 +13,13 @@ public class TransportLineUI : MonoBehaviour
 
     bool hide = true;
 
+    public List<GameObject> trainUIs;
+
+    void Awake()
+    {
+        trainUIs = new List<GameObject>();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -38,6 +45,18 @@ public class TransportLineUI : MonoBehaviour
             circle.transform.localPosition = p;
             demolish.SetActive(true);
         }
+
+
+        while(trainUIs.Count < line.trains.Count){
+            //Add train
+            trainUIs.Add(GameObject.Instantiate(circle, this.transform));
+        }
+        while(trainUIs.Count > line.trains.Count){
+            if(trainUIs.Count > 0){
+                Destroy(trainUIs[0]);
+                trainUIs.RemoveAt(0);
+            }
+        }
         
     }
 
@@ -56,6 +75,15 @@ public class TransportLineUI : MonoBehaviour
         line.RemoveAll();
         demolish.SetActive(false);
         hide = true;
+    }
+    
+    public void AddTrainClick(){
+        if(!line.isDeployed) return;
+        line.AddTrain(0, 1);
+    }
+    public void RemoveTrainClick(){
+        if(!line.isDeployed) return;
+        line.RemoveTrain();
     }
     
 }
