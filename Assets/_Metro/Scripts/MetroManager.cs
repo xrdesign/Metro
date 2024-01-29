@@ -41,6 +41,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     private float _logTimer;
     public float  secondsPerLogEntry = 10;
     StreamWriter sw;
+    private int[] actionsTaken;
 
     #endregion
 
@@ -135,6 +136,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
                 games[(int)i].StartSimGame(jsonGames[(int)i], this.gameSpeed, this.simLength);
             }
         }
+        actionsTaken = new int[games.Count];
     
     }
 
@@ -178,7 +180,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         var json = new JSONObject(JSONObject.Type.ARRAY);
         for(int i=0; i<games.Count; i++){
             MetroGame game = games[i];
-            json.Add(game.SerializeGameState());
+            var gameJson = game.SerializeGameState();
+            gameJson.AddField("agent_action_count", actionsTaken[i]);
+            json.Add(gameJson);
         }
         log.AddField("log_step", logStep);
         log.AddField("games", json);
@@ -342,6 +346,15 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// <param name="gameID">ID of game to queue the action for</param>
     public static uint QueueGameAction(MetroGame.MetroGameAction action, uint gameID)
     {
+        //update action count for logging
+        if(Instance != null){
+            if(Instance.actionsTaken != null){
+                if(gameID >= 0 && gameID < Instance.actionsTaken.Length){
+                    Instance.actionsTaken[gameID]++;
+                }
+            }
+        }
+
         return GetGameWithID(gameID).QueueAction(action);
     }
 
