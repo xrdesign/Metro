@@ -41,7 +41,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     private float _logTimer;
     public float  secondsPerLogEntry = 10;
     StreamWriter sw;
-    private int[] actionsTaken;
+    private int[,] actionsTaken;
 
     #endregion
 
@@ -136,7 +136,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
                 games[(int)i].StartSimGame(jsonGames[(int)i], this.gameSpeed, this.simLength);
             }
         }
-        actionsTaken = new int[games.Count];
+        actionsTaken = new int[games.Count,3];
     
     }
 
@@ -181,16 +181,23 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         for(int i=0; i<games.Count; i++){
             MetroGame game = games[i];
             var gameJson = game.SerializeGameState();
-            gameJson.AddField("agent_action_count", actionsTaken[i]);
+            gameJson.AddField("agent_insert_station", actionsTaken[i,0]);
+            actionsTaken[i,0]=0;
+            gameJson.AddField("agent_remove_station", actionsTaken[i,1]);
+            actionsTaken[i,1]=0;
+            gameJson.AddField("agent_remove_track", actionsTaken[i,2]);
+            actionsTaken[i,2]=0;
             json.Add(gameJson);
         }
         log.AddField("log_step", logStep);
         log.AddField("games", json);
+        log.AddField("server_messages", commandList);
         if(logStep == 1)
             sw.WriteLine(log.ToString()); 
         else
             sw.WriteLine(","+log.ToString());
         logStep++;
+        commandList.Clear();
     }
 
     void SetupLogs(){
@@ -202,10 +209,32 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         if(File.Exists(filePath+"Latest.txt"))
             File.Copy(filePath+"Latest.txt", filePath+"Previous.txt", true);
 
+        commandList = new JSONObject(JSONObject.Type.ARRAY);
 
         //start new log
         sw = new StreamWriter(filePath+"Latest.txt");
         sw.Write("{\"time_steps\":[");
+    }
+
+    private JSONObject commandList;
+    public static void LogServerMessage(JSONObject message){
+        Instance.commandList.Add(message);
+        if(message.HasField("command")){
+            int game = (int)message["game_id"].i;
+            string type = message["arguments"]["action"].str;
+            Debug.Log(type);
+            int typeIdx = 0;
+            if(string.Equals(type, "insert_station")){
+                typeIdx = 0;
+            }
+            else if(string.Equals(type, "remove_station")){
+                typeIdx = 1;
+            }
+            else if(string.Equals(type, "remove_track")){
+                typeIdx = 2;
+            }
+            Instance.actionsTaken[game, typeIdx]++;
+        }
     }
 
     #endregion
@@ -346,17 +375,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// <param name="gameID">ID of game to queue the action for</param>
     public static uint QueueGameAction(MetroGame.MetroGameAction action, uint gameID)
     {
-        //update action count for logging
-        if(Instance != null){
-            if(Instance.actionsTaken != null){
-                if(gameID >= 0 && gameID < Instance.actionsTaken.Length){
-                    Instance.actionsTaken[gameID]++;
-                }
-            }
-        }
-
         return GetGameWithID(gameID).QueueAction(action);
     }
+
 
     /// <summary>
     /// Gives a queue ID to use in MetroGame, and stores the ID as not completed until FulfillQueueAction is called.
