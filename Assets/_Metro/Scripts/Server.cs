@@ -52,7 +52,7 @@ public class Server : MonoBehaviour
 public class MetroService : WebSocketBehavior
 {
 
-    bool enableLogs = false;
+    bool enableLogs = true;
     protected override void OnOpen(){
         Debug.Log("[Server][Metro Service] Client connected.");
     }
@@ -98,8 +98,9 @@ public class MetroService : WebSocketBehavior
     */
     protected override void OnMessage (MessageEventArgs e)
     {
-        if(enableLogs)
+        if(enableLogs){
             Server.sw.WriteLine(e.Data);
+        }
         var res = new JSONObject();
         var json = new JSONObject(e.Data);
         var command = json["command"].str;
@@ -150,9 +151,11 @@ public class MetroService : WebSocketBehavior
                     break;
 
                 case "take_action":
+                    MetroManager.LogServerMessage(json);
                     uint gameIDTakeAction = (uint)json["game_id"].i;
                     args = json["arguments"];
                     res = QueueAction(args, gameIDTakeAction);
+                    MetroManager.LogServerMessage(res);
                     break;
                 case "get_potential_actions":
                     JSONObject actions = new JSONObject(JSONObject.Type.ARRAY);
@@ -189,8 +192,9 @@ public class MetroService : WebSocketBehavior
 
         Send(res.ToString());
         if(res.ToString().Length > 0){
-            if(enableLogs)
+            if(enableLogs){
                 Server.sw.WriteLine(res.ToString());
+            }
         }
     }
 
