@@ -27,6 +27,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     #region Set In Editor
 
     public uint numGamesToSpawn = 1;
+    public uint daysPerNewTrain = 5;
+    public uint daysPerNewLine  = 15;
 
     #region Game Parameters
 
@@ -129,6 +131,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
                 var newMetroGame = (new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
                 newMetroGame.gameId = i;
                 newMetroGame.transform.parent = this.transform; //less clutter in scene hiearchy
+                newMetroGame.daysPerLine = (int)Instance.daysPerNewLine;
+                newMetroGame.daysPerTrain = (int)Instance.daysPerNewTrain;
                 games.Add(newMetroGame);
                 newMetroGame.transform.position = GetGameLocation(newMetroGame.gameId);
             }

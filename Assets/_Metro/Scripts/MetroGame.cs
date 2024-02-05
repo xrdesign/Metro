@@ -85,6 +85,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     #endregion
     
     
+    public int daysPerTrain = int.MaxValue;
+    public int daysPerLine  = int.MaxValue;
 
 
     #region Delegates
@@ -122,6 +124,17 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     private volatile bool needReset = false;
     private bool simGame = false;
     private float simLength = 0;
+
+
+    private static  Color[] lineColors = {
+        Color.red,
+        Color.blue,
+        Color.yellow,
+        Color.cyan,
+        Color.magenta,
+    };
+    private int addedLines = 0;
+    
     
     void OnEnable(){
         CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(this);
@@ -326,9 +339,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         stations[1].stationName = "2";
         stations[2].stationName = "3";
 
-        AddTransportLine(Color.red);
-        AddTransportLine(Color.blue);
-        AddTransportLine(Color.yellow);
+        this.addedLines = 0;
+        AddTransportLine();
+        AddTransportLine();
+        AddTransportLine();
         
         paused = false;
         gameSpeed = 1.0f;
@@ -396,24 +410,35 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             if(hour % 2 == 0){
                 SpawnPassengers(); // spawn random passengers if needed
             }
-
-
         }
         if(newDay != day){
             // new day event
             day = newDay;
-
             if(!simGame)
                 SpawnStations(); // spawn random stations if needed
-
+            if(day % daysPerTrain == 0){
+                freeTrains++;
+                if(uiUpdateDelegate != null)
+                    uiUpdateDelegate.Invoke();
+            }
+            if(day % daysPerLine == 0){
+                AddTransportLine();
+                if(uiUpdateDelegate != null)
+                    uiUpdateDelegate.Invoke();
+            }
         }
+        
         if(newWeek != week){
             // new week event
             week = newWeek;
         }
     }
 
-    public void AddTransportLine(Color color){
+    public void AddTransportLine(){
+        if(addedLines < 0 || addedLines >= lineColors.Length){
+            return;
+        }
+        Color color = lineColors[addedLines];
         var go = new GameObject();
         go.name = "TransportLine";
         var line = go.AddComponent<TransportLine>();
@@ -423,6 +448,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         line.uuid = line.GetInstanceID();
         line.gameInstance = this;
         lines.Add(line);
+        addedLines++;
     }
 
     public void SpawnPassengers(){
@@ -964,14 +990,11 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         }
 
         //Recreate Transit Lines
-        this.AddTransportLine(Color.red); 
-        this.AddTransportLine(Color.blue);
-        this.AddTransportLine(Color.yellow);
-
         var jsonLines = gameState["lines"].list;
-        lines[0].uuid = (int)jsonLines[0]["unique_id"].i;
-        lines[1].uuid = (int)jsonLines[1]["unique_id"].i;
-        lines[2].uuid = (int)jsonLines[2]["unique_id"].i;
+        for(int i =0; i<jsonLines.Count; i++){
+            this.AddTransportLine();
+            lines[i].uuid = (int)jsonLines[i]["unique_id"].i;
+        }
 
         int current_line_id = 0;
         TransportLine currLine = null;
