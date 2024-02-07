@@ -325,6 +325,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         passengersDelivered = 0;
         totalPassengerWaitTime = 0;
         totalPassengerTravelTime = 0;
+        addedLines = 0;
 
         
     }
@@ -988,6 +989,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
             }
             */
         }
+
 
         //Recreate Transit Lines
         var jsonLines = gameState["lines"].list;
