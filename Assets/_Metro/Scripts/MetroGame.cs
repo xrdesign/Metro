@@ -17,6 +17,7 @@ using UnityEngine.InputSystem.EnhancedTouch;
 
 
 using TMPro;
+using Random = System.Random;
 
 
 public delegate void GameSelectionDelegateDef(bool selected);
@@ -26,6 +27,7 @@ public delegate void GameSelectionDelegateDef(bool selected);
 * This singleton object initializes and handles global game state and events
 */
 public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
+    private Random random;
     public uint gameId;
     
     public float score = 0.0f;
@@ -159,6 +161,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     void Start(){
         //Create Display Plane:
+        if(random == null){
+            random = new Random();
+        }
         GameObject floor = GameObject.Instantiate(Resources.Load("Prefabs/GameFloor") as GameObject);
         floor.transform.SetParent(this.transform, worldPositionStays: false);
         floor.GetComponent<MeshRenderer>().material.SetInt("_IsEven", (gameId % 2 == 0 || gameId == 0)?1:0);
@@ -451,10 +456,17 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         lines.Add(line);
         addedLines++;
     }
+    public float GetRandomFloat(){
+        return random.Next(0,10000) / 10000f;
+    }
+    public void SetSeed(int seed){
+        Debug.Log($"Setting seed: {seed}");
+        random = new Random(seed);
+    }
 
     public void SpawnPassengers(){
         foreach(Station station in stations){
-            var p = UnityEngine.Random.value;
+            var p = GetRandomFloat();
             if(p < 0.15f){
                 station.SpawnRandomPassenger();
             }
@@ -462,7 +474,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     }
 
     public void SpawnStations(){
-        var p = UnityEngine.Random.value;
+        var p = GetRandomFloat();
         if(p < 0.8f){
             SpawnRandomStation();
         }
@@ -501,7 +513,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         var offset = new Vector3(0f,0f,2f);
         var pos = new Vector3(0f,1.0f,0f) + offset;
         while(StationTooClose(pos)){
-            pos = UnityEngine.Random.insideUnitSphere * radius + offset;
+            float theta = GetRandomFloat() * 360f;
+            float w = GetRandomFloat() * 360f;
+            float r = GetRandomFloat();
+            Vector3 ran = Vector3.forward * r;
+            ran = Quaternion.AngleAxis(theta, Vector3.up) * ran;
+            ran = Quaternion.AngleAxis(w, Vector3.right) * ran;
+            pos = ran * radius + offset;
             radius += 0.02f;
             if(pos.y < 0.5f) pos.Set(pos.x, 0.5f, pos.z);
             if(pos.y > 2.0f) pos.Set(pos.x, 2.0f, pos.z);
@@ -517,7 +535,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     }
 
     public void SpawnRandomStation(){
-        var p = UnityEngine.Random.value;
+        var p = GetRandomFloat();
         var type = StationType.Sphere;
         if( p < .1f && !containsStarStation) 
             type = StationType.Star;

@@ -1878,6 +1878,7 @@ MonoBehaviour:
   daysPerNewTrain: 5
   daysPerNewLine: 15
   timeoutDurationOverride: 45
+  gameSeeds: 0a0000000a000000
   secondsPerLogEntry: 20
   menuUI: {fileID: 0}
   metroUI: {fileID: 4500513732196729373}
