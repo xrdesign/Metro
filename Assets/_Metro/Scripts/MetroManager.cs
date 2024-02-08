@@ -33,6 +33,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     #region Game Parameters
 
     public float timeoutDurationOverride = 45.0f;
+    public int[] gameSeeds;
 
     #endregion
 
@@ -135,6 +136,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
                 newMetroGame.daysPerTrain = (int)Instance.daysPerNewTrain;
                 games.Add(newMetroGame);
                 newMetroGame.transform.position = GetGameLocation(newMetroGame.gameId);
+                if(i < gameSeeds.Length){
+                    newMetroGame.SetSeed(gameSeeds[i]);
+                }
             }
             if(jsonGames != null){
                 games[(int)i].StartSimGame(jsonGames[(int)i], this.gameSpeed, this.simLength);

@@ -161,7 +161,7 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         var pCone = type == StationType.Cone ? 0.0f : 0.55f;
         var pCube = type == StationType.Cube ? 0.0f : 0.45f;
         
-        var p = Random.value;
+        var p = gameInstance.GetRandomFloat();
         int idx = (int)(p*possibleTypes.Count);
         if(idx == possibleTypes.Count) idx--;
         SpawnPassenger(possibleTypes[idx]);
