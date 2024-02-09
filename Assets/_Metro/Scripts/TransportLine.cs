@@ -54,11 +54,15 @@ public class TransportLine : MonoBehaviour
         Debug.Log("insert station");
         stops.Insert(stopIndex, station);
         if(!station.lines.Contains(this)) station.lines.Add(this);
+        if(!isDeployed){
+            gameInstance.linesCreated++;
+        }
         isDeployed = true;
         if(stops.Count >= 2 && trains.Count == 0){
             AddTrain(0.0f,1.0f);
         }
         tracks.needsUpdate = true;
+        gameInstance.insertions++;
     }
 
     public void RemoveStation(Station station){
@@ -67,7 +71,7 @@ public class TransportLine : MonoBehaviour
         if(stops.Count <= 1)
             this.RemoveAll();
         tracks.needsUpdate = true;
-
+        gameInstance.deletions++;
     }
 
     public void RemoveAll(){
@@ -82,6 +86,7 @@ public class TransportLine : MonoBehaviour
         gameInstance.freeTrains += trains.Count;
         trains.Clear();
         isDeployed = false;
+        gameInstance.linesRemoved++;
     }
 
     //add train at a specific location
@@ -106,10 +111,12 @@ public class TransportLine : MonoBehaviour
         t.transform.SetParent(gameInstance.trainOrganizer.transform);
 
         trains.Add(t);
+        gameInstance.trainsAdded++;
     }
     public void RemoveTrain(){
         if(this.trains.Count <= 0) return;
         trains[0].shouldRemove = true;
+        gameInstance.trainsRemoved++;
     }
 
     public Station FindDestination(int from, int direction, StationType type){

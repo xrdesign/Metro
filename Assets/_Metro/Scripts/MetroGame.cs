@@ -104,7 +104,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     
     #endregion
 
-    
+    public int insertions;
+    public int deletions;
+    public int linesRemoved;
+    public int linesCreated;
+
+    public int trainsAdded;
+    public int trainsRemoved;
 
     #region Action Queue
 
@@ -851,6 +857,18 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         json.AddField("lines", SerializeTransportLines());
         json.AddField("trains", SerializeTrains());
         json.AddField("segments", SerializeSegments());
+        json.AddField("stationsInserted", insertions);
+        insertions = 0;
+        json.AddField("stationsRemoved", deletions);
+        deletions = 0;
+        json.AddField("linesRemoved", linesRemoved);
+        linesRemoved = 0;
+        json.AddField("linesCreated", linesCreated);
+        linesCreated = 0;
+        json.AddField("trainsAdded", trainsAdded);
+        trainsAdded = 0;
+        json.AddField("trainsRemoved", trainsRemoved);
+        trainsRemoved = 0;
         return json;
     }
     
