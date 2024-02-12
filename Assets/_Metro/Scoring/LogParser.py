@@ -6,30 +6,30 @@ import json
 
 class GameStruct:
     def __init__(self, gameJson):
-        self.score = gameJson['score']
-        self.time  = gameJson['time']
-        self.isPause = gameJson['isPause']
-        self.isGameover = gameJson['isGameover']
-        self.freeTrains = gameJson['freeTrains']
-        self.agentInsertStation = gameJson['agent_insert_station']
-        self.agentRemoveStation = gameJson['agent_remove_station']
-        self.agentRemoveTrack   = gameJson['agent_remove_track']
-        self.stationsInserted = gameJson["stationsInserted"]
-        self.stationsRemoved  = gameJson["stationsRemoved"]
-        self.linesRemoved     = gameJson["linesRemoved"]
-        self.linesCreated     = gameJson["linesCreated"]
-        self.trainsAdded      = gameJson["trainsAdded"]
-        self.trainsRemoved    = gameJson["trainsRemoved"]
+        self.score = gameJson['score'] if 'score' in gameJson else 0
+        self.time  = gameJson['time']  if 'time' in gameJson else 0
+        self.isPause = gameJson['isPause'] if 'isPause' in gameJson else False
+        self.isGameover = gameJson['isGameover'] if 'isGameover' in gameJson else False
+        self.freeTrains = gameJson['freeTrains'] if 'freeTrains' in gameJson else 0
+        self.agentInsertStation = gameJson['agent_insert_station'] if 'agent_insert_station' in gameJson else 0
+        self.agentRemoveStation = gameJson['agent_remove_station'] if 'agent_remove_station' in gameJson else 0
+        self.agentRemoveTrack   = gameJson['agent_remove_track'] if 'agent_remove_track' in gameJson else 0
+        self.stationsInserted = gameJson["stationsInserted"] if 'stationsInserted' in gameJson else 0
+        self.stationsRemoved  = gameJson["stationsRemoved"] if 'stationsRemoved' in gameJson else 0
+        self.linesRemoved     = gameJson["linesRemoved"] if 'linesRemoved' in gameJson else 0
+        self.linesCreated     = gameJson["linesCreated"] if 'linesCreated' in gameJson else 0
+        self.trainsAdded      = gameJson["trainsAdded"]  if 'trainsAdded' in gameJson else 0
+        self.trainsRemoved    = gameJson["trainsRemoved"] if 'trainsRemoved' in gameJson else 0
 
         self.agentActions = self.agentInsertStation + self.agentRemoveStation + self.agentRemoveTrack
 
 class SimStruct:
     def __init__(self, gameJson):
-        self.score = gameJson['score']
-        self.passengersDelivered = gameJson['passengersDelivered']
-        self.totalWaitTime = gameJson['totalWaitTime']
-        self.totalTravelTime = gameJson['totalTravelTime']
-        self.stationCount = gameJson['station_count']
+        self.score = gameJson['score'] if 'score' in gameJson else 0
+        self.passengersDelivered = gameJson['passengersDelivered'] if 'passengersDelivered' in gameJson else 0  
+        self.totalWaitTime = gameJson['totalWaitTime'] if 'totalWaitTime' in gameJson else 0
+        self.totalTravelTime = gameJson['totalTravelTime'] if 'totalTravelTime' in gameJson else 0
+        self.stationCount = gameJson['station_count'] if 'station_cout' in gameJson else 0
 
 if __name__ == "__main__":
     filename = sys.argv[1] #Get log file path as first commandline arg
