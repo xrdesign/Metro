@@ -50,7 +50,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
     #region Privates
 
-    private List<MetroGame> games = new List<MetroGame>();
+    public List<MetroGame> games = new List<MetroGame>();
 
     // Used for UI stuff. The game that the player is currently "selecting". I.E. what they can interact with, add to, change, etc.
     // todo: Decide how to select. Should it just be nearest game? Should there be some UI for it? ETC. For now just select first game.
