@@ -148,6 +148,10 @@ PrefabInstance:
       propertyPath: m_margin.z
       value: 2.2602592
       objectReference: {fileID: 0}
+    - target: {fileID: 133888950268617049, guid: 39766aea825dd0748b0820eb45eb63f6, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 404284039319932707, guid: 39766aea825dd0748b0820eb45eb63f6, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
