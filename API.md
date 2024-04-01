@@ -74,8 +74,12 @@ Take some specified action on the game.
 	  - line_index: index of the line to remove on.
 	  - station_index: index of the station to remove.
 	  - station_name: name of the station to remove.
-	- remove_track: "arguments" needs to contain thhe following:
+	- remove_track: "arguments" needs to contain the following:
 	  - line_index: index of the line to remove.
+	- add_train: "arguments" needs to contain the following:
+    	  - line_index: index of the line to add a train to
+    	- remove_train: "arguments" needs to contain the following:
+    	  - line_index: index of the line to remove a train from
 
 
 - Notes:  Inserting a station to an empty line will not create a visual change in the game until the second station is added.  Once two stations are added to a transport line, a train is added and the line begins to function.  When inserting a station at an index that already contains a station, the station at and after that index are moved down the line to make room for the new station.  If both a station index and station name are provided the station name is used and the index is ignored.
