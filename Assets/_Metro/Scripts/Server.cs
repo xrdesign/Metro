@@ -308,6 +308,26 @@ public class MetroService : WebSocketBehavior
                 }, gameID);
                 break;
 
+            case "add_train":
+                if (!args.HasField("line_index"))
+                    throw new Exception("insert_train action missing required input: line_index");
+                lineIndex = (int)args["line_index"].i;
+                queueID = MetroManager.QueueGameAction((game) =>
+                {
+                    var line = game.lines[lineIndex];
+                    line.AddTrain(0,0);
+                }, gameID);
+                break;
+            case "remove_train":
+                if (!args.HasField("line_index"))
+                    throw new Exception("remove_train action missing required input: line_index");
+                lineIndex = (int)args["line_index"].i;
+                queueID = MetroManager.QueueGameAction((game) =>
+                {
+                    var line = game.lines[lineIndex];
+                    line.RemoveTrain();
+                }, gameID);
+                break;
             default:
                 throw new Exception("Error, action didn't match any valid actions.");
         }
