@@ -33,7 +33,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d6ccd3d0ef0f1d458e69421dccbdae1, type: 3}
   m_Name: ValveIndexControllerProfile Standalone
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: Valve Index Controller Profile
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.input.valveindex
@@ -146,7 +146,6 @@ MonoBehaviour:
   - {fileID: -7452671674391756271}
   m_renderMode: 1
   m_depthSubmissionMode: 0
-  versionChanged: 0
 --- !u!114 &-3014103557172192820
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -647,7 +646,6 @@ MonoBehaviour:
   - {fileID: -8029940560599859431}
   m_renderMode: 1
   m_depthSubmissionMode: 0
-  versionChanged: 0
 --- !u!114 &6826620147031632720
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -672,7 +670,6 @@ MonoBehaviour:
   - {fileID: -2118556540208650400}
   m_renderMode: 1
   m_depthSubmissionMode: 0
-  versionChanged: 0
 --- !u!114 &7677708633562973351
 MonoBehaviour:
   m_ObjectHideFlags: 0
