@@ -139,7 +139,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         Color.blue,
         Color.yellow,
         Color.green,
-        new Color(107, 47, 247),
+        new Color(107f/255f, 47f/255f, 247f/255f),
     };
     private int addedLines = 0;
     
