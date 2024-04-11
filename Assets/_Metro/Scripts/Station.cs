@@ -135,18 +135,18 @@ public class Station : MonoBehaviour, IMixedRealityPointerHandler, IMixedReality
         timerImage.fillAmount = timer / MaxTimeoutDuration;
 
         // Update passenger routes
-        // passengersRoutes = new string[passengers.Count];
-        // for (int i = 0; i < passengers.Count; i++)
-        // {
-        //     passengersRoutes[i] = "";
-        //     if (passengers[i].route != null)
-        //     {
-        //         foreach (var s in passengers[i].route)
-        //         {
-        //             passengersRoutes[i] += s.id + " ";
-        //         }
-        //     }
-        // }
+        passengersRoutes = new string[passengers.Count];
+        for (int i = 0; i < passengers.Count; i++)
+        {
+            passengersRoutes[i] = "";
+            if (passengers[i].route != null)
+            {
+                foreach (var s in passengers[i].route)
+                {
+                passengersRoutes[i] += s.id + " ";
+                }
+            }
+        }
     }
 
     public void SpawnRandomPassenger(){

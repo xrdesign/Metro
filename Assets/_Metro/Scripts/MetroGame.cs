@@ -662,6 +662,17 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
                 //}
             }
         }
+        /*
+        foreach(var line in lines){
+            foreach(var train in line.trains){
+                Station station = line.stops[train.nextStop];
+                foreach(var passenger in train.passengers){
+                    passenger.route = FindRouteClosest(station, passenger.destination);
+                    passenger.route.Insert(0, station);
+                }
+            }
+        }
+        */
     }
 
     public List<Station> ReconstructRoute(Station start, Station end, Dictionary<Station, Station> cameFrom)

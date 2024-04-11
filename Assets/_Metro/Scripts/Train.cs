@@ -24,8 +24,11 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
     private GameObject train;
     public GameObject ghost = null;
     
+
     public MetroGame gameInstance;
 
+
+    public List<string> passengerRoutes = new List<string>();
     // Start is called before the first frame update
     void Start()
     {
@@ -44,6 +47,16 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
     // Update is called once per frame
     void Update()
     {
+
+        passengerRoutes.Clear();
+
+        foreach(var p in passengers){
+            string s = "";
+            foreach(var i in p.route){
+                s += i.id + " ";
+            }
+            passengerRoutes.Add(s);
+        }
 
         foreach(var p in passengers){
             p.travelTime += Time.deltaTime * gameInstance.gameSpeed;
@@ -82,27 +95,32 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
         var closestStopIndex = System.Math.Round(d);
         // var dist = System.Math.Abs(d - closestStopIndex);
         var dist = direction*(closestStopIndex - d); // if overshot then negative
-        if(dist < 0.05 && nextStop == closestStopIndex){
-            // Debug.Log("stop " + nextStop);
-
-            var station = line.stops[nextStop];
-
-            if(closestStopIndex == line.stops.Count - 1) nextStop -= 1;
-            else if(closestStopIndex == 0) nextStop += 1;
-            else nextStop += (int)direction;
-
-            var nextStation = line.stops[nextStop];
-
-            PassengerDropWithRoute(station, nextStation);
-            if(shouldRemove){
-                DropAllPassengers(station);
-
-                this.gameInstance.freeTrains++;
-                this.line.trains.Remove(this);
-                Destroy(this.gameObject);
-                return;
+        if(dist < 0.05 ){
+            if(nextStop >= line.stops.Count || nextStop < 0){
+                nextStop = (int)closestStopIndex;
             }
-            PassengerPickupWithRoute(station, nextStation);
+            if(nextStop == closestStopIndex){
+                // Debug.Log("stop " + nextStop);
+
+                var station = line.stops[nextStop];
+
+                if(closestStopIndex == line.stops.Count - 1) nextStop -= 1;
+                else if(closestStopIndex == 0) nextStop += 1;
+                else nextStop += (int)direction;
+
+                var nextStation = line.stops[nextStop];
+
+                PassengerDropWithRoute(station, nextStation);
+                if(shouldRemove){
+                    DropAllPassengers(station);
+
+                    this.gameInstance.freeTrains++;
+                    this.line.trains.Remove(this);
+                    Destroy(this.gameObject);
+                    return;
+                }
+                PassengerPickupWithRoute(station, nextStation);
+            }
 
         }
     }
@@ -181,14 +199,21 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
                 continue;
             }
 
+
             // if station is on route, but the next Station is not, drop the passenger (add back to station!)
             if (p.route != null)
             {
-                if (p.route.Contains(station) && !p.route.Contains(nextStation)) // this should always be index 0 and index 1 though if no error
-                {
+                if(p.route[0] != station){
+                    Debug.Log("Error dropping off passenger, arrived at unexpected station, recomputing route");
+                    p.route = gameInstance.FindRouteClosest(station, p.destination);
+                }
+                else{
+                    p.route.RemoveAt(0);
+                }
+                if(p.route.Count <= 0 || p.route[0] != nextStation){
                     passengers.RemoveAt(i);
                     station.passengers.Add(p); // add back
-                    // remove the station from the route
+                                               // remove the station from the route
                     p.route.Remove(station); // this should be at index 0 (hopefully)
                     count += 1;
                     continue;
