@@ -123,6 +123,8 @@ public class MetroService : WebSocketBehavior
                 case "get_state":
                     uint gameIDGetState = (uint)json["game_id"].i;
                     res = MetroManager.SerializeGame(gameIDGetState);
+                    res.AddField("new_instructions", MetroManager.HasInstructions());
+                    res.AddField("instruction_text", MetroManager.GetInstructions());
                     break;
                 case "get_all_states":
                     var games = new JSONObject(JSONObject.Type.ARRAY);

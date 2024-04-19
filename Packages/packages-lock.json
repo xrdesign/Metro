@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.endel.nativewebsocket": {
+      "version": "https://github.com/endel/NativeWebSocket.git#upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "c5101c07762251edc82caad9e8a39d51b1229c31"
+    },
     "com.microsoft.mixedreality.toolkit.extensions": {
       "version": "file:MixedReality/com.microsoft.mixedreality.toolkit.extensions-2.8.0.tgz",
       "depth": 0,
