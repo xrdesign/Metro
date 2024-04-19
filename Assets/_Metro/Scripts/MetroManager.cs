@@ -144,7 +144,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
                 games[(int)i].StartSimGame(jsonGames[(int)i], this.gameSpeed, this.simLength);
             }
         }
-        actionsTaken = new int[games.Count,3];
+        actionsTaken = new int[games.Count,5];
     
     }
 
@@ -195,6 +195,10 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             actionsTaken[i,1]=0;
             gameJson.AddField("agent_remove_track", actionsTaken[i,2]);
             actionsTaken[i,2]=0;
+            gameJson.AddField("agent_add_train", actionsTaken[i,3]);
+            actionsTaken[i,3]=0;
+            gameJson.AddField("agent_remove_train", actionsTaken[i,4]);
+            actionsTaken[i,4]=0;
             json.Add(gameJson);
         }
         log.AddField("log_step", logStep);
@@ -240,6 +244,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             }
             else if(string.Equals(type, "remove_track")){
                 typeIdx = 2;
+            }
+            else if(string.Equals(type, "add_train")){
+                typeIdx = 3;
+            }
+            else if(string.Equals(type, "remove_train")){
+                typeIdx = 4;
             }
             Instance.actionsTaken[game, typeIdx]++;
         }
@@ -370,6 +380,25 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// <returns>Currently selected <see cref="MetroGame"/></returns>
     public static MetroGame GetSelectedGame() {
         return Instance.selectedGame;
+    }
+
+    private static Queue<string> instructionQueue = new Queue<string>(); 
+    private static bool hasInstructions = false;
+
+    public static bool HasInstructions(){
+        return instructionQueue.Count > 0;
+    }
+    public static string GetInstructions(){
+        string instructions = "";
+        if(HasInstructions()){
+            instructions = instructionQueue.Dequeue();
+            Debug.Log("retrieved instructions" + instructions);
+        }
+        return instructions;
+    }
+    public static void AddInstructions(string i){
+        Debug.Log("added instructions: " + i);
+        instructionQueue.Enqueue(i);
     }
 
     #endregion
