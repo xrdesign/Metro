@@ -144,7 +144,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
                 games[(int)i].StartSimGame(jsonGames[(int)i], this.gameSpeed, this.simLength);
             }
         }
-        actionsTaken = new int[games.Count,6];
+        actionsTaken = new int[games.Count,5];
     
     }
 
@@ -199,8 +199,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             actionsTaken[i,3]=0;
             gameJson.AddField("agent_remove_train", actionsTaken[i,4]);
             actionsTaken[i,4]=0;
-            gameJson.AddField("agent_remove_line", actionsTaken[i,5]);
-            actionsTaken[i,5]=0;
             json.Add(gameJson);
         }
         log.AddField("log_step", logStep);
@@ -252,9 +250,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             }
             else if(string.Equals(type, "remove_train")){
                 typeIdx = 4;
-            }
-            else if(string.Equals(type, "remove_track")){
-                typeIdx = 5;
             }
             Instance.actionsTaken[game, typeIdx]++;
         }
