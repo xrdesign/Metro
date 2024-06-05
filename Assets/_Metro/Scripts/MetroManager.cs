@@ -21,6 +21,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     #region LibLSL
 
     private liblsl.StreamOutlet markerStream;
+    private List<string> markersThisFrame;
 
     #endregion
 
@@ -105,6 +106,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         liblsl.StreamInfo inf =
             new liblsl.StreamInfo("EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
         markerStream = new liblsl.StreamOutlet(inf);
+        markersThisFrame = new List<string>();
 
         // Spawn in the games.
 
@@ -161,6 +163,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
                 LogData();
                 _logTimer = diff;
             }
+        }
+        
+        //Send LSL Markers
+        if(markersThisFrame.Count > 0){
+            markerStream.push_sample(markersThisFrame.ToArray());  
+            markersThisFrame.Clear();
         }
 
     }
@@ -238,18 +246,23 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
             int typeIdx = 0;
             if(string.Equals(type, "insert_station")){
                 typeIdx = 0;
+                MetroManager.SendEvent($"AgentAction: InsertStation, Game: {game}");
             }
             else if(string.Equals(type, "remove_station")){
                 typeIdx = 1;
+                MetroManager.SendEvent($"AgentAction: RemoveStation, Game: {game}");
             }
             else if(string.Equals(type, "remove_track")){
                 typeIdx = 2;
+                MetroManager.SendEvent($"AgentAction: DeleteLine, Game: {game}");
             }
             else if(string.Equals(type, "add_train")){
                 typeIdx = 3;
+                MetroManager.SendEvent($"AgentAction: AddTrain, Game: {game}");
             }
             else if(string.Equals(type, "remove_train")){
                 typeIdx = 4;
+                MetroManager.SendEvent($"AgentAction: RemoveTrain, Game: {game}");
             }
             Instance.actionsTaken[game, typeIdx]++;
         }
@@ -500,9 +513,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     }
 
     public static void SendEvent(string eventString) {
+        Instance.markersThisFrame.Add(eventString);
+        /*
         string[] tempSample;
         tempSample = new string[] { eventString };
-        Instance.markerStream.push_sample(tempSample);
+        //Instance.markerStream.push_sample(tempSample);
+        */
     }
 
     public static void ResetGame(uint gameID) {
