@@ -15,16 +15,20 @@ To get started using this repo you will have to import the MRTK and Oculus Integ
 
 ### Import MRTK 
 
-The project currently uses MRTK 2.8, to install use the microsoft feature tool:
-
-[https://docs.microsoft.com/en-us/windows/mixed-reality/develop/unity/welcome-to-mr-feature-tool](https://docs.microsoft.com/en-us/windows/mixed-reality/develop/unity/welcome-to-mr-feature-tool)
-
+The project currently uses MRTK 2.8, 
 Install the following packages into the Metro unity project directory:
 - "com.microsoft.mixedreality.toolkit.extensions"
 - "com.microsoft.mixedreality.toolkit.foundation"
 - "com.microsoft.mixedreality.toolkit.standardassets"
 - "com.microsoft.mixedreality.toolkit.testutilities"
 - "com.microsoft.mixedreality.toolkit.tools"
+
+#### Windows
+To install use the microsoft feature tool:
+[https://docs.microsoft.com/en-us/windows/mixed-reality/develop/unity/welcome-to-mr-feature-tool](https://docs.microsoft.com/en-us/windows/mixed-reality/develop/unity/welcome-to-mr-feature-tool)
+
+#### Mac
+MRTK packages can be directly downloaded from [https://github.com/microsoft/MixedRealityToolkit-Unity/releases/](github)
 
 
 ### Import Oculus Integration
@@ -41,6 +45,8 @@ Open the Unity editor, import the Oculus Integration package by clicking the men
 - Run Oculus / MRTK integration: click menu item "Mixed Reality > Toolkit > Utilities > Oculus > Integrate Oculus Integration Unity Modules"
 
 - Upgrad MRTK shaders for Universal Render Pipeline: click menu item "Mixed Reality > Toolkit > Utilities > Upgrade MRTK Standard Shader for Universal Render Pipeline"
+
+- Open _Metro/Scenes/Metro.unity and select Import TMPro Essentials from the popup
 
 
 ## TODOs
