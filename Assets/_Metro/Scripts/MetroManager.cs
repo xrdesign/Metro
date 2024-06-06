@@ -21,6 +21,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     #region LibLSL
 
     private liblsl.StreamOutlet markerStream;
+
     private List<string> markersThisFrame;
 
     #endregion
@@ -102,10 +103,13 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
         if(this.enabled)
             gameObject.AddComponent<Server>();
-
+        
+#if Unity_EDITOR_OSX || UNITY_STANDALONE_OSX
+#else
         liblsl.StreamInfo inf =
             new liblsl.StreamInfo("EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
         markerStream = new liblsl.StreamOutlet(inf);
+#endif
         markersThisFrame = new List<string>();
 
         // Spawn in the games.
@@ -167,7 +171,10 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         
         //Send LSL Markers
         if(markersThisFrame.Count > 0){
+#if Unity_EDITOR_OSX || UNITY_STANDALONE_OSX
+#else
             markerStream.push_sample(markersThisFrame.ToArray());  
+#endif
             markersThisFrame.Clear();
         }
 
