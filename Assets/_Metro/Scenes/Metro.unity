@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028352, g: 0.22571376, b: 0.30692244, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -586,7 +586,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8719966155073801540, guid: 39766aea825dd0748b0820eb45eb63f6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.644
       objectReference: {fileID: 0}
     - target: {fileID: 8719966155073801540, guid: 39766aea825dd0748b0820eb45eb63f6, type: 3}
       propertyPath: m_LocalPosition.z
@@ -934,7 +934,7 @@ MonoBehaviour:
   maxGazeCollisionDistance: 10
   raycastLayerMasks:
   - serializedVersion: 2
-    m_Bits: 4294967291
+    m_Bits: 4294967227
   stabilizer:
     storedStabilitySamples: 60
   gazeTransform: {fileID: 0}
@@ -2675,6 +2675,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &2132612191 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1707266662751158, guid: f676e25d0fcd1ec4fa22af3017316de9, type: 3}
+  m_PrefabInstance: {fileID: 1772753117}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2132612194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2132612191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 093f81e6f8e27974c8fe3119984c0af8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  folderName: MetroData
+  gazeRadius: 0.1
 --- !u!1 &4500513732196729373 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4500513732209504935, guid: 39766aea825dd0748b0820eb45eb63f6, type: 3}
