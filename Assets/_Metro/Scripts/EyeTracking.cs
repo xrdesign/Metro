@@ -165,9 +165,13 @@ public class EyeTracking : MonoBehaviour
         }
 
         // if hit object is different from last hit object, send marker
-        if (hit.collider != lastHit && hit.collider != null)
+        if (hit.collider != lastHit)
         {
-            markerStream.push_sample(new string[] { hit.collider.name });
+            if(hit.collider != null){
+                markerStream.push_sample(new string[] { hit.collider.name });
+            }else{
+                markerStream.push_sample(new string[] { "null" });
+            }
             lastHit = hit.collider;
         }
 
