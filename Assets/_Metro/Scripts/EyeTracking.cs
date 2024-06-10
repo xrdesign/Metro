@@ -9,7 +9,7 @@ using LSL;
 using System.Runtime.InteropServices;
 using Microsoft.MixedReality.Toolkit;
 
-public class ProEyeGazeVST : MonoBehaviour
+public class EyeTracking : MonoBehaviour
 {   
     [Tooltip("The size of the eye tracking collider (1.0 is the same size).")]
     public static float EyeColliderSize = 1.2f; 
@@ -30,7 +30,7 @@ public class ProEyeGazeVST : MonoBehaviour
     bool eye_callback_registered = false;
     private StreamWriter _writer;
     private liblsl.StreamOutlet eyeStream;
-    private liblsl.StreamOutlet markerStream
+    private liblsl.StreamOutlet markerStream;
     private Collider lastHit = null;
 
     //private VerboseData eyeData = new VerboseData();
@@ -46,6 +46,12 @@ public class ProEyeGazeVST : MonoBehaviour
 
         //print(aGlass.Instance.aGlassStart());
         string filename = String.Format("{1}_{0:MMddyyyy-HHmmss}{2}", DateTime.Now, "Eyetracking", ".txt");
+        // check folder exist
+        if (!Directory.Exists(@"C:\" + folderName))
+        {
+            Directory.CreateDirectory(@"C:\" + folderName);
+        }
+        
         string path = Path.Combine(@"C:\" + folderName, filename);
         _writer = File.CreateText(path);
         _writer.Write("\n\n=============== Game started ================\n\n");
@@ -62,55 +68,75 @@ public class ProEyeGazeVST : MonoBehaviour
 
     private static void EyeCallback(ref EyeData eye_data)
     {
+
+        Debug.Log("EyeCallback");
         leftDiameter = eye_data.verbose_data.left.pupil_diameter_mm;
         rightDiameter = eye_data.verbose_data.right.pupil_diameter_mm;
 
-        SRanipal_Eye.GetGazeRay(GazeIndex.COMBINE, out GazeOriginCombinedLocal, out GazeDirectionCombinedLocal, eye_data);
-        if (SRanipal_Eye.GetGazeRay(GazeIndex.LEFT, out GazeOriginLeftLocal, out GazeDirectionLeftLocal, eye_data))
+        if (!eye_data.verbose_data.left.GetValidity(SingleEyeDataValidity.SINGLE_EYE_DATA_PUPIL_DIAMETER_VALIDITY))
         {
-            if(SRanipal_Eye.GetEyeOpenness(EyeIndex.LEFT, out leftOpenness, eye_data)){
-                leftOpenness = -1;
-            }
-        }
-        else
-        {
-            leftOpenness = -1;
+            leftDiameter = -1;
         }
 
-        if (SRanipal_Eye.GetGazeRay(GazeIndex.RIGHT, out GazeOriginRightLocal, out GazeDirectionRightLocal, eye_data))
+        if (!eye_data.verbose_data.right.GetValidity(SingleEyeDataValidity.SINGLE_EYE_DATA_PUPIL_DIAMETER_VALIDITY))
         {
-            if(SRanipal_Eye.GetEyeOpenness(EyeIndex.RIGHT, out rightOpenness, eye_data)){
-                rightOpenness = -1;
-            }
-        }
-        else
-        {
-            rightOpenness = -1;
+            rightDiameter = -1;
         }
 
+        // check if the data is valid
+        if (!SRanipal_Eye.GetGazeRay(GazeIndex.COMBINE, out GazeOriginCombinedLocal, out GazeDirectionCombinedLocal, eye_data))
+        {
+            GazeDirectionCombinedLocal = Vector3.zero;
+            GazeOriginCombinedLocal = Vector3.zero;
+        }
+
+        if (!SRanipal_Eye.GetGazeRay(GazeIndex.LEFT, out GazeOriginLeftLocal, out GazeDirectionLeftLocal, eye_data))
+        {
+            GazeDirectionLeftLocal = Vector3.zero;
+            GazeOriginLeftLocal = Vector3.zero;
+        }
+
+        if (!SRanipal_Eye.GetGazeRay(GazeIndex.RIGHT, out GazeOriginRightLocal, out GazeDirectionRightLocal, eye_data))
+        {
+            GazeDirectionRightLocal = Vector3.zero;
+            GazeOriginRightLocal = Vector3.zero;
+        }
+
+        if (!SRanipal_Eye.GetEyeOpenness(EyeIndex.LEFT, out leftOpenness, eye_data))
+        {
+            // leftOpenness = -1;
+        }
+
+        if (!SRanipal_Eye.GetEyeOpenness(EyeIndex.RIGHT, out rightOpenness, eye_data))
+        {
+            // rightOpenness = -1;
+        }
 
         if (!SRanipal_Eye.GetPupilPosition(EyeIndex.LEFT, out pupilPos_L, eye_data))
         {
-            leftOpenness = -1;
+            pupilPos_L = Vector2.zero;
         }
 
         if (!SRanipal_Eye.GetPupilPosition(EyeIndex.RIGHT, out pupilPos_R, eye_data))
         {
-            rightOpenness = -1;
+            pupilPos_R = Vector2.zero;
         }
 
+    }
+
+    void Update(){
+        // for now, we should probably put a button instead of a hotkey
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            Debug.Log("Calibration Key pressed");
+            SRanipal_Eye.LaunchEyeCalibration();
+        }
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && (SceneManager.GetActiveScene().buildIndex == 0 ||
-                                                 SceneManager.GetActiveScene().buildIndex == 1))
-        {
-            Application.Quit();
-        }
-
-
+        
         if (SRanipal_Eye_Framework.Status != SRanipal_Eye_Framework.FrameworkStatus.WORKING &&
             SRanipal_Eye_Framework.Status != SRanipal_Eye_Framework.FrameworkStatus.NOT_SUPPORT) return;
 
@@ -139,7 +165,7 @@ public class ProEyeGazeVST : MonoBehaviour
         }
 
         // if hit object is different from last hit object, send marker
-        if (hit.collider != lastHit)
+        if (hit.collider != lastHit && hit.collider != null)
         {
             markerStream.push_sample(new string[] { hit.collider.name });
             lastHit = hit.collider;
