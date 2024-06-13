@@ -168,7 +168,28 @@ public class EyeTracking : MonoBehaviour
         if (hit.collider != lastHit)
         {
             if(hit.collider != null){
-                markerStream.push_sample(new string[] { hit.collider.name });
+                var go = hit.collider.gameObject;
+                Train t = go.GetComponent<Train>();
+                Station s = go.GetComponent<Station>();
+                TrackSegment l = go.GetComponent<TrackSegment>();
+
+                if(t != null){
+                    //Train
+                    Debug.Log("[EyeTracking] Looking at Train");
+                    markerStream.push_sample(new string[] { $"Type: Train, Game: {t.gameInstance.gameId}, Line: {t.line.id}"});
+                }
+                else if(s != null){
+                    Debug.Log("[EyeTracking] Looking at Station");
+                    markerStream.push_sample(new string[] { $"Type: Station, Game: {s.gameInstance.gameId}, Shape: {s.type}, ID: {s.id}"});
+                }
+                else if(l != null){
+                    Debug.Log("[EyeTracking] Looking at Line");
+                    markerStream.push_sample(new string[] { $"Type: TrackSegment, Game: {l.gameInstance.gameId}, Line: {l.line.id}"});
+                }
+                else{
+                    Debug.Log("[EyeTracking] Looking at " + hit.collider.name);
+                    markerStream.push_sample(new string[] { hit.collider.name });
+                }
             }else{
                 markerStream.push_sample(new string[] { "null" });
             }
