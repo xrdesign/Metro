@@ -257,7 +257,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
   private JSONObject commandList;
   public static void LogServerMessage(JSONObject message)
   {
-    Instance.commandList.Add(message);
     if (message.HasField("command"))
     {
       int game = (int)message["game_id"].i;
