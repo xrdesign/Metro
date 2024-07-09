@@ -76,6 +76,8 @@ public class TransportLine : MonoBehaviour
     if (!isDeployed)
     {
       gameInstance.linesCreated++;
+      MetroManager.SendEvent(
+        $"Action: LineCreated, Game: {gameInstance.gameId}");
     }
     isDeployed = true;
     if (stops.Count >= 2 && trains.Count == 0)
