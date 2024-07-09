@@ -6,375 +6,355 @@ using Microsoft.MixedReality.Toolkit.Input;
 
 public class Train : MonoBehaviour, IMixedRealityPointerHandler
 {
-  public int uuid;
-  public float position; // index position along line
-  public float speed;
-  public float direction;
-  public int cars = 0;
-  public int nextStop = 0;
-  public List<Passenger> passengers = new List<Passenger>();
-  public Color color;
+    public int uuid;
+    public float position; // index position along line
+    public float speed;
+    public float direction;
+    public int cars = 0;
+    public int nextStop = 0;
+    public List<Passenger> passengers = new List<Passenger>();
+    public Color color;
 
-  private Image[] seats;
+    private Image[] seats;
+    
+    public TransportLine line = null;
+    public bool shouldRemove  = false;
 
-  public TransportLine line = null;
-  public bool shouldRemove = false;
+    private GameObject prefab;
+    private GameObject train;
+    public GameObject ghost = null;
+    
 
-  private GameObject prefab;
-  private GameObject train;
-  public GameObject ghost = null;
-  public MetroGame gameInstance;
-  public List<string> passengerRoutes = new List<string>();
+    public MetroGame gameInstance;
 
-  public bool deleted;
-  // Start is called before the first frame update
-  public void Init()
-  {
-    /*
-    prefab = Resources.Load("Prefabs/Train") as GameObject;
-    train = GameObject.Instantiate(prefab, new Vector3(0,0,0),
-    prefab.transform.rotation) as GameObject;
-    train.transform.SetParent(this.gameObject.transform, false);
-    */
-    train = this.gameObject;
-    SetColor(color);
 
-    // seat[0] is image frame..
-    seats = train.GetComponentsInChildren<Image>(true);
-  }
-
-  public void Update() { }
-
-  // used to be update now called my MetroGame.ProcessTick(float)
-  public void ProcessTick()
-  {
-    passengerRoutes.Clear();
-
-    foreach (var p in passengers)
+    public List<string> passengerRoutes = new List<string>();
+    // Start is called before the first frame update
+    void Start()
     {
-      string s = "";
-      foreach (var i in p.route)
-      {
-        s += i.id + " ";
-      }
-      passengerRoutes.Add(s);
+        /*
+        prefab = Resources.Load("Prefabs/Train") as GameObject;
+        train = GameObject.Instantiate(prefab, new Vector3(0,0,0), prefab.transform.rotation) as GameObject;
+        train.transform.SetParent(this.gameObject.transform, false);
+        */
+        train = this.gameObject;
+        SetColor(color);
+
+        // seat[0] is image frame..
+        seats = train.GetComponentsInChildren<Image>(true);
     }
 
-    foreach (var p in passengers)
+    // Update is called once per frame
+    void Update()
     {
-      p.travelTime += gameInstance.dt * gameInstance.gameSpeed;
-    }
-    if (line == null)
-    {
-      return;
-    }
-    if (line.stops.Count <= 1)
-    {
-      return;
-    }
 
-    this.gameObject.transform.position = line.tracks.GetPosition(position);
-    var v = line.tracks.GetVelocity(position);
-    this.gameObject.transform.rotation = Quaternion.LookRotation(v);
-    float speedMult =
-        line.tracks.GetTrainDistanceSpeedMultiplier(position, 5.0f);
+        passengerRoutes.Clear();
 
-    // var factor = v.magnitude;
-    // if(factor == 0.0f) factor = 1.0f;
-    speed = 0.15f * gameInstance.dt * speedMult; /// 60.0f; // / factor;
-
-    position += direction * speed;
-    if (position <= 0.0f)
-    {
-      position = 0.0f;
-      direction = 1.0f;
-    }
-    else if (position >= 1.0f)
-    {
-      position = 1.0f;
-      direction = -1.0f;
-    }
-
-    var d = position * (line.stops.Count - 1);
-    var closestStopIndex = System.Math.Round(d);
-    // var dist = System.Math.Abs(d - closestStopIndex);
-    var dist = direction * (closestStopIndex - d); // if overshot then negative
-    if (dist < 0.05)
-    {
-      if (nextStop >= line.stops.Count || nextStop < 0)
-      {
-        nextStop = (int)closestStopIndex;
-      }
-      if (nextStop == closestStopIndex)
-      {
-        // Debug.Log("stop " + nextStop);
-
-        var station = line.stops[nextStop];
-
-        if (closestStopIndex == line.stops.Count - 1)
-          nextStop -= 1;
-        else if (closestStopIndex == 0)
-          nextStop += 1;
-        else
-          nextStop += (int)direction;
-
-        var nextStation = line.stops[nextStop];
-
-        PassengerDropWithRoute(station, nextStation);
-        if (shouldRemove)
-        {
-          DropAllPassengers(station);
-
-          this.gameInstance.freeTrains++;
-          deleted = true;
-          return;
+        foreach(var p in passengers){
+            string s = "";
+            foreach(var i in p.route){
+                s += i.id + " ";
+            }
+            passengerRoutes.Add(s);
         }
-        PassengerPickupWithRoute(station, nextStation);
-      }
-    }
-  }
-  void DropAllPassengers(Station station)
-  {
-    for (int i = passengers.Count - 1; i >= 0; i--)
-    {
-      var p = passengers[i];
-      if (p.destination == station.type)
-      {
-        passengers.RemoveAt(i);
-        continue;
-      }
-      // if station is on route, but the next Station is not, drop the passenger
-      // (add back to station!)
-      if (p.route != null)
-      {
-        passengers.RemoveAt(i);
-        station.passengers.Add(p); // add back
-        continue;
-      }
-    }
-  }
 
-  public void SwitchLine(TransportLine nextLine)
-  {
-    if (this.line.trains.Count <= 1)
-    {
-      return;
-    }
-    this.gameInstance.freeTrains++;
-    nextLine.AddTrain(0.0f, 1.0f);
-
-    Destroy(this.gameObject);
-    Destroy(ghost);
-  }
-
-  void DisplayPickedupPassengers()
-  {
-    // show passengers
-    foreach (var s in seats)
-      s.enabled = false;
-    if (passengers.Count > 0)
-    {
-      seats[0].enabled = true;
-      var dir = Vector3.Normalize(Camera.main.transform.position -
-                                  transform.position);
-      var quat = Quaternion.LookRotation(dir, Camera.main.transform.up);
-      seats[0].transform.parent.rotation = quat;
-    }
-    for (int i = 0; i < passengers.Count; i++)
-    {
-      seats[i + 1].enabled = true;
-      var dest = passengers[i].destination;
-      if (dest == StationType.Cube)
-        seats[i + 1].sprite = Resources.Load<Sprite>("Images/square");
-      else if (dest == StationType.Cone)
-        seats[i + 1].sprite = Resources.Load<Sprite>("Images/triangle");
-      else if (dest == StationType.Sphere)
-        seats[i + 1].sprite = Resources.Load<Sprite>("Images/circle");
-      else if (dest == StationType.Star)
-        seats[i + 1].sprite = Resources.Load<Sprite>("Images/star");
-    }
-  }
-
-  int PassengerDropWithRoute(Station station, Station nextStation)
-  {
-    var count = 0;
-    var scoreCount = 0;
-    float waitTime = 0;
-    float travelTime = 0;
-    for (int i = passengers.Count - 1; i >= 0; i--)
-    {
-      var p = passengers[i];
-
-      // if destination, drop (delete) the passenger
-      if (p.destination == station.type)
-      {
-        passengers.RemoveAt(i);
-        count += 1;
-        // only this get score
-        scoreCount += 1;
-        waitTime += p.waitTime;
-        travelTime += p.travelTime;
-        continue;
-      }
-
-      // if station is on route, but the next Station is not, drop the passenger
-      // (add back to station!)
-      if (p.route != null)
-      {
-        if (p.route[0] != station)
-        {
-          Debug.Log("Error dropping off passenger, arrived at unexpected " +
-                    "station, recomputing route");
-          p.route = gameInstance.FindRouteClosest(station, p.destination);
+        foreach(var p in passengers){
+            p.travelTime += Time.deltaTime * gameInstance.gameSpeed;
         }
-        else
-        {
-          p.route.RemoveAt(0);
+        if(line == null){
+            return;
         }
-        if (p.route.Count <= 0 || p.route[0] != nextStation)
-        {
-          passengers.RemoveAt(i);
-          station.passengers.Add(p); // add back
-                                     // remove the station from the route
-          p.route.Remove(station);   // this should be at index 0 (hopefully)
-          count += 1;
-          continue;
+        if(line.stops.Count <= 1){
+            return;
         }
-      }
-    }
+        
 
-    gameInstance.AddScore(scoreCount);
-    gameInstance.passengersDelivered += scoreCount;
-    gameInstance.totalPassengerWaitTime += waitTime;
-    gameInstance.totalPassengerTravelTime += travelTime;
 
-    return count;
-  }
 
-  void PassengerPickupWithRoute(Station station, Station nextStation)
-  {
-    var newList = new List<Passenger>();
+        this.gameObject.transform.position = line.tracks.GetPosition(position);
+        var v = line.tracks.GetVelocity(position);
+        this.gameObject.transform.rotation = Quaternion.LookRotation(v);
+        float speedMult = line.tracks.GetTrainDistanceSpeedMultiplier(position, 5.0f);
 
-    foreach (var p in station.passengers)
-    {
-      if (passengers.Count < 6 + 6 * cars) // TODO: should use a better way to
-                                           // manage capacity check
-      {
 
-        // if the nextStation is in route, pick up the passenger
-        if (p.route != null)
-        {
 
-          // TODO: if the train can arrive one of the station onroute, we should
-          // try it as well especially when closest route is so full (wait after
-          // certain time)
-          if (p.route.Contains(nextStation))
-          {
-            passengers.Add(p);
-            continue;
-          }
+        // var factor = v.magnitude;
+        // if(factor == 0.0f) factor = 1.0f;
+        speed = 0.15f * gameInstance.dt * speedMult; /// 60.0f; // / factor;
+
+        position += direction * speed;
+        if(position <= 0.0f){
+            position = 0.0f;
+            direction = 1.0f;
+        } else if(position >= 1.0f){
+            position = 1.0f;
+            direction = -1.0f;
         }
-      }
 
-      // if not pickup, then throw back to station
-      newList.Add(p);
+        var d = position * (line.stops.Count - 1);
+        var closestStopIndex = System.Math.Round(d);
+        // var dist = System.Math.Abs(d - closestStopIndex);
+        var dist = direction*(closestStopIndex - d); // if overshot then negative
+        if(dist < 0.05 ){
+            if(nextStop >= line.stops.Count || nextStop < 0){
+                nextStop = (int)closestStopIndex;
+            }
+            if(nextStop == closestStopIndex){
+                // Debug.Log("stop " + nextStop);
+
+                var station = line.stops[nextStop];
+
+                if(closestStopIndex == line.stops.Count - 1) nextStop -= 1;
+                else if(closestStopIndex == 0) nextStop += 1;
+                else nextStop += (int)direction;
+
+                var nextStation = line.stops[nextStop];
+
+                PassengerDropWithRoute(station, nextStation);
+                if(shouldRemove){
+                    DropAllPassengers(station);
+
+                    this.gameInstance.freeTrains++;
+                    this.line.trains.Remove(this);
+                    Destroy(this.gameObject);
+                    return;
+                }
+                PassengerPickupWithRoute(station, nextStation);
+            }
+
+        }
+    }
+    void DropAllPassengers(Station station){
+        for (int i = passengers.Count - 1; i >= 0; i--)
+        {
+            var p = passengers[i];
+            if (p.destination == station.type)
+            {
+                passengers.RemoveAt(i);
+                continue;
+            }
+            // if station is on route, but the next Station is not, drop the passenger (add back to station!)
+            if (p.route != null)
+            {
+                passengers.RemoveAt(i);
+                station.passengers.Add(p); // add back
+                continue;
+            }
+        }
     }
 
-    station.passengers = newList;
-    DisplayPickedupPassengers();
-  }
+    public void SwitchLine(TransportLine nextLine){
+        if(this.line.trains.Count <= 1){
+            return;
+        }
+        this.gameInstance.freeTrains++;
+        nextLine.AddTrain(0.0f, 1.0f);
 
-  int PassengerDrop(Station station)
-  {
+        Destroy(this.gameObject);
+        Destroy(ghost);
+    }
+    
+    void DisplayPickedupPassengers(){
+        // show passengers
+        foreach(var s in seats) s.enabled = false;
+        if(passengers.Count > 0){
+            seats[0].enabled = true;
+            var dir = Vector3.Normalize(Camera.main.transform.position - transform.position);
+            var quat = Quaternion.LookRotation(dir, Camera.main.transform.up);
+            seats[0].transform.parent.rotation = quat;
+        }
+        for(int i = 0; i < passengers.Count; i++){
+            seats[i+1].enabled = true;
+            var dest = passengers[i].destination;
+            if(dest == StationType.Cube)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/square");
+            else if(dest == StationType.Cone)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/triangle");
+            else if(dest == StationType.Sphere)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/circle");
+            else if(dest == StationType.Star)
+                seats[i+1].sprite = Resources.Load<Sprite>("Images/star");
+        }
+    }
 
-    // passengers.RemoveAll(p => p.destination == station.type)
-    var newList = new List<Passenger>();
-    var dropCount = 0;
-    float waitTime = 0;
-    float travelTime = 0;
-    foreach (var p in passengers)
+    int PassengerDropWithRoute(Station station, Station nextStation)
     {
-      if (p.destination == station.type)
-      {
-        dropCount += 1;
-        waitTime += p.waitTime;
-        travelTime += p.travelTime;
-      }
-      else
-        newList.Add(p);
+        var count = 0;
+        var scoreCount = 0;
+        float waitTime = 0;
+        float travelTime = 0;
+        for (int i = passengers.Count - 1; i >= 0; i--)
+        {
+            var p = passengers[i];
+
+            // if destination, drop (delete) the passenger
+            if (p.destination == station.type)
+            {
+                passengers.RemoveAt(i);
+                count += 1;
+                // only this get score
+                scoreCount += 1;
+                waitTime += p.waitTime;
+                travelTime += p.travelTime;
+                continue;
+            }
+
+
+            // if station is on route, but the next Station is not, drop the passenger (add back to station!)
+            if (p.route != null)
+            {
+                if(p.route[0] != station){
+                    Debug.Log("Error dropping off passenger, arrived at unexpected station, recomputing route");
+                    p.route = gameInstance.FindRouteClosest(station, p.destination);
+                }
+                else{
+                    p.route.RemoveAt(0);
+                }
+                if(p.route.Count <= 0 || p.route[0] != nextStation){
+                    passengers.RemoveAt(i);
+                    station.passengers.Add(p); // add back
+                                               // remove the station from the route
+                    p.route.Remove(station); // this should be at index 0 (hopefully)
+                    count += 1;
+                    continue;
+                }
+            }
+        }
+
+        gameInstance.AddScore(scoreCount);
+        gameInstance.passengersDelivered += scoreCount;
+        gameInstance.totalPassengerWaitTime += waitTime;
+        gameInstance.totalPassengerTravelTime += travelTime;
+
+        return count;
     }
 
-    passengers = newList;
-    gameInstance.AddScore(dropCount);
-    gameInstance.totalPassengerWaitTime += waitTime;
-    gameInstance.totalPassengerTravelTime += travelTime;
-
-    return 0; // todo animate?
-  }
-
-  void PassengerPickup(Station station)
-  {
-    var newList = new List<Passenger>();
-
-    foreach (var p in station.passengers)
+    void PassengerPickupWithRoute(Station station, Station nextStation)
     {
-      if (passengers.Count < 6 + 6 * cars)
-      {
+        var newList = new List<Passenger>();
 
-        passengers.Add(p);
+        foreach (var p in station.passengers)
+        {
+            if (passengers.Count < 6 + 6 * cars) // TODO: should use a better way to manage capacity check
+            {
+                
+                // if the nextStation is in route, pick up the passenger
+                if (p.route != null)
+                {
 
-      }
-      else
-        newList.Add(p);
+                    // TODO: if the train can arrive one of the station onroute, we should try it as well
+                    // especially when closest route is so full (wait after certain time)
+                    if (p.route.Contains(nextStation))
+                    {
+                        passengers.Add(p);
+                        continue;
+                    }
+                }
+            }
+
+            // if not pickup, then throw back to station
+            newList.Add(p);
+        }
+
+        station.passengers = newList;
+        DisplayPickedupPassengers();
     }
 
-    station.passengers = newList;
-  }
+    int PassengerDrop(Station station){
 
-  public void AddCar() { }
+        // passengers.RemoveAll(p => p.destination == station.type)
+        var newList = new List<Passenger>();
+        var dropCount = 0;
+        float waitTime = 0;
+        float travelTime = 0;
+        foreach(var p in passengers){
+            if(p.destination == station.type){
+                dropCount += 1;
+                waitTime += p.waitTime;
+                travelTime += p.travelTime;
+            }
+            else
+                newList.Add(p);
+        }
 
-  public void RemoveCar() { }
+        passengers = newList;
+        gameInstance.AddScore(dropCount);
+        gameInstance.totalPassengerWaitTime += waitTime;
+        gameInstance.totalPassengerTravelTime += travelTime;
 
-  public void SetColor(Color color)
-  {
-    var material =
-        train.transform.Find("train").GetComponent<Renderer>().materials[0];
-    // material.color = color;
-    material.SetColor("_BaseColor", color);
-  }
+        return 0; //todo animate?
+    }
 
-  public void IsClicked() { Debug.Log("Train clicked"); }
+    void PassengerPickup(Station station){
+        var newList = new List<Passenger>();
 
-  void IMixedRealityPointerHandler.OnPointerDown(
-      MixedRealityPointerEventData eventData)
-  {
-    Debug.Log("Train pointer down");
-    Debug.Log(eventData.Pointer.Position);
-  }
+        foreach(var p in station.passengers){
+            if(passengers.Count < 6 + 6*cars){
 
-  void IMixedRealityPointerHandler.OnPointerUp(
-      MixedRealityPointerEventData eventData)
-  {
-    Debug.Log("Train pointer up");
-  }
+                passengers.Add(p);
+                
 
-  void IMixedRealityPointerHandler.OnPointerDragged(
-      MixedRealityPointerEventData eventData)
-  {
-    Debug.Log("Train pointer dragging");
-  }
-  void IMixedRealityPointerHandler.OnPointerClicked(
-      MixedRealityPointerEventData eventData)
-  {
-    Debug.Log("Train pointer clicked");
-    gameInstance.selectedTrain = this;
-    // SpawnGhost Train to follow cursur
-    GameObject prefab =
-        Resources.Load("Prefabs/SelectedTrainIndicator") as GameObject;
-    ghost = Instantiate(prefab);
-    var indicator = ghost.GetComponent<SelectedTrainIndicator>();
-    indicator.gameInstance = this.gameInstance;
-    indicator.targetTrain = this;
-    indicator.SetColor(this.color);
-  }
+            }else
+                newList.Add(p);
+        }
+
+        station.passengers = newList;
+    }
+
+
+    public void AddCar(){
+
+    }
+
+    public void RemoveCar(){
+
+    }
+
+    public void SetColor(Color color){
+        var material = train.transform.Find("train").GetComponent<Renderer>().materials[0];
+        // material.color = color;
+        material.SetColor("_BaseColor", color);
+    }
+
+    public void IsClicked()
+    {
+        Debug.Log("Train clicked");
+    }
+
+
+    void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData)
+    {
+        Debug.Log("Train pointer down");
+        Debug.Log(eventData.Pointer.Position);
+
+
+    }
+
+    void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData)
+    {
+        Debug.Log("Train pointer up");
+
+    }
+
+    void IMixedRealityPointerHandler.OnPointerDragged(MixedRealityPointerEventData eventData)
+    {
+        Debug.Log("Train pointer dragging");
+
+    }
+    void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData)
+    {
+        Debug.Log("Train pointer clicked");
+        gameInstance.selectedTrain = this;
+        //SpawnGhost Train to follow cursur
+        GameObject prefab = Resources.Load("Prefabs/SelectedTrainIndicator") as GameObject;
+        ghost = Instantiate(prefab);
+        var indicator = ghost.GetComponent<SelectedTrainIndicator>();
+        indicator.gameInstance = this.gameInstance;
+        indicator.targetTrain = this;
+        indicator.SetColor(this.color);
+
+    }
+
+
+
 }
