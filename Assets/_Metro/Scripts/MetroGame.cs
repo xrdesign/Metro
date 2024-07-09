@@ -434,7 +434,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     gameSpeed = 0.0f;
     paused = true;
 
-    MetroManager.SendEvent("Game Over: " + gameId);
+    MetroManager.SendEvent("Game Over: " + gameId + ", " + SerializeGameState().ToString());
     isGameover = true;
   }
 

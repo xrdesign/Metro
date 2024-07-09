@@ -551,6 +551,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
 
   public static void SendEvent(string eventString)
   {
+    Debug.Log("[SendEvent] " + eventString);
     Instance.markersThisFrame.Add(eventString);
     /*
     string[] tempSample;
