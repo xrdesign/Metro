@@ -71,13 +71,16 @@ public class TransportLine : MonoBehaviour
     }
     Debug.Log("insert station");
     stops.Insert(stopIndex, station);
+    if (stops.Count == 2)
+    {
+      MetroManager.SendEvent(
+          $"Action: LineCreated, Game: {gameInstance.gameId}, Line{id}.");
+    }
     if (!station.lines.Contains(this))
       station.lines.Add(this);
     if (!isDeployed)
     {
       gameInstance.linesCreated++;
-      MetroManager.SendEvent(
-        $"Action: LineCreated, Game: {gameInstance.gameId}");
     }
     isDeployed = true;
     if (stops.Count >= 2 && trains.Count == 0)
@@ -88,7 +91,7 @@ public class TransportLine : MonoBehaviour
     tracks.needsUpdate = true;
     gameInstance.insertions++;
     MetroManager.SendEvent(
-        $"Action: InsertStation, Game: {gameInstance.gameId}");
+        $"Action: InsertStation, Game: {gameInstance.gameId}, Station: {station.id}, Line: {id}.");
 
     // LOG IT!
     LineInsertStationEvent e =
@@ -105,7 +108,7 @@ public class TransportLine : MonoBehaviour
     tracks.needsUpdate = true;
     gameInstance.deletions++;
     MetroManager.SendEvent(
-        $"Action: RemoveStation, Game: {gameInstance.gameId}");
+        $"Action: RemoveStation, Game: {gameInstance.gameId}, Station: {station.id}, Line: {id}.");
 
     // LOG IT!
     LineRemoveStationEvent e = new LineRemoveStationEvent(id, station.id);
@@ -128,7 +131,8 @@ public class TransportLine : MonoBehaviour
     trains.Clear();
     isDeployed = false;
     gameInstance.linesRemoved++;
-    MetroManager.SendEvent($"Action: RemoveLine, Game: {gameInstance.gameId}");
+    MetroManager.SendEvent(
+        $"Action: RemoveLine, Game: {gameInstance.gameId}, Line: {id}");
 
     LineClearedEvent e = new LineClearedEvent(id);
     LogRecorder.SendEvent(gameInstance.gameId, e);
@@ -160,7 +164,8 @@ public class TransportLine : MonoBehaviour
 
     trains.Add(t);
     gameInstance.trainsAdded++;
-    MetroManager.SendEvent($"Action: AddTrain, Game: {gameInstance.gameId}");
+    MetroManager.SendEvent(
+        $"Action: AddTrain, Game: {gameInstance.gameId}, Line: {id}.");
     t.Init();
 
     LineAddTrainEvent e = new LineAddTrainEvent(id);
@@ -172,7 +177,8 @@ public class TransportLine : MonoBehaviour
       return;
     trains[0].shouldRemove = true;
     gameInstance.trainsRemoved++;
-    MetroManager.SendEvent($"Action: RemoveTrain, Game: {gameInstance.gameId}");
+    MetroManager.SendEvent(
+        $"Action: RemoveTrain, Game: {gameInstance.gameId}, Line: {id}.");
     LineRemoveTrainEvent e = new LineRemoveTrainEvent(id);
     LogRecorder.SendEvent(gameInstance.gameId, e);
   }
