@@ -23,7 +23,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
 
   private liblsl.StreamOutlet markerStream;
 
-  private List<string> markersThisFrame;
+  private Queue<string> markersThisFrame;
 
   #endregion
 
@@ -122,7 +122,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
         "EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
     markerStream = new liblsl.StreamOutlet(inf);
 #endif
-    markersThisFrame = new List<string>();
+    markersThisFrame = new Queue<string>();
 
     // Spawn in the games.
 
@@ -177,14 +177,13 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
         this.isDone = true;
     }
     // Send LSL Markers
-    if (markersThisFrame.Count > 0)
-    {
 #if Unity_EDITOR_OSX || UNITY_STANDALONE_OSX
 #else
-      markerStream.push_sample(markersThisFrame.ToArray());
-#endif
-      markersThisFrame.Clear();
+    while (markersThisFrame.Count > 0)
+    {
+      markerStream.push_sample(new string[] { markersThisFrame.Dequeue() });
     }
+#endif
   }
 
   private void OnEnable()
@@ -552,7 +551,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
   public static void SendEvent(string eventString)
   {
     Debug.Log("[SendEvent] " + eventString);
-    Instance.markersThisFrame.Add(eventString);
+    Instance.markersThisFrame.Enqueue(eventString);
     /*
     string[] tempSample;
     tempSample = new string[] { eventString };

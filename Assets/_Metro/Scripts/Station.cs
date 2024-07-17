@@ -224,8 +224,10 @@ public class Station : MonoBehaviour,
       Debug.Log("station down");
       line.AddStation(this);
 
+      /*
       MetroManager.SendEvent("Select Station: " + "station - " + id +
                              ";line - " + line.id);
+     */
       Debug.Log("Select Station: " + "station - " + id + ";line - " + line.id);
 
       var dist = eventData.Pointer.Result.Details.RayDistance;
@@ -283,9 +285,10 @@ public class Station : MonoBehaviour,
 
     if (line != null)
     {
-      // TODO:
+      /*
       MetroManager.SendEvent("Add Station: " + "station - " + id + ";line - " +
                              line.id);
+     */
       Debug.Log("Add Station: " + "station - " + id + ";line - " + line.id);
       Debug.Log("Index: " + index + ", insert: " + insert +
                 "Stops Count: " + line.stops.Count);
