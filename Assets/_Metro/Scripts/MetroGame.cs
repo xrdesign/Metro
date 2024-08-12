@@ -382,10 +382,6 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       SpawnStation(StationType.Cube);
       SpawnStation(StationType.Cone);
       SpawnStation(StationType.Sphere);
-
-      stations[0].stationName = "1";
-      stations[1].stationName = "2";
-      stations[2].stationName = "3";
     }
 
     this.addedLines = 0;
@@ -434,7 +430,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     gameSpeed = 0.0f;
     paused = true;
 
-    MetroManager.SendEvent("Game Over: " + gameId + ", " + SerializeGameState().ToString());
+    MetroManager.SendEvent("Game Over: " + gameId + ", " +
+                           SerializeGameState().ToString());
     isGameover = true;
   }
 
@@ -604,6 +601,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     station.uuid = station.GetInstanceID();
     station.gameInstance = this; // Pass in ourselves for access
     this.stations.Add(station);
+
     station.Init();
 
     // LOG IT!
