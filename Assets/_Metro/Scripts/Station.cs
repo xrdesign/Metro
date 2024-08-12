@@ -72,8 +72,10 @@ public class Station : MonoBehaviour,
     MaxTimeoutDuration = MetroManager.Instance.timeoutDurationOverride;
     // Get random station name from manager.
     if (stationName == "")
+    {
       stationName =
           $"{id}"; // MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
+    }
 
     _stationText.text = stationName;
   }
