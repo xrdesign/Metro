@@ -351,7 +351,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   metroManager: {fileID: 361273077}
   _timePerTick: 0.05
-  replayFilePath: 2024-8-15-15-9-16.replay
+  replayFilePath: example.replay
+  eyeTrackingReplayFile: example.replayposition
   shouldExecuteTick: 0
   playing: 0
   selectedTime: 0
@@ -359,6 +360,8 @@ MonoBehaviour:
   headMarkerPrefab: {fileID: 3771967270509990888, guid: 6617d2c4671e5424a9e2724b27617ed3, type: 3}
   gazeMarkerPrefab: {fileID: 3771967270509990888, guid: f2ea930fe65ecc342a2b9e5d6727dd70, type: 3}
   gazeLine: {fileID: 361273079}
+  fixationMat: {fileID: 2100000, guid: 302477ffe5025c8418b312bcaf88563f, type: 2}
+  gazePointMat: {fileID: 2100000, guid: f0e40fc865770de4cb1577c051163a9d, type: 2}
 --- !u!114 &361273077
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -437,9 +440,7 @@ LineRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Positions:
-  - {x: 0, y: 0, z: 0}
-  - {x: 0, y: 0, z: 1}
+  m_Positions: []
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 0.02
