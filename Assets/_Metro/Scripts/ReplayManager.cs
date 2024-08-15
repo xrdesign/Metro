@@ -17,7 +17,11 @@ public class ReplayManager : MonoBehaviour
 
   [SerializeField]
   string replayFilePath;
-  StreamReader sr;
+  StreamReader eventStream;
+  [SerializeField]
+  string eyeTrackingReplayFile;
+  bool useEyeTracking = false;
+  StreamReader positionStream;
 
   bool initialized = false;
   public bool shouldExecuteTick = false;
@@ -28,6 +32,19 @@ public class ReplayManager : MonoBehaviour
 
   bool loading = false;
   List<MetroGame> games = new List<MetroGame>();
+
+  [SerializeField]
+  GameObject headMarkerPrefab;
+  [SerializeField]
+  GameObject gazeMarkerPrefab;
+  GameObject headMarker;
+  GameObject gazeMarker;
+  [SerializeField]
+  LineRenderer gazeLine;
+  [SerializeField]
+  Material fixationMat;
+  [SerializeField]
+  Material gazePointMat;
 
   /* Built-Ins / LifeCycle */
 
@@ -42,7 +59,20 @@ public class ReplayManager : MonoBehaviour
           $"[ReplayManager] No replay file found at \"{replayFile}\"");
       return;
     }
-    sr = new StreamReader(replayFile);
+    eventStream = new StreamReader(replayFile);
+    var eyeTrackingReplayFilePath = Path.Join(Application.persistentDataPath,
+                                              "Logs", eyeTrackingReplayFile);
+    if (File.Exists(eyeTrackingReplayFilePath))
+    {
+      Debug.Log("Using Eye Tracking Replay");
+      positionStream = new StreamReader(eyeTrackingReplayFilePath);
+      useEyeTracking = true;
+      headMarker = GameObject.Instantiate(headMarkerPrefab);
+      headMarker.name = "Head";
+      gazeMarker = GameObject.Instantiate(gazeMarkerPrefab);
+      gazeMarker.name = "Gaze";
+      gazeLine.positionCount = 2;
+    }
   }
 
   void Start() { Reset(); }
@@ -124,6 +154,70 @@ public class ReplayManager : MonoBehaviour
     {
       g.ProcessTick(dt);
     }
+
+    if (useEyeTracking)
+    {
+      // Place head and gaze markers
+      while (currTime > nextPositionTimeStamp)
+      {
+        PlaceMarkers();
+        GetNextMarker();
+        if (nextPositionTimeStamp < 0)
+        {
+          break;
+        }
+      }
+    }
+  }
+  float nextPositionTimeStamp = 0;
+  JSONObject nextPositionObject;
+  void PlaceMarkers()
+  {
+    if (!useEyeTracking)
+    {
+      return;
+    }
+    headMarker.transform.position =
+        ParseVector(nextPositionObject["HEAD_POSITION"].str);
+    gazeMarker.transform.position =
+        ParseVector(nextPositionObject["GAZE_POSITION"].str);
+
+    bool isFixation = nextPositionObject["FIXATION_IDX"].b;
+    gazeMarker.GetComponent<Renderer>().material =
+        isFixation ? fixationMat : gazePointMat;
+    headMarker.transform.LookAt(gazeMarker.transform);
+    Vector3[] markers = { headMarker.transform.position,
+                          gazeMarker.transform.position };
+    gazeLine.SetPositions(markers);
+  }
+  void GetNextMarker()
+  {
+    if (!useEyeTracking)
+    {
+      return;
+    }
+    Debug.Log("Getting next position");
+    var l = positionStream.ReadLine();
+
+    // reached EOF
+    if (l == "")
+    {
+      Debug.Log("TEST! EOF");
+      nextPositionTimeStamp = -1;
+      nextPositionObject = null;
+      return;
+    }
+
+    nextPositionObject = new JSONObject(l);
+    if (!nextPositionObject.HasField("TIME"))
+    {
+      Debug.Log("TEST! NO TIME");
+      Debug.Log(l);
+      nextPositionObject = null;
+      nextPositionTimeStamp = -1;
+      return;
+    }
+    nextPositionTimeStamp = nextPositionObject["TIME"].f;
   }
 
   /* Helpers */
@@ -137,9 +231,14 @@ public class ReplayManager : MonoBehaviour
     games.Clear();
 
     // Load header
-    sr.DiscardBufferedData();
-    sr.BaseStream.Seek(0, SeekOrigin.Begin);
-    string headerRaw = sr.ReadLine();
+    eventStream.DiscardBufferedData();
+    eventStream.BaseStream.Seek(0, SeekOrigin.Begin);
+    if (useEyeTracking)
+    {
+      positionStream.DiscardBufferedData();
+      positionStream.BaseStream.Seek(0, SeekOrigin.Begin);
+    }
+    string headerRaw = eventStream.ReadLine();
 
     // Read header
     JSONObject header = new JSONObject(headerRaw);
@@ -176,6 +275,7 @@ public class ReplayManager : MonoBehaviour
 
     // Load first event:
     GetNextEvent();
+    GetNextMarker();
 
     currTime = 0;
     initialized = true;
@@ -267,7 +367,7 @@ public class ReplayManager : MonoBehaviour
   void GetNextEvent()
   {
     Debug.Log("Getting next event");
-    var l = sr.ReadLine();
+    var l = eventStream.ReadLine();
 
     // reached EOF
     if (l == "")
