@@ -10,7 +10,10 @@ public class LogRecorder : MonoBehaviour
   bool enabled = true;
   private Queue<Tuple<uint, BaseEvent>> eventsThisFrame;
   private float currentTime;
-  private StreamWriter sw;
+
+  private StreamWriter eventWriter;
+  private StreamWriter playerPositionWriter;
+
   private DateTime date;
 
   static LogRecorder instance;
@@ -66,7 +69,9 @@ public class LogRecorder : MonoBehaviour
     filePath += ".replay";
 
     // Create and open file stream for writing
-    sw = new StreamWriter(File.Create(filePath));
+    eventWriter = new StreamWriter(File.Create(filePath));
+    playerPositionWriter =
+        new StreamWriter(File.Create(filePath + ("positio" + "n")));
 
     eventsThisFrame = new Queue<Tuple<uint, BaseEvent>>();
     currentTime = 0;
@@ -90,7 +95,7 @@ public class LogRecorder : MonoBehaviour
     m.AddField("DAYS_PER_LINE", MetroManager.Instance.daysPerNewLine);
     header.AddField("MANAGER_PARAMS", m);
 
-    sw.WriteLine(header.ToString());
+    eventWriter.WriteLine(header.ToString());
   }
 
   // Log anything sent this frame:
@@ -110,8 +115,17 @@ public class LogRecorder : MonoBehaviour
       log.AddField("EVENT_TYPE", pair.Item2.EventType());
       log.AddField("EVENT", pair.Item2.ToJson());
 
-      sw.WriteLine(log.ToString());
+      eventWriter.WriteLine(log.ToString());
     }
+  }
+
+  public static void RecordPosition(Vector3 headPos, Vector3 gazePoint)
+  {
+    JSONObject logStep = new JSONObject();
+    logStep.AddField("TIME", instance.currentTime);
+    logStep.AddField("HEAD", headPos.ToString());
+    logStep.AddField("GAZE", gazePoint.ToString());
+    instance.playerPositionWriter.WriteLine(logStep.ToString());
   }
 
   // (print footer?) flush and close
@@ -128,10 +142,13 @@ public class LogRecorder : MonoBehaviour
     log.AddField("GAME_ID", 0);
     log.AddField("EVENT_TYPE", e.EventType());
     log.AddField("EVENT", e.ToJson());
-    sw.WriteLine(log.ToString());
+    eventWriter.WriteLine(log.ToString());
 
-    sw.Flush();
-    sw.Close();
+    eventWriter.Flush();
+    eventWriter.Close();
+
+    playerPositionWriter.Flush();
+    playerPositionWriter.Close();
   }
 
   /* Public Interface */
@@ -277,6 +294,7 @@ public class LineRemoveTrainEvent : BaseEvent
   public override string EventType() { return "LineRemoveTrainEvent"; }
   public override JSONObject ToJson()
   {
+
     JSONObject o = new JSONObject();
     o.AddField("LINE_ID", lineID);
     return o;

@@ -6,6 +6,7 @@ TagManager:
   tags:
   - MetroManager
   - ServerConnection
+  - MetroUI
   layers:
   - Default
   - TransparentFX
