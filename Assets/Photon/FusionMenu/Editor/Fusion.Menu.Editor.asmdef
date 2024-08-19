@@ -1,0 +1,29 @@
+{
+    "name": "Fusion.Menu.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Fusion.Menu"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.textmeshpro",
+            "expression": "1.0",
+            "define": "FUSION_ENABLE_TEXTMESHPRO"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "2.0",
+            "define": "FUSION_ENABLE_TEXTMESHPRO"
+        }
+    ],
+    "noEngineReferences": false
+}
