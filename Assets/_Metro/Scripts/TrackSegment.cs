@@ -6,22 +6,25 @@ using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Physics;
 using System;
+using Fusion;
+using Oculus.Voice.Windows;
+using UnityEditor.Build;
 
-public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
-    public MetroGame gameInstance;
+public class TrackSegment : NetworkBehaviour,  IMixedRealityPointerHandler {
+    [Networked] public MetroGame gameInstance { get; set; }
     
-    public TransportLine line;
+    [Networked] public TransportLine line { get; set; }
     //track segment id
-    public int index; 
+    [Networked] public int index { get; set; }
 
-    public bool needsUpdate = true;
-    public int lengthOfLine = 20;
+    [Networked] public bool needsUpdate { get; set; } = true;
+    [Networked] public int lengthOfLine { get; set; } = 20;
 
-    public float segmentLengthSum;
-    public float addPosition;
+    [Networked] public float segmentLengthSum { get; set; } = 0;
+    [Networked] public float addPosition { get; set; } = 0;
 
-    public bool isAddingTrain;
-    public bool addedTrain;
+    [Networked] public bool isAddingTrain { get; set; } = false;
+    [Networked] public bool addedTrain { get; set; } = false;
 
     public Vector3[] cp = new Vector3[]{
             new Vector3(0f,0f,0f),
@@ -36,7 +39,8 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
     
 
     // Start is called before the first frame update
-    void Start()
+    // void Start()
+    public override void Spawned()
     {
         lineRenderer = gameObject.AddComponent<LineRenderer>();
         meshCollider = gameObject.AddComponent<MeshCollider>();
@@ -51,7 +55,8 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
     }
 
     // Update is called once per frame
-    void Update()
+    // void Update()
+    public override void Render()
     {   
         //if(!needsUpdate) return;
 
@@ -136,8 +141,8 @@ public class TrackSegment : MonoBehaviour,  IMixedRealityPointerHandler {
         
         
         var dist = eventData.Pointer.Result.Details.RayDistance;
-        var insert = index >= 0 && index < line.stops.Count-1;
-        MetroGame.StartEditingLine(line, index, dist, insert);
+        var insert = index >= 0 && index < line.stopCount-1;
+        gameInstance.StartEditingLine(line, index, dist, insert);
 
         eventData.Pointer.IsFocusLocked = false;
         eventData.Pointer.IsTargetPositionLockedOnFocusLock = false;

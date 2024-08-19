@@ -8,10 +8,26 @@ using System.IO;
 
 public class Server : MonoBehaviour
 {
-
+    public WebSocketServer wssv;
     public void Start(){
         SetupLogs();
-        var wssv = new WebSocketServer ("ws://localhost:3000");
+        // try 3000, if it fails, try 3001, if it fails, try 3002, etc.
+        // wssv = new WebSocketServer ("ws://localhost:3000");
+        var port = 3000;
+        while (true)
+        {
+            try
+            {
+                wssv = new WebSocketServer("ws://localhost:" + port);
+                wssv.Start();
+                break;
+            }
+            catch (Exception e)
+            {
+                Debug.Log("[Server] Failed to start server on port " + port + ". Trying next port.");
+                port++;
+            }
+        }
 
         wssv.AddWebSocketService<MetroService> ("/metro");
         wssv.AddWebSocketService<MetroService> ("/multiplayer");
@@ -27,21 +43,33 @@ public class Server : MonoBehaviour
     public static StreamWriter sw;
     public static void SetupLogs(){
         
-
+        string fileName = "ServerLatest_" + System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".txt";
         string filePath = Path.Combine(Application.persistentDataPath, "Logs/");
 
         if(!Directory.Exists(filePath))
             Directory.CreateDirectory(filePath);
-        if(File.Exists(filePath+"ServerLatest.txt"))
-            File.Copy(filePath+"ServerLatest.txt", filePath+"ServerPrevious.txt", true);
+        if(File.Exists(filePath+fileName))
+            File.Copy(filePath+fileName, filePath+"ServerPrevious.txt", true);
 
         //backup previous log
 
         //start new log
-        sw = new StreamWriter(filePath+"ServerLatest.txt");
+        sw = new StreamWriter(filePath+fileName);
     }
     void OnDisable(){
         sw.Flush();
+    }
+
+    
+    // clean up when the game is stopped
+    void OnApplicationQuit(){
+        if(sw != null){
+            sw.Flush();
+            sw.Close();
+        }
+        if(wssv != null){
+            wssv.Stop();
+        }
     }
 
 }
@@ -357,5 +385,5 @@ public class MetroService : WebSocketBehavior
     //     // }
     //     return "";
     // }
-    
+
 }

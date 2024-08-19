@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8343243838823437202
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8343243838823437207}
+  - component: {fileID: 8343243838823437204}
+  - component: {fileID: 8343243838823437205}
+  - component: {fileID: -3564197619474441988}
+  - component: {fileID: 1352107917118921725}
+  m_Layer: 0
+  m_Name: Game
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8343243838823437207
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8343243838823437202}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8343243838823437204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8343243838823437202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a1004cd8a694e543bc6b5b7dff047ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gameId: 0
+  _score: 0
+  _time: 0
+  _gameSpeed: 0
+  dt: 0
+  _passengersDelivered: 0
+  _totalPassengerWaitTime: 0
+  _totalPassengerTravelTime: 0
+  _freeTrains: 3
+  selectedTrain: {fileID: 0}
+  _freeCars: 0
+  stations: []
+  lines: []
+  _containsStarStation: 0
+  _containsOtherStation: 0
+  _paused: 0
+  _isGameover: 0
+  addingTrain: 0
+  addedTrain: 0
+  _Ai_paused: 0
+  trackLengths: []
+  totalTrackLength: 0
+  stationsOrganizer: {fileID: 0}
+  transportLinesOrganizer: {fileID: 0}
+  trainOrganizer: {fileID: 0}
+  alertCylinder: {fileID: 0}
+  insertions: 0
+  deletions: 0
+  linesRemoved: 0
+  linesCreated: 0
+  trainsAdded: 0
+  trainsRemoved: 0
+--- !u!114 &8343243838823437205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8343243838823437202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 2582503183
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 8343243838823437204}
+  - {fileID: -3564197619474441988}
+  - {fileID: 1352107917118921725}
+--- !u!114 &-3564197619474441988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8343243838823437202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SyncScale: 0
+  SyncParent: 1
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0
+--- !u!114 &1352107917118921725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8343243838823437202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23154b24fc55b5647aca422ab536b859, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _name: NetworkObject
+  _prefabId: 100000

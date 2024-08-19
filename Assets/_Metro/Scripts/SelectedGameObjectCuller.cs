@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Fusion;
 using UnityEngine;
 
 
 // Similar to SelectedGameComponentCuller, but instead of disabling components, it instead sets alpha for every child canvasrenderer to 0 or 1
-public class SelectedGameObjectCuller : MonoBehaviour
+public class SelectedGameObjectCuller : NetworkBehaviour
 {
     
     [Serializable]
@@ -15,7 +16,7 @@ public class SelectedGameObjectCuller : MonoBehaviour
     }
     public SelectedGameObjectCullerOption disabledOption;
     
-    void Start()
+    public override void Spawned()
     {
         var game = GetComponentInParent<MetroGame>();
         game.GameSelectionDelegate += OnGameSelected;
@@ -26,7 +27,8 @@ public class SelectedGameObjectCuller : MonoBehaviour
         UpdateComponents(game.IsGameSelected());
     }
 
-    void OnDestroy(){
+    // void OnDestroy(){
+    public override void Despawned(NetworkRunner runner, bool hasState){
         var game = GetComponentInParent<MetroGame>();
         if(!game)return;
         game.GameSelectionDelegate -= OnGameSelected;

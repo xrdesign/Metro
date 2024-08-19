@@ -46,24 +46,11 @@ public class AddTrainUI : MonoBehaviour,
     // Update is called once per frame
     void Update()
     {
-        trainCountTxt.text = MetroManager.GetSelectedGame().freeTrains.ToString();
-        return;
-        //update the ghostTrain's position to match that of left controller
-        ghostTrain.transform.position = MetroManager.Instance.LController.transform.position;
-        //ghostTrain.transform.position = LeftPose.Position;
-        
-
-        
-        //check if the ghostTrain should be placed and make it Hide/show      
-        if (ghostTrain!= null && MetroManager.GetSelectedGame().addedTrain)
-        {
-            this.ghostTrain.SetActive(false);
-
-            //GhostTrain trainComponent = this.ghostTrain.GetComponent<GhostTrain>();
-        } else if (MetroManager.GetSelectedGame().addingTrain)
-        {
-            this.ghostTrain.SetActive(true);
+        if(MetroManager.GetSelectedGame()){
+            trainCountTxt.text = MetroManager.GetSelectedGame().freeTrains.ToString();
         }
+        return;
+        
     }
 
     public void wasClicked()

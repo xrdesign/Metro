@@ -1,29 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
+using Fusion;
 using UnityEngine;
 
-public class Passenger {
+public struct Passenger : INetworkStruct
+{
+    public StationType destination { get; set; }
+    public NetworkId gameInstance { get; set; }
+    public float waitTime { get; set; }
+    public float travelTime { get; set; }
 
-    public StationType destination = StationType.Cube;
-    public MetroGame gameInstance;
-    public float waitTime;
-    public float travelTime;
+    public float totalTime { get; set; }
 
-    public float totalTime;
-
-    public List<Station> route = null;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        totalTime = 0;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        Debug.Log("gameSpeed" + gameInstance.gameSpeed);
-        totalTime += Time.deltaTime * gameInstance.gameSpeed;
-    }
+    [Networked, Capacity(20)] public NetworkArray<NetworkId> routes => default;
+    public int routeCount { get; set; }
 
 }

@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Fusion;
 
-public class Recommender : MonoBehaviour {
+public class Recommender : NetworkBehaviour {
     [SerializeField] MetroManager metroManager;
     [SerializeField] TMP_Text output;
     [SerializeField] float pollingPeriod;
@@ -39,22 +40,26 @@ public class Recommender : MonoBehaviour {
     List<GameIssues> AnalyzeGames () {
         var games = metroManager.games;
         List<GameIssues> issues = new List<GameIssues>();
-        var numGames = games.Count;
+        var numGames = metroManager.gameCount;
         //Loop through games and store metrics
         for (int g = 0; g<numGames; g++){
             MetroGame game = games[g];
             GameIssues gIssues = NewGameIssues();
             gIssues.gameID = g;
-            foreach(var station in game.stations){
-                if(station.lines.Count == 0){
+            // foreach(var station in game.stations){
+            for(int i = 0; i<game.stationCount; i++){
+                var station = game.stations[i];
+                if(station.lineCount == 0){
                     gIssues.disconnectedStations++;
                 }
-                if(station.passengers.Count > 10){
+                if(station.passengerCount > 10){
                     gIssues.overCrowdedStations++;
                 }
             }
-            foreach(var line in game.lines){
-                if(line.stops.Count <= 0){
+            // foreach(var line in game.lines){
+            for(int i = 0; i<game.lineCount; i++){
+                var line = game.lines[i];
+                if(line.stopCount <= 0){
                     gIssues.unusedLines++;
                 }
             }

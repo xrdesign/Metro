@@ -8,8 +8,12 @@ using UnityEngine;
 using Random = System.Random;
 using System.IO;
 using System;
+using Fusion;
+using System.Collections;
+using UnityEditor.Build;
 
-public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
+public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
+{
     #region Fields
 
     #region Singleton
@@ -28,23 +32,25 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
     #region Set In Editor
 
-    public uint numGamesToSpawn = 1;
-    public uint daysPerNewTrain = 5;
-    public uint daysPerNewLine  = 15;
+    [Networked] public uint numGamesToSpawn { get; set; } = 1;
+    [Networked] public uint daysPerNewTrain { get; set; } = 5;
+    [Networked] public uint daysPerNewLine { get; set; } = 15;
 
     #region Game Parameters
 
-    public float timeoutDurationOverride = 45.0f;
-    public int[] gameSeeds;
+    [Networked] public float timeoutDurationOverride { get; set; } = 45.0f;
+
+    // public int[] gameSeeds;
+    [Networked, Capacity(16)] public NetworkArray<int> gameSeeds => default;
 
     #endregion
 
     #endregion
 
     #region Logging
-    
+
     private float _logTimer;
-    public float  secondsPerLogEntry = 10;
+    public float secondsPerLogEntry = 10;
     StreamWriter sw;
     private int[,] actionsTaken;
 
@@ -52,7 +58,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
     #region Privates
 
-    public List<MetroGame> games = new List<MetroGame>();
+    [Networked, Capacity(16) ] public NetworkArray<MetroGame> games => default;
+    [Networked] public int gameCount { get; set; } = 0;
 
     // Used for UI stuff. The game that the player is currently "selecting". I.E. what they can interact with, add to, change, etc.
     // todo: Decide how to select. Should it just be nearest game? Should there be some UI for it? ETC. For now just select first game.
@@ -84,26 +91,34 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
     #region Methods
 
-    public static bool SetAlert(uint gameID, bool value){
-        var game = GetGameWithID(gameID);
-        if(game!=null){
-            game.SetAlert(value);
-            return true;
+    public static bool SetAlert(uint gameID, bool value)
+    {
+        if (Instance.HasStateAuthority)
+        {
+            var game = GetGameWithID(gameID);
+            if (game != null)
+            {
+                game.SetAlert(value);
+                return true;
+            }
+            return false;
         }
         return false;
     }
 
     #region Monobehavior Overrides
-    void Awake() {
+    void Awake()
+    {
         if (Instance is null) Instance = this;
-        else {
+        else
+        {
             Destroy(this);
             Debug.LogError("More than one MetroManager initialized!");
         }
 
-        if(this.enabled)
+        if (this.enabled)
             gameObject.AddComponent<Server>();
-        
+
 #if Unity_EDITOR_OSX || UNITY_STANDALONE_OSX
 #else
         liblsl.StreamInfo inf =
@@ -115,159 +130,212 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         // Spawn in the games.
 
 
-        if (numGamesToSpawn <= 0) {
-            Debug.LogError("No games set to spawn!");
-        }
+        // if (numGamesToSpawn <= 0)
+        // {
+        //     Debug.LogError("No games set to spawn!");
+        // }
 
         lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
 
 
         SetupLogs();
     }
-    
-    private void Start(){
-        //Spawn Games
-        SpawnGames();
-        if(games.Count > 0)
-            SelectGame(games[0]);
+
+    private void Start()
+    {
+        // //Spawn Games
+        // SpawnGames();
+        // if (games.Count > 0)
+        //     SelectGame(games[0]);
     }
 
-    public void SpawnGames(){
-        for (uint i = 0; i < numGamesToSpawn; i++) {
-            if(i >= games.Count){
-                var newMetroGame = (new GameObject("Game " + games.Count)).AddComponent<MetroGame>();
-                newMetroGame.gameId = i;
-                newMetroGame.transform.parent = this.transform; //less clutter in scene hiearchy
-                newMetroGame.daysPerLine = (int)Instance.daysPerNewLine;
-                newMetroGame.daysPerTrain = (int)Instance.daysPerNewTrain;
-                games.Add(newMetroGame);
-                newMetroGame.transform.position = GetGameLocation(newMetroGame.gameId);
-                if(i < gameSeeds.Length){
-                    newMetroGame.SetSeed(gameSeeds[i]);
-                }
+    public void SpawnGames()
+    {
+        if(!HasStateAuthority){
+            return;
+        }
+
+        for (int i = 0; i < numGamesToSpawn; i++)
+        {
+            if (i >= gameCount)
+            {
+                // use Runner.Spawn to spawn the game prefab (path "Assets/_Metro/Resources/Prefabs/Game.prefab")
+                var gamePrefab = Resources.Load<GameObject>("Prefabs/Game");
+                var newMetroGame = Runner.Spawn(gamePrefab, onBeforeSpawned: (runner, obj) =>
+                    {
+                        obj.GetComponent<NetworkName>().syncedName = $"Game {i}";
+                        obj.GetComponent<MetroGame>().gameId = (uint)i;
+                        obj.GetComponent<MetroGame>().transform.parent = this.transform; //less clutter in scene hiearchy
+                        obj.GetComponent<MetroGame>().daysPerLine = (int)Instance.daysPerNewLine;
+                        obj.GetComponent<MetroGame>().daysPerTrain = (int)Instance.daysPerNewTrain;
+                        obj.GetComponent<MetroGame>().transform.position = GetGameLocation(obj.GetComponent<MetroGame>().gameId);
+                        if (i < gameSeeds.Length)
+                        {
+                            obj.GetComponent<MetroGame>().SetSeed(gameSeeds[i]);
+                        }
+                    }
+                ).GetComponent<MetroGame>();
+                
+                // add the new game to the list of games
+                gameCount = FusionUtils.Add(games, gameCount, newMetroGame);
             }
-            if(jsonGames != null){
-                games[(int)i].StartSimGame(jsonGames[(int)i], this.gameSpeed, this.simLength);
+            if (jsonGames != null)
+            {
+                games[i].StartSimGame(jsonGames[i], this.gameSpeed, this.simLength);
             }
         }
-        actionsTaken = new int[games.Count,5];
-    
+        actionsTaken = new int[gameCount, 5];
     }
 
-    private void Update(){
-        if(jsonGames != null){
-            time += Time.deltaTime * gameSpeed;
-            if(time>=simLength)
+    // override Spawned()
+    public override void Spawned()
+    {
+        SpawnGames();
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        if (selectedGame == null && gameCount > 0 && games[0])
+            SelectGame(games[0]);
+        // this is recording to run on both host and client
+        if (jsonGames != null)
+        {
+            time += Runner.DeltaTime * gameSpeed;
+            if (time >= simLength)
                 this.isDone = true;
         }
-        else{
-            _logTimer += Time.deltaTime;
+        else
+        {
+            _logTimer += Runner.DeltaTime;
             float diff = _logTimer - secondsPerLogEntry;
-            if(diff >= 0){
+            if (diff >= 0)
+            {
                 LogData();
                 _logTimer = diff;
             }
         }
-        
+
         //Send LSL Markers
-        if(markersThisFrame.Count > 0){
+        if (markersThisFrame.Count > 0)
+        {
 #if Unity_EDITOR_OSX || UNITY_STANDALONE_OSX
 #else
-            markerStream.push_sample(markersThisFrame.ToArray());  
+            markerStream.push_sample(markersThisFrame.ToArray());
 #endif
             markersThisFrame.Clear();
         }
 
     }
 
-    private void OnEnable() {
+    public override void Render()
+    {
+        if (selectedGame == null && gameCount > 0 && games[0])
+            SelectGame(games[0]);
+    }
+
+    private void OnEnable()
+    {
+        // teleport is handle locally and then transform follower will sync it to the server
         CoreServices.TeleportSystem.RegisterHandler<IMixedRealityTeleportHandler>(this);
     }
 
-    private void OnDisable() {
+    private void OnDisable()
+    {
         //CoreServices.TeleportSystem.UnregisterHandler<IMixedRealityTeleportHandler>(this);
         sw.Write("]}");
         sw.Flush();
         sw.Close();
     }
 
-    
+
     #endregion
 
     #region Log Handling
-    
+
     private int logStep = 1;
-    void LogData(){
+    void LogData()
+    {
         Debug.Log("Logging data");
         var log = new JSONObject();
         var json = new JSONObject(JSONObject.Type.ARRAY);
-        for(int i=0; i<games.Count; i++){
+        for (int i = 0; i < gameCount; i++)
+        {
             MetroGame game = games[i];
             var gameJson = game.SerializeGameState();
-            gameJson.AddField("agent_insert_station", actionsTaken[i,0]);
-            actionsTaken[i,0]=0;
-            gameJson.AddField("agent_remove_station", actionsTaken[i,1]);
-            actionsTaken[i,1]=0;
-            gameJson.AddField("agent_remove_track", actionsTaken[i,2]);
-            actionsTaken[i,2]=0;
-            gameJson.AddField("agent_add_train", actionsTaken[i,3]);
-            actionsTaken[i,3]=0;
-            gameJson.AddField("agent_remove_train", actionsTaken[i,4]);
-            actionsTaken[i,4]=0;
+            gameJson.AddField("agent_insert_station", actionsTaken[i, 0]);
+            actionsTaken[i, 0] = 0;
+            gameJson.AddField("agent_remove_station", actionsTaken[i, 1]);
+            actionsTaken[i, 1] = 0;
+            gameJson.AddField("agent_remove_track", actionsTaken[i, 2]);
+            actionsTaken[i, 2] = 0;
+            gameJson.AddField("agent_add_train", actionsTaken[i, 3]);
+            actionsTaken[i, 3] = 0;
+            gameJson.AddField("agent_remove_train", actionsTaken[i, 4]);
+            actionsTaken[i, 4] = 0;
             json.Add(gameJson);
         }
         log.AddField("log_step", logStep);
         log.AddField("games", json);
         log.AddField("server_messages", commandList);
-        if(logStep == 1)
-            sw.WriteLine(log.ToString()); 
+        if (logStep == 1)
+            sw.WriteLine(log.ToString());
         else
-            sw.WriteLine(","+log.ToString());
+            sw.WriteLine("," + log.ToString());
         logStep++;
         commandList.Clear();
     }
 
-    void SetupLogs(){
+    void SetupLogs()
+    {
         Debug.Log("Setting up Logs");
+        // Latest + ${time}.txt
+        string fileName = "Latest_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".txt";
         string filePath = Path.Combine(Application.persistentDataPath, "Logs/");
 
-        if(!Directory.Exists(filePath))
+        if (!Directory.Exists(filePath))
             Directory.CreateDirectory(filePath);
-        if(File.Exists(filePath+"Latest.txt"))
-            File.Copy(filePath+"Latest.txt", filePath+"Previous.txt", true);
+        if (File.Exists(filePath + fileName))
+            File.Copy(filePath + fileName, filePath + "Previous.txt", true);
 
         commandList = new JSONObject(JSONObject.Type.ARRAY);
 
         //start new log
-        sw = new StreamWriter(filePath+"Latest.txt");
+        sw = new StreamWriter(filePath + fileName);
         sw.Write("{\"time_steps\":[");
     }
 
     private JSONObject commandList;
-    public static void LogServerMessage(JSONObject message){
+    public static void LogServerMessage(JSONObject message)
+    {
         Instance.commandList.Add(message);
-        if(message.HasField("command")){
+        if (message.HasField("command"))
+        {
             int game = (int)message["game_id"].i;
             string type = message["arguments"]["action"].str;
             Debug.Log(type);
             int typeIdx = 0;
-            if(string.Equals(type, "insert_station")){
+            if (string.Equals(type, "insert_station"))
+            {
                 typeIdx = 0;
                 MetroManager.SendEvent($"AgentAction: InsertStation, Game: {game}");
             }
-            else if(string.Equals(type, "remove_station")){
+            else if (string.Equals(type, "remove_station"))
+            {
                 typeIdx = 1;
                 MetroManager.SendEvent($"AgentAction: RemoveStation, Game: {game}");
             }
-            else if(string.Equals(type, "remove_track")){
+            else if (string.Equals(type, "remove_track"))
+            {
                 typeIdx = 2;
                 MetroManager.SendEvent($"AgentAction: DeleteLine, Game: {game}");
             }
-            else if(string.Equals(type, "add_train")){
+            else if (string.Equals(type, "add_train"))
+            {
                 typeIdx = 3;
                 MetroManager.SendEvent($"AgentAction: AddTrain, Game: {game}");
             }
-            else if(string.Equals(type, "remove_train")){
+            else if (string.Equals(type, "remove_train"))
+            {
                 typeIdx = 4;
                 MetroManager.SendEvent($"AgentAction: RemoveTrain, Game: {game}");
             }
@@ -278,13 +346,14 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     #endregion
 
     #region Simulation Based Scoring
-    
+
     private List<JSONObject> jsonGames = null;
     float simLength;
     public bool isDone = false;
     float gameSpeed;
     float time = 0;
-    public void SetupSim(List<JSONObject> games, float gameSpeed, float simLength){
+    public void SetupSim(List<JSONObject> games, float gameSpeed, float simLength)
+    {
         Debug.Log("setting up sim");
         jsonGames = games;
         this.gameSpeed = gameSpeed;
@@ -293,16 +362,18 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         this.isDone = false;
         SpawnGames();
     }
-    public JSONObject GetSimScores(){
+    public JSONObject GetSimScores()
+    {
         var json = new JSONObject(JSONObject.Type.ARRAY);
-        for(int i = 0; i<games.Count; i++){
+        for (int i = 0; i < gameCount; i++)
+        {
             var game = new JSONObject();
             game.AddField("index", i);
             game.AddField("score", games[i].score);
             game.AddField("passengersDelivered", games[i].passengersDelivered);
             game.AddField("totalWaitTime", games[i].totalPassengerWaitTime);
             game.AddField("totalTravelTime", games[i].totalPassengerTravelTime);
-            game.AddField("station_count", games[i].stations.Count);
+            game.AddField("station_count", games[i].stationCount);
             json.Add(game);
         }
         return json;
@@ -314,26 +385,30 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     #region Teleportation Handling
     // Teleportation used for selecting game based on player teleportation location.
     // Mostly just overrides
-    
-    public void OnTeleportRequest(TeleportEventData eventData) {
-        
+
+    public void OnTeleportRequest(TeleportEventData eventData)
+    {
+
     }
 
-    public void OnTeleportStarted(TeleportEventData eventData) {
-        
+    public void OnTeleportStarted(TeleportEventData eventData)
+    {
+
     }
 
-    public void OnTeleportCompleted(TeleportEventData eventData) {
+    public void OnTeleportCompleted(TeleportEventData eventData)
+    {
         var closestGame = FindNearestMetroGameToPosition(eventData.Pointer.Position);
         if (!closestGame) return;
         MetroManager.Instance.SelectGame(closestGame);
     }
 
-    public void OnTeleportCanceled(TeleportEventData  eventData) {
-        
+    public void OnTeleportCanceled(TeleportEventData eventData)
+    {
+
     }
 
-    
+
     #endregion
 
 
@@ -344,7 +419,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// </summary>
     /// <param name="position">Position to compare against</param>
     /// <returns>Closest <see cref="MetroGame"/></returns>
-    public MetroGame FindNearestMetroGameToPosition(Vector3 position) {
+    public MetroGame FindNearestMetroGameToPosition(Vector3 position)
+    {
         var games = FindObjectsOfType<MetroGame>();
 
         if (games.Length <= 0) return null;
@@ -352,13 +428,14 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         var sorted = games.OrderBy(obj => (position - obj.transform.position).sqrMagnitude);
         return sorted.First();
     }
-    
+
     /// <summary>
     /// Get what the transform of the game with a certain id should be. This should space them apart so that there is sufficient distance between each game.
     /// </summary>
     /// <param name="gameID">Game ID to find desired spaced position of</param>
     /// <returns>Position of game</returns>
-    private Vector3 GetGameLocation(uint gameID) {
+    private Vector3 GetGameLocation(uint gameID)
+    {
         float
             distanceBetweenGames =
                 10.0f; //todo: This is arbitrary right now. Radius in which stations can spawn grows with time, so we need some way to deal with that eventually.
@@ -377,7 +454,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// </summary>
     /// <param name="gameID">ID of game to serialize</param>
     /// <returns><see cref="JSONObject"/> containing formatted game state</returns>
-    public static JSONObject SerializeGame(uint gameID) {
+    public static JSONObject SerializeGame(uint gameID)
+    {
         return GetGameWithID(gameID).SerializeGameState();
     }
 
@@ -386,37 +464,45 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// </summary>
     /// <param name="gameID">ID of game to return</param>
     /// <returns><see cref="MetroGame"/> component</returns>
-    private static MetroGame GetGameWithID(uint gameID) {
-        return Instance.games.Find(game => game.gameId == gameID);
+    private static MetroGame GetGameWithID(uint gameID)
+    {
+        // return Instance.games.Find(game => game.gameId == gameID);
+        return FusionUtils.Find(Instance.games, Instance.gameCount, game => game.gameId == gameID);
     }
 
-    public static uint GetNumGames(){
+    public static uint GetNumGames()
+    {
         return Instance.numGamesToSpawn;
     }
-    
+
     /// <summary>
     /// Get the currently selected <see cref="MetroGame"/>
     /// </summary>
     /// <returns>Currently selected <see cref="MetroGame"/></returns>
-    public static MetroGame GetSelectedGame() {
+    public static MetroGame GetSelectedGame()
+    {
         return Instance.selectedGame;
     }
 
-    private static Queue<string> instructionQueue = new Queue<string>(); 
+    private static Queue<string> instructionQueue = new Queue<string>();
     private static bool hasInstructions = false;
 
-    public static bool HasInstructions(){
+    public static bool HasInstructions()
+    {
         return instructionQueue.Count > 0;
     }
-    public static string GetInstructions(){
+    public static string GetInstructions()
+    {
         string instructions = "";
-        if(HasInstructions()){
+        if (HasInstructions())
+        {
             instructions = instructionQueue.Dequeue();
             Debug.Log("retrieved instructions" + instructions);
         }
         return instructions;
     }
-    public static void AddInstructions(string i){
+    public static void AddInstructions(string i)
+    {
         Debug.Log("added instructions: " + i);
         instructionQueue.Enqueue(i);
     }
@@ -485,18 +571,22 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// <summary>
     /// Refresh the UI. EX: When selected game is reset or when switching the selected game.
     /// </summary>
-    private void RefreshUI() {
-        foreach (TransportLineUI l in lineUIs) {
+    private void RefreshUI()
+    {
+        foreach (TransportLineUI l in lineUIs)
+        {
             l.SetLine(null);
         }
 
         metroUI.SetActive(!selectedGame.isGameover);
 
-        for (int i = 0; i < selectedGame.lines.Count; i++) {
+        for (int i = 0; i < selectedGame.lineCount; i++)
+        {
             lineUIs[i].SetLine(selectedGame.lines[i]);
         }
 
-        if (addTrainUI) {
+        if (addTrainUI)
+        {
             addTrainUI.SetActive(!selectedGame.isGameover);
         }
 
@@ -507,8 +597,10 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// Only change selected game through this function, so that delegates are properly assigned.
     /// </summary>
     /// <param name="game">Game to select</param>
-    public void SelectGame(MetroGame game) {
-        if (selectedGame) {
+    public void SelectGame(MetroGame game)
+    {
+        if (selectedGame)
+        {
             selectedGame.uiUpdateDelegate -= RefreshUI;
             selectedGame.OnSelectionChange(false);
             selectedGame = null;
@@ -519,7 +611,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         selectedGame.OnSelectionChange(true);
     }
 
-    public static void SendEvent(string eventString) {
+    public static void SendEvent(string eventString)
+    {
         Instance.markersThisFrame.Add(eventString);
         /*
         string[] tempSample;
@@ -528,27 +621,32 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         */
     }
 
-    public static void ResetGame(uint gameID) {
+    public static void ResetGame(uint gameID)
+    {
         GetGameWithID(gameID).ScheduleReset();
     }
-    
-    public static void ResetScene() {
-        foreach(var metroGame in Instance.games){
+
+    public static void ResetScene()
+    {
+        foreach (var metroGame in Instance.games)
+        {
             metroGame.ScheduleReset();
         }
     }
-    
+
 
     // Starts every game simultaneously.
-    public static void StartGames() {
-        foreach (var metroGame in Instance.games) {
+    public static void StartGames()
+    {
+        foreach (var metroGame in Instance.games)
+        {
             metroGame.StartGame();
         }
     }
 
 
     #region Station Name Generation
-    
+
 
     /// <summary>
     /// Generates a random station name for this station. The name is only guaranteed to be unique within the same game instance.
@@ -559,18 +657,22 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     ///
     /// <param name="gameID">The ID of the game that is checked for conflicting station names.</param>
     /// </summary>
-    public string GenerateRandomStationName(uint gameID) {
+    public string GenerateRandomStationName(uint gameID)
+    {
         var newName = "";
 
         var currStationNames = new List<string>();
-        foreach (var station in GetGameWithID(gameID).stations) {
+        foreach (var station in GetGameWithID(gameID).stations.GetFilledElements(GetGameWithID(gameID).stationCount))
+        {
             currStationNames.Add(station.stationName);
         }
-        
-        while (newName == "") {
+
+        while (newName == "")
+        {
             newName = GenerateSingleStationName();
 
-            if (currStationNames.Contains(newName)) {
+            if (currStationNames.Contains(newName))
+            {
                 Debug.LogWarning("Same name (" + newName + ") was generated as already used in game " + gameID + "!");
                 newName = "";
             }
@@ -578,9 +680,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
 
         return newName;
     }
-    
+
     #region Hardcoded generation strings.
-    
+
     private static readonly string[] Nouns = new string[] {
         // birds
         "Tinamou", "Ostrich", "Kiwi", "Cassowary", "Guinea", "Quail", "Partridge", "Grouse", "Capercaillie", "Curassow",
@@ -744,11 +846,11 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         "Central",
         ""
     };
-        
+
     private static readonly string[] StationPrefixes = new string[] {
         "Grand", "Central", "North", "South"
     };
-    
+
     private static readonly string[] StationWords = new string[] {
         // merriam webster's word of the day
         "Stalwart", "Libertine", "Rococo", "Verdant", "Constellation",
@@ -761,12 +863,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
         // saints
         "St. Augustine", "St. Clementine", "St. Christopher", "St. Francis", "St. John", "St. Nicholas", "Saints"
     };
-    
+
     private static readonly string[] StationSuffixes = new string[] {
         "Cross", "Junction", "Station", "Cross", "Circus", "Square", "Junction", "Plaza", "Terminal", "Hall"
     };
 
-    
+
     #endregion
 
     // These simply generate names for different things using the Hardcoded strings above in certain ways.
@@ -778,7 +880,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// Logic adapted from the javascript in this website: https://groenroos.co.uk/names/
     /// </summary>
     /// <returns></returns>
-    private string GenerateSingleStationName() {
+    private string GenerateSingleStationName()
+    {
 
         // New, single word generation.
 
@@ -822,11 +925,14 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// Logic adapted from the javascript in this website: https://groenroos.co.uk/names/
     /// </summary>
     /// <returns></returns>
-    private string GenerateSingleDistrictName () {
-        if (random.NextDouble() > 0.75) {
+    private string GenerateSingleDistrictName()
+    {
+        if (random.NextDouble() > 0.75)
+        {
             return Nouns[random.Next(0, Nouns.Length)] + " " + DistrictSuffixes[random.Next(0, DistrictSuffixes.Length)];
         }
-        else {
+        else
+        {
             return DistrictPrefixes[random.Next(0, DistrictPrefixes.Length)] + " " +
                        Nouns[random.Next(0, Nouns.Length)];
         }
@@ -837,57 +943,65 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler {
     /// Logic adapted from the javascript in this website: https://groenroos.co.uk/names/
     /// </summary>
     /// <returns></returns>
-    private string ordinalSuffixOf(int i) {
+    private string ordinalSuffixOf(int i)
+    {
         var j = i % 10;
         var k = i % 100;
 
-        if (j == 1 && k != 11) {
+        if (j == 1 && k != 11)
+        {
             return i + "st";
         }
 
-        if (j == 2 && k != 12) {
+        if (j == 2 && k != 12)
+        {
             return i + "nd";
         }
 
-        if (j == 3 && k != 13) {
+        if (j == 3 && k != 13)
+        {
             return i + "rd";
         }
 
         return i + "th";
     }
-    
+
     /// <summary>
     /// Internal helper used by GenerateSingleStationName().
     /// Logic adapted from the javascript in this website: https://groenroos.co.uk/names/
     /// </summary>
     /// <returns></returns>
-    private string GenerateSingleRoadName() {
+    private string GenerateSingleRoadName()
+    {
         var street = "";
 
         // Chance of prefix
-        if (random.NextDouble() > 0.65) {
+        if (random.NextDouble() > 0.65)
+        {
             street = RoadPrefixes[random.Next(0, RoadPrefixes.Length)];
         }
-        
+
         // Chance of numbered
-        if (random.NextDouble() > 0.85) {
+        if (random.NextDouble() > 0.85)
+        {
             street += " " + ordinalSuffixOf(random.Next(1, 25));
         }
-        else {
+        else
+        {
             street += " " + NounsExtras[random.Next(0, NounsExtras.Length)];
         }
-        
+
         // Random ending
         street += " " + RoadSuffixes[random.Next(0, RoadSuffixes.Length)];
 
         return street;
     }
-    
+
 
     #endregion
-    
+
     #endregion
-    
-    
+
+
     #endregion
 }

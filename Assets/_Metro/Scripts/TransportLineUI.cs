@@ -47,11 +47,11 @@ public class TransportLineUI : MonoBehaviour
         }
 
 
-        while(trainUIs.Count < line.trains.Count){
+        while(trainUIs.Count < line.trainCount){
             //Add train
             trainUIs.Add(GameObject.Instantiate(circle, this.transform));
         }
-        while(trainUIs.Count > line.trains.Count){
+        while(trainUIs.Count > line.trainCount){
             if(trainUIs.Count > 0){
                 Destroy(trainUIs[0]);
                 trainUIs.RemoveAt(0);
