@@ -117,9 +117,14 @@ public class TransportLine : NetworkBehaviour
 
     public void RemoveAll()
     {
-        // foreach(var s in stops){
-        //     s.lines.Remove(this);
-        // }
+        // make sure only server actually handles this
+        RPC_RemoveAll();
+        MetroManager.SendEvent($"Action: RemoveLine, Game: {gameInstance.gameId}");
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_RemoveAll()
+    {
         for (int i = 0; i < stopCount; i++)
         {
             stops[i].lineCount = FusionUtils.Remove(stops[i].lines, stops[i].lineCount, this);
@@ -139,27 +144,22 @@ public class TransportLine : NetworkBehaviour
         trainCount = 0;
         isDeployed = false;
         gameInstance.linesRemoved++;
-        MetroManager.SendEvent($"Action: RemoveLine, Game: {gameInstance.gameId}");
     }
 
     //add train at a specific location
     public void AddTrain(float position, float direction)
     {
+        // make sure only server actually handles this
+        RPC_AddTrain(position, direction);
+        MetroManager.SendEvent($"Action: AddTrain, Game: {gameInstance.gameId}");
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_AddTrain(float position, float direction){
         if (gameInstance.freeTrains == 0) return;
         gameInstance.freeTrains -= 1;
 
         var prefab = Resources.Load("Prefabs/Train") as GameObject;
-        // var go = GameObject.Instantiate(prefab, new Vector3(0,0,0), prefab.transform.rotation) as GameObject;
-        // go.name = "Train";
-        // var t = go.GetComponent<Train>();
-        // t.gameInstance = gameInstance;
-        // t.position = position;
-        // t.direction = direction;
-        // t.speed = 0.0f;
-        // t.line = this;
-        // t.uuid = t.GetInstanceID();
-        // t.color = color;
-        // t.transform.SetParent(gameInstance.trainOrganizer.transform);
 
         var t = Runner.Spawn(prefab, onBeforeSpawned: (runner, obj) =>
         {
@@ -177,15 +177,20 @@ public class TransportLine : NetworkBehaviour
         // trains.Add(t);
         trainCount = FusionUtils.Add(trains, trainCount, t);
         gameInstance.trainsAdded++;
-        MetroManager.SendEvent($"Action: AddTrain, Game: {gameInstance.gameId}");
-
     }
+
     public void RemoveTrain()
     {
+        // make sure only server actually handles this
+        RPC_RemoveTrain();
+        MetroManager.SendEvent($"Action: RemoveTrain, Game: {gameInstance.gameId}");
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_RemoveTrain(){
         if (this.trainCount <= 0) return;
         trains[0].shouldRemove = true;
         gameInstance.trainsRemoved++;
-        MetroManager.SendEvent($"Action: RemoveTrain, Game: {gameInstance.gameId}");
     }
 
     public Station FindDestination(int from, int direction, StationType type)

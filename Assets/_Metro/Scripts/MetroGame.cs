@@ -991,7 +991,8 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
                 // Debug.Log("drag " + editingIndex + " " + segment + " " + color);
                 segment.SetColor(color);
             }
-            if(editingLine.tracks){
+            if (editingLine.tracks)
+            {
                 editingLine.tracks.UpdateUISegment(0, point, editingIndex);
                 if (editingInsert)
                     editingLine.tracks.UpdateUISegment(1, point, editingIndex + 1);

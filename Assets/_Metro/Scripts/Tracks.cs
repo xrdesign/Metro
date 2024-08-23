@@ -52,7 +52,7 @@ public class Tracks : NetworkBehaviour
             // head.gameObject.SetActive(false);
             tail = CreateSegment(9999);
             // tail.gameObject.SetActive(false);
-        } 
+        }
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -73,7 +73,8 @@ public class Tracks : NetworkBehaviour
 
     public override void Render()
     {
-        if(!isInitialized){
+        if (!isInitialized)
+        {
             UpdateTracks();
             isInitialized = true;
         }
@@ -85,7 +86,8 @@ public class Tracks : NetworkBehaviour
         UpdateTracks();
     }
 
-    public void UpdateTracks(){
+    public void UpdateTracks()
+    {
         UpdateControlPoints();
         UpdateSegments();
         UpdateLengths();
@@ -171,10 +173,13 @@ public class Tracks : NetworkBehaviour
         {
 
             TrackSegment track = default;
-            if(HasStateAuthority){ 
+            if (HasStateAuthority)
+            {
                 track = CreateSegment(i);
                 segmentCount = FusionUtils.Add(segments, segmentCount, track);
-            } else {
+            }
+            else
+            {
                 track = segments[i];
             }
 
@@ -195,7 +200,7 @@ public class Tracks : NetworkBehaviour
             tail.cp[1] = cp[cp.Count - 1];
             tail.cp[2] = cp[cp.Count - 1] - (cp[cp.Count - 2] - cp[cp.Count - 1]).normalized * 0.15f;
             tail.cp[3] = cp[cp.Count - 1] - (cp[cp.Count - 2] - cp[cp.Count - 1]).normalized * 0.15f;
-            
+
             head.gameObject.SetActive(true);
             head.needsUpdate = true;
             tail.gameObject.SetActive(true);
@@ -235,6 +240,12 @@ public class Tracks : NetworkBehaviour
 
     public void UpdateUISegment(int i, Vector3 pos, int stopIndex)
     {
+        RPC_UpdateUISegment(i, pos, stopIndex);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_UpdateUISegment(int i, Vector3 pos, int stopIndex)
+    {
         if (i >= uiSegmentCount) return;
         // Debug.Log("UpdateUISegment");
         // Debug.Log(i + " " + stopIndex);
@@ -247,7 +258,6 @@ public class Tracks : NetworkBehaviour
         uiSegments[i].cp[2] = pos;
         uiSegments[i].cp[3] = pos;
         uiSegments[i].needsUpdate = true;
-
     }
 
     public void DisableUISegments()
