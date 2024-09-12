@@ -71,7 +71,7 @@ public class EyeTracking : MonoBehaviour
   private static void EyeCallback(ref EyeData eye_data)
   {
 
-    Debug.Log("EyeCallback");
+    // Debug.Log("EyeCallback");
     leftDiameter = eye_data.verbose_data.left.pupil_diameter_mm;
     rightDiameter = eye_data.verbose_data.right.pupil_diameter_mm;
 
@@ -302,7 +302,7 @@ public class EyeTracking : MonoBehaviour
                            rightDiameter };
     eyeStream.push_sample(tempSample);
 
-    LogRecorder.RecordPosition(Camera.main.transform.position, hit.point);
+    LogRecorder.RecordPosition(Camera.main.transform.position, Camera.main.transform.rotation, hit.point);
   }
 
   void OnDestroy() { _writer.Close(); }
