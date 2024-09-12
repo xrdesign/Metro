@@ -72,6 +72,14 @@ public class ReplayManager : MonoBehaviour
       gazeMarker = GameObject.Instantiate(gazeMarkerPrefab);
       gazeMarker.name = "Gaze";
       gazeLine.positionCount = 2;
+
+      // Try to setup the GameObjectFollower for the main camera if there is one
+      // Find GameObjectFollower
+      GameObjectFollower follower = Camera.main.GetComponent<GameObjectFollower>();
+      if (follower)
+      {
+        follower.SetTarget(headMarker);
+      }
     }
   }
 
@@ -177,15 +185,43 @@ public class ReplayManager : MonoBehaviour
     {
       return;
     }
-    headMarker.transform.position =
-        ParseVector(nextPositionObject["HEAD_POSITION"].str);
-    gazeMarker.transform.position =
-        ParseVector(nextPositionObject["GAZE_POSITION"].str);
 
-    bool isFixation = nextPositionObject["FIXATION_IDX"].b;
+    // Handle different formats
+    if (nextPositionObject["HEAD"])
+    {
+      headMarker.transform.position =
+          ParseVector(nextPositionObject["HEAD"].str);
+    } else if (nextPositionObject["HEAD_POSITION"])
+    {
+      headMarker.transform.position =
+          ParseVector(nextPositionObject["HEAD_POSITION"].str);
+    }
+
+    
+    if (nextPositionObject["GAZE"]){
+      gazeMarker.transform.position =
+          ParseVector(nextPositionObject["GAZE"].str);
+    } else if (nextPositionObject["GAZE_POSITION"])
+    {
+      gazeMarker.transform.position =
+          ParseVector(nextPositionObject["GAZE_POSITION"].str);
+    }
+
+    // Debug.Log("head: " + headMarker.transform.position);
+
+    bool isFixation = nextPositionObject["FIXATION_IDX"] && nextPositionObject["FIXATION_IDX"].b;
     gazeMarker.GetComponent<Renderer>().material =
         isFixation ? fixationMat : gazePointMat;
-    headMarker.transform.LookAt(gazeMarker.transform);
+    
+    if (nextPositionObject["HEAD_ROTATION"]){
+      headMarker.transform.rotation = 
+          ParseQuaternion(nextPositionObject["HEAD_ROTATION"].str);
+    }else{
+      // For the old data, this is the best we can have because we don't have head rotation recorded
+      // but for the new data, we have head rotation recorded
+      headMarker.transform.LookAt(gazeMarker.transform); 
+    }
+
     Vector3[] markers = { headMarker.transform.position,
                           gazeMarker.transform.position };
     gazeLine.SetPositions(markers);
@@ -351,6 +387,17 @@ public class ReplayManager : MonoBehaviour
     float y = float.Parse(p[1]);
     float z = float.Parse(p[2]);
     return new Vector3(x, y, z);
+  }
+
+  Quaternion ParseQuaternion(string pStr)
+  {
+    string trimmed = pStr.Trim('(', ')');
+    var p = trimmed.Split(',');
+    float x = float.Parse(p[0]);
+    float y = float.Parse(p[1]);
+    float z = float.Parse(p[2]);
+    float w = float.Parse(p[3]);
+    return new Quaternion(x, y, z, w);
   }
   StationType ParseStationType(string shape)
   {

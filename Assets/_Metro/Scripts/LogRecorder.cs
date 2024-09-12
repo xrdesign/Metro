@@ -119,12 +119,13 @@ public class LogRecorder : MonoBehaviour
     }
   }
 
-  public static void RecordPosition(Vector3 headPos, Vector3 gazePoint)
+  public static void RecordPosition(Vector3 headPos, Quaternion headRot, Vector3 gazePoint)
   {
     JSONObject logStep = new JSONObject();
     logStep.AddField("TIME", instance.currentTime);
-    logStep.AddField("HEAD", headPos.ToString());
-    logStep.AddField("GAZE", gazePoint.ToString());
+    logStep.AddField("HEAD_POSITION", headPos.ToString());
+    logStep.AddField("HEAD_ROTATION", headRot.ToString());
+    logStep.AddField("GAZE_POSITION", gazePoint.ToString());
     instance.playerPositionWriter.WriteLine(logStep.ToString());
   }
 
