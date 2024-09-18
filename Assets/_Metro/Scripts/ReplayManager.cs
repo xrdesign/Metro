@@ -225,7 +225,16 @@ public class ReplayManager : MonoBehaviour
     Vector3[] markers = { headMarker.transform.position,
                           gazeMarker.transform.position };
     gazeLine.SetPositions(markers);
+
+    // Calculate the 2D on-screen coordinates of the gaze point
+    Vector3 screenPoint = Camera.main.WorldToScreenPoint(gazeMarker.transform.position);
+    Vector2 normalizedScreenPoint = new Vector2(screenPoint.x / Screen.width, screenPoint.y / Screen.height);
+    // Sanity check
+    // Debug.Log("Width: " + Screen.width + " Height: " + Screen.height + " Screen Point: " + screenPoint + " Normalized Screen Point: " + normalizedScreenPoint);
+
+    // TODO: export the normalized screen point to a file with the timestamp
   }
+
   void GetNextMarker()
   {
     if (!useEyeTracking)
