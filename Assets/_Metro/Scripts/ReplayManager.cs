@@ -45,6 +45,10 @@ public class ReplayManager : MonoBehaviour
   Material fixationMat;
   [SerializeField]
   Material gazePointMat;
+  [SerializeField]
+  bool shouldCreateGazePointCSV = false;
+  [SerializeField]
+  string eyetrackingOutputFile;
 
   /* Built-Ins / LifeCycle */
 
@@ -75,7 +79,8 @@ public class ReplayManager : MonoBehaviour
 
       // Try to setup the GameObjectFollower for the main camera if there is one
       // Find GameObjectFollower
-      GameObjectFollower follower = Camera.main.GetComponent<GameObjectFollower>();
+      GameObjectFollower follower =
+          Camera.main.GetComponent<GameObjectFollower>();
       if (follower)
       {
         follower.SetTarget(headMarker);
@@ -101,6 +106,11 @@ public class ReplayManager : MonoBehaviour
     {
       StartCoroutine(LoadTime(selectedTime));
       jumpToSelectedTime = false;
+    }
+    else if (shouldCreateGazePointCSV)
+    {
+      shouldCreateGazePointCSV = false;
+      StartCoroutine(CreateGazePointCSV(eyetrackingOutputFile));
     }
   }
 
@@ -191,17 +201,19 @@ public class ReplayManager : MonoBehaviour
     {
       headMarker.transform.position =
           ParseVector(nextPositionObject["HEAD"].str);
-    } else if (nextPositionObject["HEAD_POSITION"])
+    }
+    else if (nextPositionObject["HEAD_POSITION"])
     {
       headMarker.transform.position =
           ParseVector(nextPositionObject["HEAD_POSITION"].str);
     }
 
-    
-    if (nextPositionObject["GAZE"]){
+    if (nextPositionObject["GAZE"])
+    {
       gazeMarker.transform.position =
           ParseVector(nextPositionObject["GAZE"].str);
-    } else if (nextPositionObject["GAZE_POSITION"])
+    }
+    else if (nextPositionObject["GAZE_POSITION"])
     {
       gazeMarker.transform.position =
           ParseVector(nextPositionObject["GAZE_POSITION"].str);
@@ -209,30 +221,66 @@ public class ReplayManager : MonoBehaviour
 
     // Debug.Log("head: " + headMarker.transform.position);
 
-    bool isFixation = nextPositionObject["FIXATION_IDX"] && nextPositionObject["FIXATION_IDX"].b;
+    bool isFixation = nextPositionObject["FIXATION_IDX"] &&
+                      nextPositionObject["FIXATION_IDX"].b;
     gazeMarker.GetComponent<Renderer>().material =
         isFixation ? fixationMat : gazePointMat;
-    
-    if (nextPositionObject["HEAD_ROTATION"]){
-      headMarker.transform.rotation = 
+
+    if (nextPositionObject["HEAD_ROTATION"])
+    {
+      headMarker.transform.rotation =
           ParseQuaternion(nextPositionObject["HEAD_ROTATION"].str);
-    }else{
-      // For the old data, this is the best we can have because we don't have head rotation recorded
-      // but for the new data, we have head rotation recorded
-      headMarker.transform.LookAt(gazeMarker.transform); 
+    }
+    else
+    {
+      // For the old data, this is the best we can have because we don't have
+      // head rotation recorded but for the new data, we have head rotation
+      // recorded
+      headMarker.transform.LookAt(gazeMarker.transform);
     }
 
     Vector3[] markers = { headMarker.transform.position,
                           gazeMarker.transform.position };
     gazeLine.SetPositions(markers);
+  }
 
-    // Calculate the 2D on-screen coordinates of the gaze point
-    Vector3 screenPoint = Camera.main.WorldToScreenPoint(gazeMarker.transform.position);
-    Vector2 normalizedScreenPoint = new Vector2(screenPoint.x / Screen.width, screenPoint.y / Screen.height);
-    // Sanity check
-    // Debug.Log("Width: " + Screen.width + " Height: " + Screen.height + " Screen Point: " + screenPoint + " Normalized Screen Point: " + normalizedScreenPoint);
+  public IEnumerator CreateGazePointCSV(string filename)
+  {
+    string path =
+        Path.Join(Application.persistentDataPath, "EyetrackingCoordinates");
+    if (!Directory.Exists(path))
+    {
+      Directory.CreateDirectory(path);
+    }
+    string filepath = Path.Join(path, filename);
+    if (Directory.Exists(filepath))
+    {
+      Debug.LogError("output file already exists");
+      yield return null;
+    }
+    StreamWriter sw = new StreamWriter(filepath);
 
-    // TODO: export the normalized screen point to a file with the timestamp
+    Reset();
+    yield return new WaitForEndOfFrame();
+    float time = 0;
+    while (nextPositionTimeStamp >= 0)
+    {
+      time += _timePerTick;
+      SimulateTick(_timePerTick);
+      if (gazeMarker != null)
+      {
+        Vector3 screenPoint =
+            Camera.main.WorldToScreenPoint(gazeMarker.transform.position);
+        Vector2 normalizedScreenPoint = new Vector2(
+            screenPoint.x / Screen.width, screenPoint.y / Screen.height);
+        sw.WriteLine(
+            $"{time}, {normalizedScreenPoint.x}, {normalizedScreenPoint.y}");
+      }
+      // Wait for camera position to update
+      yield return new WaitForEndOfFrame();
+    }
+    sw.Flush();
+    sw.Close();
   }
 
   void GetNextMarker()
