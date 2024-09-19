@@ -1861,10 +1861,11 @@ MonoBehaviour:
   _numGamesToSpawn: 1
   _daysPerNewTrain: 5
   _daysPerNewLine: 15
-  _timeoutDurationOverride: 45
+  _timeoutDurationOverride: 999
   _gameSeeds: 01000000
+  _games: []
   secondsPerLogEntry: 20
-  games: []
+  _gameCount: 0
   menuUI: {fileID: 0}
   metroUI: {fileID: 4500513732196729373}
   addTrainUI: {fileID: 0}
@@ -1962,6 +1963,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1277933882}
+  - {fileID: 177065657}
 --- !u!1 &1463175014
 GameObject:
   m_ObjectHideFlags: 0

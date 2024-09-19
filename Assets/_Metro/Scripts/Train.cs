@@ -15,7 +15,7 @@ public class Train : NetworkBehaviour, IMixedRealityPointerHandler
     public int cars = 0;
     public int nextStop = 0;
 
-    [Networked, Capacity(30)] public NetworkArray<Passenger> passengers => default;
+    [Networked, Capacity(8)] public NetworkArray<Passenger> passengers => default;
     [Networked] public int passengerCount { get; set; } = 0;
 
     public Color color;
@@ -241,7 +241,16 @@ public class Train : NetworkBehaviour, IMixedRealityPointerHandler
             // if station is on route, but the next Station is not, drop the passenger (add back to station!)
             if (p.routeCount > 0)
             {
-                if (p.routes[0] != station)
+                // Debug: print all routes
+                // string s = "";
+                // for (int j = 0; j < p.routeCount; j++)
+                // {
+                //     var r = Runner.FindObject(p.routes[j]);
+                //     s += r.GetComponent<Station>().id + " ";
+                // }
+                // Debug.Log("[PassengerDropWithRoute:251] Passenger route: " + s);
+
+                if (Runner.FindObject(p.routes[0]) != station)
                 {
                     Debug.Log("Error dropping off passenger, arrived at unexpected station, recomputing route");
                     // p.routes = gameInstance.FindRouteClosest(station, p.destination);
@@ -254,8 +263,9 @@ public class Train : NetworkBehaviour, IMixedRealityPointerHandler
                 {
                     // p.route.RemoveAt(0);
                     p.routeCount = FusionUtils.RemoveAt(p.routes, p.routeCount, 0);
+                    // Debug.Log("[PassengerDropWithRoute:257] Remove station from route"); 
                 }
-                if (p.routeCount <= 0 || p.routes[0] != nextStation)
+                if (p.routeCount <= 0 || Runner.FindObject(p.routes[0]) != nextStation)
                 {
                     // passengers.RemoveAt(i);
                     passengerCount = FusionUtils.RemoveAt(passengers, passengerCount, i);
@@ -265,6 +275,7 @@ public class Train : NetworkBehaviour, IMixedRealityPointerHandler
                     // p.route.Remove(station); // this should be at index 0 (hopefully)
                     p.routeCount = FusionUtils.Remove(p.routes, p.routeCount, station.Object.Id);
                     count += 1;
+                    // Debug.Log("[PassengerDropWithRoute:271] Dropped off passenger at station " + station.id);
                     continue;
                 }
             }
