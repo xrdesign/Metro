@@ -33,6 +33,8 @@ public class EyeTracking : MonoBehaviour
   private liblsl.StreamOutlet markerStream;
   private Collider lastHit = null;
 
+  public Transform gazePositionT;
+
   // private VerboseData eyeData = new VerboseData();
 
   // Use this for initialization
@@ -43,6 +45,9 @@ public class EyeTracking : MonoBehaviour
       enabled = false;
       return;
     }
+
+    gazePositionT = new GameObject().transform;
+    ScreenPositionRecorder.instance.target = gazePositionT;
 
     // print(aGlass.Instance.aGlassStart());
     string filename = String.Format("{1}_{0:MMddyyyy-HHmmss}{2}", DateTime.Now,
@@ -302,7 +307,8 @@ public class EyeTracking : MonoBehaviour
                            rightDiameter };
     eyeStream.push_sample(tempSample);
 
-    LogRecorder.RecordPosition(Camera.main.transform.position, Camera.main.transform.rotation, hit.point);
+    LogRecorder.RecordPosition(Camera.main.transform.position,
+                               Camera.main.transform.rotation, hit.point);
   }
 
   void OnDestroy() { _writer.Close(); }
