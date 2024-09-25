@@ -309,6 +309,7 @@ public class EyeTracking : MonoBehaviour
 
     LogRecorder.RecordPosition(Camera.main.transform.position,
                                Camera.main.transform.rotation, hit.point);
+    gazePositionT.transform.position = hit.point;
   }
 
   void OnDestroy() { _writer.Close(); }
