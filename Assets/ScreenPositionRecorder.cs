@@ -33,28 +33,25 @@ public class ScreenPositionRecorder : MonoBehaviour
   {
     filename = String.Format("{1}_{0:MMddyyyy-HHmmss}{2}", DateTime.Now,
                              "EyetrackingScreenPosition", ".csv");
+    startImage.enabled = true;
+    output =
+        new StreamWriter(Path.Join(Application.persistentDataPath, filename));
+    output.WriteLine("leftX,leftY,leftPupilDiameter,rightX,rightY," +
+                     "rightPupilDiameter,timestamp");
+    running = true;
   }
   void LateUpdate()
   {
-    if (running && start)
-    {
-      startImage.enabled = false;
-      start = false;
-    }
     if (start)
     {
-      startImage.enabled = true;
-      output =
-          new StreamWriter(Path.Join(Application.persistentDataPath, filename));
-      output.WriteLine("leftX,leftY,rightX,rightY,timestamp");
-      running = true;
+      start = false;
+      startImage.enabled = false;
+      MetroManager.SendEvent("Event: VideoSyncedThisFrame");
+      LogRecorder.SendEvent(0, new SyncGamesEvent());
     }
     if (running)
     {
-      if (!start)
-      {
-        time += Time.deltaTime;
-      }
+      time += Time.deltaTime;
       var s = target.position;
 
       Matrix4x4 lpm =
@@ -74,7 +71,8 @@ public class ScreenPositionRecorder : MonoBehaviour
       Vector2 rPos = new Vector2(rTemp.x, rTemp.y) / rTemp.z;
       rPos = rPos * .5f;
       rPos += Vector2.one * .5f;
-      output.WriteLine($"{lPos.x}, {lPos.y}, {rPos.x}, {rPos.y}, {time}");
+      output.WriteLine(
+          $"{lPos.x},{lPos.y},{EyeTracking.leftPupilDiamter},{rPos.x},{rPos.y},{EyeTracking.rightPupilDiameter},{time}");
     }
   }
 }

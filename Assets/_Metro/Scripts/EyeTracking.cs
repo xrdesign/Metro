@@ -17,7 +17,15 @@ public class EyeTracking : MonoBehaviour
   public float gazeRadius = 0.1f;
 
   static float leftDiameter = 0;
+  public static float leftPupilDiamter
+  {
+    get { return leftDiameter; }
+  }
   static float rightDiameter = 0;
+  public static float rightPupilDiameter
+  {
+    get { return rightDiameter; }
+  }
 
   static Vector3 GazeOriginCombinedLocal, GazeDirectionCombinedLocal;
   static Vector3 GazeOriginLeftLocal, GazeDirectionLeftLocal;

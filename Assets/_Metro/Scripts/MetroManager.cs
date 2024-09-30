@@ -123,6 +123,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
     markerStream = new liblsl.StreamOutlet(inf);
 #endif
     markersThisFrame = new Queue<string>();
+    SendEvent("Event: FirstFrame");
 
     // Spawn in the games.
 

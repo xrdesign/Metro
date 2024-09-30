@@ -119,7 +119,8 @@ public class LogRecorder : MonoBehaviour
     }
   }
 
-  public static void RecordPosition(Vector3 headPos, Quaternion headRot, Vector3 gazePoint)
+  public static void RecordPosition(Vector3 headPos, Quaternion headRot,
+                                    Vector3 gazePoint)
   {
     JSONObject logStep = new JSONObject();
     logStep.AddField("TIME", instance.currentTime);
@@ -298,6 +299,16 @@ public class LineRemoveTrainEvent : BaseEvent
 
     JSONObject o = new JSONObject();
     o.AddField("LINE_ID", lineID);
+    return o;
+  }
+}
+
+public class SyncGamesEvent : BaseEvent
+{
+  public override string EventType() { return "SyncGamesEvent"; }
+  public override JSONObject ToJson()
+  {
+    JSONObject o = new JSONObject();
     return o;
   }
 }
