@@ -571,7 +571,14 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
     /// <summary>
     /// Refresh the UI. EX: When selected game is reset or when switching the selected game.
     /// </summary>
-    private void RefreshUI()
+    /// 
+    public void RefreshUI()
+    {
+        RPC_RefreshUI();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, InvokeLocal = true)]
+    private void RPC_RefreshUI()
     {
         foreach (TransportLineUI l in lineUIs)
         {
@@ -589,7 +596,7 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
         {
             addTrainUI.SetActive(!selectedGame.isGameover);
         }
-
+        
     }
 
     /// <summary>
