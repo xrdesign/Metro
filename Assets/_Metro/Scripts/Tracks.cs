@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Microsoft.MixedReality.Toolkit.UI;
 using Fusion;
+using System;
 
 /// <summary>
 /// Container behavior for TrackSegments. Coupled to TransportLine such that each TransportLine has a Tracks child that manages TrackSegments.
@@ -117,9 +118,9 @@ public class Tracks : NetworkBehaviour
             // lengths.Add(Vector3.Distance(p0,p1));
             lengthCount = FusionUtils.Add(lengths, lengthCount, Vector3.Distance(p0, p1));
 
-            Debug.Log("tracks length: " + this.lengths[i]);
+            // Debug.Log("tracks length: " + this.lengths[i]);
             this.totalLength += this.lengths[i];
-            Debug.Log("total tracks length update: " + this.totalLength);
+            // Debug.Log("total tracks length update: " + this.totalLength);
 
             gameInstance.totalTrackLength = this.totalLength;
         }
@@ -131,7 +132,7 @@ public class Tracks : NetworkBehaviour
         if (line.stopCount == 0) return;
 
         cp.Add(line.stops[0].transform.position);
-        Debug.Log("LineStopCount:" + line.stopCount);
+        // Debug.Log("LineStopCount:" + line.stopCount);
         for (int i = 0; i < line.stopCount - 1; i++)
         {
             var p0 = line.stops[i].transform.position;
@@ -258,21 +259,23 @@ public class Tracks : NetworkBehaviour
         // Debug.Log(line.stopCount);
         if (cp.Count == 0 || (3 * stopIndex >= cp.Count)) UpdateControlPoints();
 
-        // if (3 * stopIndex >= cp.Count)
-        // {
-        //     Debug.Log("RPC_UpdateUISegment " + i + " " + pos + " " + stopIndex);
-        //     // Debug.Log("UpdateUISegment");
-        //     Debug.Log(i + " " + stopIndex);
-        //     Debug.Log(uiSegmentCount + " " + cp.Count);
-        //     Debug.Log(line.stopCount);
-        // }
+        
 
         uiSegments[i].gameObject.SetActive(true);
         if (stopIndex == -1) stopIndex = 0;
-        uiSegments[i].cp[0] = cp[3 * stopIndex];
-        uiSegments[i].cp[1] = cp[3 * stopIndex];
-        uiSegments[i].cp[2] = pos;
-        uiSegments[i].cp[3] = pos;
+        try{
+            uiSegments[i].cp[0] = cp[3 * stopIndex];
+            uiSegments[i].cp[1] = cp[3 * stopIndex];
+            uiSegments[i].cp[2] = pos;
+            uiSegments[i].cp[3] = pos;
+        } catch (Exception e){
+            Debug.Log("RPC_UpdateUISegment " + i + " " + pos + " " + stopIndex);
+            // Debug.Log("UpdateUISegment");
+            Debug.Log(i + " " + stopIndex);
+            Debug.Log(uiSegmentCount + " " + cp.Count);
+            Debug.Log(line.stopCount);
+            Debug.Log(e);
+        }
         uiSegments[i].needsUpdate = true;
     }
 

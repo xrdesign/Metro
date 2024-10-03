@@ -43,7 +43,7 @@ public class Station : NetworkBehaviour, IMixedRealityPointerHandler, IMixedReal
     // todo: Change to delegates in the future?
     [Networked] public MetroGame gameInstance { get; set; }
 
-    [Networked, Capacity(20)] public NetworkArray<Passenger> passengers => default;
+    [Networked, Capacity(25)] public NetworkArray<Passenger> passengers => default;
     [Networked] public int passengerCount { get; set; } = 0;
 
     public string[] passengersRoutes; // Debug purpose
