@@ -31,11 +31,9 @@ public class ScreenPositionRecorder : MonoBehaviour
 
   void Start()
   {
-    filename = String.Format("{1}_{0:MMddyyyy-HHmmss}{2}", DateTime.Now,
-                             "EyetrackingScreenPosition", ".csv");
     startImage.enabled = true;
-    output =
-        new StreamWriter(Path.Join(Application.persistentDataPath, filename));
+    output = new StreamWriter(
+        Path.Join(LogRecorder.logDir, "EyetrackingScreenPosition.csv"));
     output.WriteLine("leftX,leftY,leftPupilDiameter,rightX,rightY," +
                      "rightPupilDiameter,timestamp");
     running = true;
