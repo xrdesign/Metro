@@ -57,6 +57,7 @@ public class EyeTracking : MonoBehaviour
     gazePositionT = new GameObject().transform;
     ScreenPositionRecorder.instance.target = gazePositionT;
 
+    /* Old Path ( C:\MetroData ) -> Moved files to same place as other logs
     // print(aGlass.Instance.aGlassStart());
     string filename = String.Format("{1}_{0:MMddyyyy-HHmmss}{2}", DateTime.Now,
                                     "Eyetracking", ".txt");
@@ -67,6 +68,9 @@ public class EyeTracking : MonoBehaviour
     }
 
     string path = Path.Combine(@"C:\" + folderName, filename);
+    */
+
+    string path = Path.Join(LogRecorder.logDir, "Eyetracking.txt");
     _writer = File.CreateText(path);
     _writer.Write("\n\n=============== Game started ================\n\n");
 

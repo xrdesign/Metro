@@ -8,6 +8,11 @@ public class LogRecorder : MonoBehaviour
 {
   [SerializeField]
   bool enabled = true;
+  [SerializeField]
+  int subjectNumber = 0;
+  [SerializeField]
+  int sessionID = -1;
+
   private Queue<Tuple<uint, BaseEvent>> eventsThisFrame;
   private float currentTime;
 
@@ -17,6 +22,12 @@ public class LogRecorder : MonoBehaviour
   private DateTime date;
 
   static LogRecorder instance;
+
+  private string _logDir = "";
+  public static string logDir
+  {
+    get { return instance._logDir; }
+  }
 
   // Constants:
   const int VERSION = 0;
@@ -47,31 +58,42 @@ public class LogRecorder : MonoBehaviour
       return;
     }
 
+    // Setup Logging Directory:
     date = DateTime.Now;
-    // Create File
     string logFolder = Path.Join(Application.persistentDataPath, "Logs");
-    Debug.Log(date.Year);
-    string d = string.Join(
-        "-", new string[] { date.Year.ToString(), date.Month.ToString(),
-                            date.Day.ToString(), date.Hour.ToString(),
-                            date.Minute.ToString(), date.Second.ToString() });
-    string logName = d;
-    string filePath = Path.Join(logFolder, logName);
-
     if (!Directory.Exists(logFolder))
     {
       Directory.CreateDirectory(logFolder);
     }
-    while (File.Exists(filePath + ".replay"))
+    string subjectFolder = Path.Join(logFolder, $"{subjectNumber}");
+    if (!Directory.Exists(subjectFolder))
     {
-      filePath += " (1)";
+      Directory.CreateDirectory(subjectFolder);
     }
-    filePath += ".replay";
-
+    string sessionFolder = Path.Join(subjectFolder, $"{sessionID}");
+    if (!Directory.Exists(sessionFolder))
+    {
+      Directory.CreateDirectory(sessionFolder);
+    }
+    string[] subdirectories = Directory.GetDirectories(sessionFolder);
+    int matchNumber = subdirectories.Length;
+    string d = string.Join(
+        "-", new string[] { date.Year.ToString(), date.Month.ToString(),
+                            date.Day.ToString(), date.Hour.ToString(),
+                            date.Minute.ToString(), date.Second.ToString() });
+    _logDir = Path.Join(sessionFolder, $"{matchNumber}--{d}");
+    int i = 1;
+    while (Directory.Exists(_logDir))
+    {
+      _logDir += $"({i})";
+      i++;
+    }
+    Directory.CreateDirectory(_logDir);
+    string filePath = Path.Join(_logDir, "game.replay");
     // Create and open file stream for writing
     eventWriter = new StreamWriter(File.Create(filePath));
     playerPositionWriter =
-        new StreamWriter(File.Create(filePath + ("positio" + "n")));
+        new StreamWriter(File.Create(filePath + ("position")));
 
     eventsThisFrame = new Queue<Tuple<uint, BaseEvent>>();
     currentTime = 0;

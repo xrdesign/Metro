@@ -431,7 +431,7 @@ public class ReplayManager : MonoBehaviour
         Debug.Log("FOOTER");
         break;
       default:
-        Debug.LogError($"[ReplayManager] Unhandled event type: {eventType}");
+        Debug.LogWarning($"[ReplayManager] Unhandled event type: {eventType}");
         break;
     }
   }
