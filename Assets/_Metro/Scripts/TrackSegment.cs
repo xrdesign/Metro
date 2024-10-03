@@ -7,12 +7,12 @@ using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Physics;
 using System;
 using Fusion;
-using Oculus.Voice.Windows;
 using UnityEditor.Build;
 
-public class TrackSegment : NetworkBehaviour,  IMixedRealityPointerHandler {
+public class TrackSegment : NetworkBehaviour, IMixedRealityPointerHandler
+{
     [Networked] public MetroGame gameInstance { get; set; }
-    
+
     [Networked] public TransportLine line { get; set; }
     //track segment id
     [Networked] public int index { get; set; }
@@ -36,7 +36,7 @@ public class TrackSegment : NetworkBehaviour,  IMixedRealityPointerHandler {
     Mesh mesh;
     public LineRenderer lineRenderer;
     MeshCollider meshCollider;
-    
+
 
     // Start is called before the first frame update
     // void Start()
@@ -51,28 +51,30 @@ public class TrackSegment : NetworkBehaviour,  IMixedRealityPointerHandler {
         color.a = 0.75f;
         SetColor(color);
         lineRenderer.widthMultiplier = 0.035f;
-        lineRenderer.positionCount = lengthOfLine+1;
+        lineRenderer.positionCount = lengthOfLine + 1;
     }
 
     // Update is called once per frame
     // void Update()
     public override void Render()
-    {   
+    {
         //if(!needsUpdate) return;
 
         for (int i = 0; i <= lengthOfLine; i++)
         {
-            Vector3 p = Interpolate(i*1.0f/lengthOfLine);
-            lineRenderer.SetPosition(i, p); 
+            Vector3 p = Interpolate(i * 1.0f / lengthOfLine);
+            lineRenderer.SetPosition(i, p);
         }
 
-        if(cp[0] != cp[3]) // Can't bake mesh from line renderer with empty position vector
+        if (cp[0] != cp[3]) // Can't bake mesh from line renderer with empty position vector
         {
-            try{
+            try
+            {
                 lineRenderer.BakeMesh(mesh, true);
                 meshCollider.sharedMesh = mesh;
             }
-            catch{
+            catch
+            {
                 Debug.LogError("MeshCollider Error Here");
             }
         }
@@ -84,41 +86,45 @@ public class TrackSegment : NetworkBehaviour,  IMixedRealityPointerHandler {
         return Vector3.Distance(cp[0], cp[3]);
     }
 
-    public void SetColor(Color c){
-        if(c == null)
+    public void SetColor(Color c)
+    {
+        if (c == null)
             return;
         var block = new MaterialPropertyBlock();
         block.SetColor("_Color", c);
         //Debug.Log("color " + lineRenderer);
-        lineRenderer.SetPropertyBlock(block); 
+        lineRenderer.SetPropertyBlock(block);
     }
 
-    public Vector3 Interpolate(float t){
+    public Vector3 Interpolate(float t)
+    {
         var t1 = 1.0f - t;
-        return t1*t1*t1*cp[0] + 3f*t1*t1*t*cp[1] + 3f*t1*t*t*cp[2] + t*t*t*cp[3];
+        return t1 * t1 * t1 * cp[0] + 3f * t1 * t1 * t * cp[1] + 3f * t1 * t * t * cp[2] + t * t * t * cp[3];
     }
 
-    public Vector3 Derivative(float t){
+    public Vector3 Derivative(float t)
+    {
         var t1 = 1.0f - t;
-        return 3f*t1*t1*(cp[1]-cp[0]) + 6f*t1*t*(cp[2]-cp[1]) + 3f*t*t*(cp[3]-cp[2]);
+        return 3f * t1 * t1 * (cp[1] - cp[0]) + 6f * t1 * t * (cp[2] - cp[1]) + 3f * t * t * (cp[3] - cp[2]);
     }
-    
+
     public float getLengthSum(int id)
     {
         float sum = 0;
-        for(int i = 0; i < id; i++)
+        for (int i = 0; i < id; i++)
         {
             sum += this.line.tracks.lengths[i];
         }
         return sum;
     }
-    
-    void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData){
+
+    void IMixedRealityPointerHandler.OnPointerDown(MixedRealityPointerEventData eventData)
+    {
         Debug.Log("track down");
-        
+
         Debug.Log("line id: " + this.line.id);
         Debug.Log("trackSegment index: " + this.index);
-        
+
         this.segmentLengthSum = this.getLengthSum(this.index);
         Debug.Log("trackSegment length sum: " + this.segmentLengthSum);
         //calculates the position of train 
@@ -126,7 +132,7 @@ public class TrackSegment : NetworkBehaviour,  IMixedRealityPointerHandler {
 
         isAddingTrain = gameInstance.addingTrain;
         addedTrain = gameInstance.addedTrain;
-        
+
         //check if the player has clicked the addTrainUI
         //if yes, add a train on the segment where the player clicks
         if (isAddingTrain & !addedTrain)
@@ -137,11 +143,11 @@ public class TrackSegment : NetworkBehaviour,  IMixedRealityPointerHandler {
             gameInstance.addedTrain = true;
             gameInstance.addingTrain = false;
             Debug.Log("addedTrain: " + addedTrain);
-        } 
-        
-        
+        }
+
+
         var dist = eventData.Pointer.Result.Details.RayDistance;
-        var insert = index >= 0 && index < line.stopCount-1;
+        var insert = index >= 0 && index < line.stopCount - 1;
         gameInstance.StartEditingLine(line, index, dist, insert);
 
         eventData.Pointer.IsFocusLocked = false;
@@ -150,17 +156,20 @@ public class TrackSegment : NetworkBehaviour,  IMixedRealityPointerHandler {
         var hapticController = eventData.Pointer?.Controller as IMixedRealityHapticFeedback;
         hapticController?.StartHapticImpulse(0.4f, 0.05f);
     }
-    
-    void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData){
+
+    void IMixedRealityPointerHandler.OnPointerUp(MixedRealityPointerEventData eventData)
+    {
 
     }
 
-    void IMixedRealityPointerHandler.OnPointerDragged(MixedRealityPointerEventData eventData){
+    void IMixedRealityPointerHandler.OnPointerDragged(MixedRealityPointerEventData eventData)
+    {
 
     }
 
-    void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData){
+    void IMixedRealityPointerHandler.OnPointerClicked(MixedRealityPointerEventData eventData)
+    {
     }
 
-    
+
 }

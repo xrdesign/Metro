@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Fusion;
 using NanoSockets;
-using Oculus.Platform;
 using UnityEngine;
 
 public static class FusionUtils
@@ -32,7 +31,7 @@ public static class FusionUtils
     }
 
 #nullable enable
-    public static T? Find<T> (NetworkArray<T> values, int length, System.Func<T, bool> predicate) where T : class
+    public static T? Find<T>(NetworkArray<T> values, int length, System.Func<T, bool> predicate) where T : class
     {
         for (int i = 0; i < length; i++)
         {
@@ -78,7 +77,7 @@ public static class FusionUtils
             // throw and print sizes
             throw new System.Exception("Destination list is too small: " + destLength + " < " + srcLength);
         }
-        
+
         int i = 0;
         foreach (var value in src)
         {
@@ -132,7 +131,8 @@ public static class FusionUtils
 
     public static NetworkObject initializeNetworkObject(NetworkRunner runner, string name, GameObject template = null)
     {
-        if (runner.IsClient){
+        if (runner.IsClient)
+        {
             GameObject go = GameObject.Find(name);
             if (go != null)
             {

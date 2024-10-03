@@ -980,6 +980,9 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
         var point = RayStep.GetPointByDistance(eventData.Pointer.Rays, editingDist);
         if (editingLine != null)
         {
+            // Debug.Log("editingLine.tracks.segmentCount " + editingLine.tracks.segmentCount);
+            // Debug.Log("editingIndex " + editingIndex);
+            // Debug.Log("editingLine.stopCount " + editingLine.stopCount);
             if (editingIndex <= editingLine.tracks.segmentCount && editingLine.stopCount > 1)
             {
                 TrackSegment segment;
@@ -988,7 +991,7 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
                 else segment = editingLine.tracks.segments[editingIndex];
                 var color = editingLine.color;
                 color.a = 0.2f;
-                // Debug.Log("drag " + editingIndex + " " + segment + " " + color);
+                Debug.Log("drag " + editingIndex + " " + segment + " " + color);
                 segment.SetColor(color);
             }
             if (editingLine.tracks)

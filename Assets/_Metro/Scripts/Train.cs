@@ -250,9 +250,11 @@ public class Train : NetworkBehaviour, IMixedRealityPointerHandler
                 // }
                 // Debug.Log("[PassengerDropWithRoute:251] Passenger route: " + s);
 
-                if (Runner.FindObject(p.routes[0]) != station)
+                if (Runner.FindObject(p.routes[0]) != station.Object)
                 {
                     Debug.Log("Error dropping off passenger, arrived at unexpected station, recomputing route");
+                    Debug.Log(Runner.FindObject(p.routes[0]).GetComponent<Station>().stationName);
+                    Debug.Log(station.stationName);
                     // p.routes = gameInstance.FindRouteClosest(station, p.destination);
                     var next = gameInstance.FindRouteClosest(station, p.destination);
                     var nextIds = next.Select(x => x.Object.Id).ToList();
@@ -263,9 +265,9 @@ public class Train : NetworkBehaviour, IMixedRealityPointerHandler
                 {
                     // p.route.RemoveAt(0);
                     p.routeCount = FusionUtils.RemoveAt(p.routes, p.routeCount, 0);
-                    // Debug.Log("[PassengerDropWithRoute:257] Remove station from route"); 
+                    // Debug.Log("[PassengerDropWithRoute:257] Remove station from route");
                 }
-                if (p.routeCount <= 0 || Runner.FindObject(p.routes[0]) != nextStation)
+                if (p.routeCount <= 0 || Runner.FindObject(p.routes[0]) != nextStation.Object)
                 {
                     // passengers.RemoveAt(i);
                     passengerCount = FusionUtils.RemoveAt(passengers, passengerCount, i);

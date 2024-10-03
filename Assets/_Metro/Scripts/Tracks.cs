@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Microsoft.MixedReality.Toolkit.UI;
 using Fusion;
-using Oculus.Voice.Windows;
 
 /// <summary>
 /// Container behavior for TrackSegments. Coupled to TransportLine such that each TransportLine has a Tracks child that manages TrackSegments.
@@ -64,9 +63,10 @@ public class Tracks : NetworkBehaviour
         }
     }
 
-    public override void FixedUpdateNetwork() 
+    public override void FixedUpdateNetwork()
     {
         if (!needsUpdate) return;
+        UpdateTracks();
         RPC_UpdateTracks();
         needsUpdate = false;
     }
@@ -89,13 +89,19 @@ public class Tracks : NetworkBehaviour
     public void UpdateTracks()
     {
         UpdateControlPoints();
+        // Debug.Log("Control point count: " + cp.Count);
         UpdateSegments();
+        // Debug.Log("Segment count: " + segmentCount);
         UpdateLengths();
-
+        // Debug.Log("UpdateTracks");
+        // Debug.Log("total tracks length: " + this.totalLength);
         //makes a shallow copy of track lengths
         // gameInstance.trackLengths = this.lengths;
-        gameInstance.trackLengths.CopyFrom(lengths.ToArray(), 0, lengthCount);
-        gameInstance.trackLengthCount = this.lengthCount;
+        if (HasStateAuthority)
+        {
+            gameInstance.trackLengths.CopyFrom(lengths.ToArray(), 0, lengthCount);
+            gameInstance.trackLengthCount = this.lengthCount;
+        }
     }
 
     void UpdateLengths()
@@ -125,7 +131,7 @@ public class Tracks : NetworkBehaviour
         if (line.stopCount == 0) return;
 
         cp.Add(line.stops[0].transform.position);
-
+        Debug.Log("LineStopCount:" + line.stopCount);
         for (int i = 0; i < line.stopCount - 1; i++)
         {
             var p0 = line.stops[i].transform.position;
@@ -211,6 +217,7 @@ public class Tracks : NetworkBehaviour
         {
             head.gameObject.SetActive(false);
             tail.gameObject.SetActive(false);
+            // Debug.Log("No stops");
         }
 
 
@@ -243,14 +250,23 @@ public class Tracks : NetworkBehaviour
         RPC_UpdateUISegment(i, pos, stopIndex);
     }
 
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    //[Rpc(RpcSources.All, RpcTargets.StateAuthority, InvokeLocal = true)]
     public void RPC_UpdateUISegment(int i, Vector3 pos, int stopIndex)
     {
         if (i >= uiSegmentCount) return;
-        // Debug.Log("UpdateUISegment");
-        // Debug.Log(i + " " + stopIndex);
-        // Debug.Log(uiSegments.Count + " " + cp.Count);
-        if (cp.Count == 0) this.UpdateControlPoints();
+
+        // Debug.Log(line.stopCount);
+        if (cp.Count == 0 || (3 * stopIndex >= cp.Count)) UpdateControlPoints();
+
+        // if (3 * stopIndex >= cp.Count)
+        // {
+        //     Debug.Log("RPC_UpdateUISegment " + i + " " + pos + " " + stopIndex);
+        //     // Debug.Log("UpdateUISegment");
+        //     Debug.Log(i + " " + stopIndex);
+        //     Debug.Log(uiSegmentCount + " " + cp.Count);
+        //     Debug.Log(line.stopCount);
+        // }
+
         uiSegments[i].gameObject.SetActive(true);
         if (stopIndex == -1) stopIndex = 0;
         uiSegments[i].cp[0] = cp[3 * stopIndex];

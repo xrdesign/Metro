@@ -63,7 +63,7 @@ public class TransportLine : NetworkBehaviour
         RPC_InsertStation(stopIndex, station);
     }
 
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority, TickAligned = false)]
     public void RPC_InsertStation(int stopIndex, Station station)
     {
         // if(this.stops.Contains(station)){ NetworkArray does not support Contains
@@ -94,7 +94,16 @@ public class TransportLine : NetworkBehaviour
         tracks.needsUpdate = true;
         gameInstance.insertions++;
         MetroManager.SendEvent($"Action: InsertStation, Game: {gameInstance.gameId}");
+        RPC_NotifyStationInserted(stopIndex, station);
     }
+
+    // notify the station is inserted
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, TickAligned = false)]
+    public void RPC_NotifyStationInserted(int stopIndex, Station station)
+    {
+        Debug.Log("notify station inserted: " + stopIndex);
+    }
+
 
     public void RemoveStation(Station station)
     {
@@ -155,7 +164,8 @@ public class TransportLine : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_AddTrain(float position, float direction){
+    public void RPC_AddTrain(float position, float direction)
+    {
         if (gameInstance.freeTrains == 0) return;
         gameInstance.freeTrains -= 1;
 
@@ -187,7 +197,8 @@ public class TransportLine : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_RemoveTrain(){
+    public void RPC_RemoveTrain()
+    {
         if (this.trainCount <= 0) return;
         trains[0].shouldRemove = true;
         gameInstance.trainsRemoved++;
