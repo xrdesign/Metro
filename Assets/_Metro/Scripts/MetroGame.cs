@@ -334,13 +334,15 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
         return newID;
     }
 
-
-    // Update is called once per frame
-    public override void FixedUpdateNetwork()
+    public override void Render()
     {
+        float gameSpeed = this.gameSpeed;
+        if (paused)
+        {
+            gameSpeed = 0.0f;
+        }
 
-        if (setAlert)
-            alertCylinder.SetActive(alertValue);
+        dt = Runner.DeltaTime * gameSpeed;
 
         // Execute Server Actions
         while (ActionQueue.Count > 0)
@@ -354,6 +356,16 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
             Debug.Log("Fulfilling action on game: " + gameId);
             MetroManager.FulfillQueueAction(action.id);
         }
+        
+        UpdatePointerState();
+    }
+
+    // Update is called once per frame
+    public override void FixedUpdateNetwork()
+    {
+
+        if (setAlert)
+            alertCylinder.SetActive(alertValue);
 
         if (needReset)
         {
@@ -370,7 +382,6 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
         CheckStationTimers(); // check for lose condition
         UpdateClock(); // update clock, grant weekly reward
 
-        UpdatePointerState();
 
     }
 
