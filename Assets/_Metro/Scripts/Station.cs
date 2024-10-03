@@ -101,7 +101,6 @@ public class Station : NetworkBehaviour, IMixedRealityPointerHandler, IMixedReal
         // TODO: Why have a position variable defined like this?
         // Great question...
         position = transform.localPosition;
-        cooldown -= Runner.DeltaTime;
 
         for (int i = 0; i < passengers.Length; i++)
         {
@@ -113,6 +112,7 @@ public class Station : NetworkBehaviour, IMixedRealityPointerHandler, IMixedReal
 
     public override void Render()
     {
+        cooldown -= gameInstance.dt;
         // show passengers
         foreach (var s in seats) s.enabled = false;
         if (passengerCount > 0)
