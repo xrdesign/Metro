@@ -87,7 +87,7 @@ public class Station : NetworkBehaviour, IMixedRealityPointerHandler, IMixedReal
         if (HasStateAuthority)
         {
             if (stationName == "")
-                stationName = $"{gameInstance.stationCount}"; //MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
+                stationName = $"{gameInstance.stationCount + 1}"; //MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
         }
 
 
