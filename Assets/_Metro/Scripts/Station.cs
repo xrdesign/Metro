@@ -31,7 +31,7 @@ public class Station : NetworkBehaviour, IMixedRealityPointerHandler, IMixedReal
 
 
     // This is a randomly generated human recognizable name. Unique within game.
-    public string stationName = "";
+    [Networked] public string stationName { get; set; } = "";
 
     #endregion
 
@@ -84,8 +84,11 @@ public class Station : NetworkBehaviour, IMixedRealityPointerHandler, IMixedReal
 
 
         // Get random station name from manager.
-        if (stationName == "")
-            stationName = $"{gameInstance.stationCount}"; //MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
+        if (HasStateAuthority)
+        {
+            if (stationName == "")
+                stationName = $"{gameInstance.stationCount}"; //MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
+        }
 
         _stationText.text = stationName;
 

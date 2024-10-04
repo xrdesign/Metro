@@ -577,7 +577,7 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
         RPC_RefreshUI();
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All, InvokeLocal = true)]
+    [Rpc(RpcSources.All, RpcTargets.All, InvokeLocal = true)]
     private void RPC_RefreshUI()
     {
         foreach (TransportLineUI l in lineUIs)

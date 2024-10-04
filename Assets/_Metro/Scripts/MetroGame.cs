@@ -1003,7 +1003,13 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
                 var color = editingLine.color;
                 color.a = 0.2f;
                 // Debug.Log("drag " + editingIndex + " " + segment + " " + color);
-                segment.SetColor(color);
+                try{
+                    segment.SetColor(color);
+                }
+                catch (Exception e)
+                {
+                    Debug.Log(e);
+                }
             }
             if (editingLine.tracks)
             {
