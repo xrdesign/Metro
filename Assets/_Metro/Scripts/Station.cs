@@ -90,7 +90,6 @@ public class Station : NetworkBehaviour, IMixedRealityPointerHandler, IMixedReal
                 stationName = $"{gameInstance.stationCount}"; //MetroManager.Instance.GenerateRandomStationName(gameInstance.gameId);
         }
 
-        _stationText.text = stationName;
 
         // Get timeout override from manager.
         MaxTimeoutDuration = MetroManager.Instance.timeoutDurationOverride;
@@ -115,6 +114,9 @@ public class Station : NetworkBehaviour, IMixedRealityPointerHandler, IMixedReal
 
     public override void Render()
     {
+
+        if (_stationText.text == "")
+            _stationText.text = stationName;
         cooldown -= gameInstance.dt;
         // show passengers
         foreach (var s in seats) s.enabled = false;
