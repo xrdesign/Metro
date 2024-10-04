@@ -115,7 +115,7 @@ public class Station : NetworkBehaviour, IMixedRealityPointerHandler, IMixedReal
     public override void Render()
     {
 
-        if (_stationText.text == "")
+        if (_stationText.text == "Station")
             _stationText.text = stationName;
         cooldown -= gameInstance.dt;
         // show passengers
