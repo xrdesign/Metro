@@ -32,6 +32,8 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
 
     #region Set In Editor
 
+    public bool updateClosestGame = false;
+
     [Networked] public uint numGamesToSpawn { get; set; } = 1;
     [Networked] public uint daysPerNewTrain { get; set; } = 5;
     [Networked] public uint daysPerNewLine { get; set; } = 15;
@@ -58,7 +60,7 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
 
     #region Privates
 
-    [Networked, Capacity(16) ] public NetworkArray<MetroGame> games => default;
+    [Networked, Capacity(16)] public NetworkArray<MetroGame> games => default;
     [Networked] public int gameCount { get; set; } = 0;
 
     // Used for UI stuff. The game that the player is currently "selecting". I.E. what they can interact with, add to, change, etc.
@@ -151,7 +153,8 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
 
     public void SpawnGames()
     {
-        if(!HasStateAuthority){
+        if (!HasStateAuthority)
+        {
             return;
         }
 
@@ -175,9 +178,10 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
                         }
                     }
                 ).GetComponent<MetroGame>();
-                
+
                 // add the new game to the list of games
                 gameCount = FusionUtils.Add(games, gameCount, newMetroGame);
+                Debug.Log("Spawning game " + i);
             }
             if (jsonGames != null)
             {
@@ -231,6 +235,14 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
     {
         if (selectedGame == null && gameCount > 0 && games[0])
             SelectGame(games[0]);
+
+        if (updateClosestGame)
+        {
+            // get main camera position
+            var camera = Camera.main;
+            TestClosestGame(camera.transform.position);
+            updateClosestGame = false;
+        }
     }
 
     private void OnEnable()
@@ -394,6 +406,13 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
     public void OnTeleportStarted(TeleportEventData eventData)
     {
 
+    }
+
+    public void TestClosestGame(Vector3 position)
+    {
+        var closestGame = FindNearestMetroGameToPosition(position);
+        if (!closestGame) return;
+        MetroManager.Instance.SelectGame(closestGame);
     }
 
     public void OnTeleportCompleted(TeleportEventData eventData)
@@ -596,7 +615,7 @@ public class MetroManager : NetworkBehaviour, IMixedRealityTeleportHandler
         {
             addTrainUI.SetActive(!selectedGame.isGameover);
         }
-        
+
     }
 
     /// <summary>

@@ -33,7 +33,7 @@ public delegate void GameSelectionDelegateDef(bool selected);
 public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
 {
     private Random random;
-    public uint gameId;
+    [Networked] public uint gameId { get; set; } = 0;
 
     [Networked] public float score { get; set; } = 0.0f;
     [Networked] public float time { get; set; } = 0.0f;
@@ -356,7 +356,7 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
             Debug.Log("Fulfilling action on game: " + gameId);
             MetroManager.FulfillQueueAction(action.id);
         }
-        
+
         UpdatePointerState();
     }
 
@@ -663,10 +663,10 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
                         pos.y = Mathf.Clamp(pos.y, 0.5f, 2.0f);
                     }
 
-                    obj.transform.localPosition = pos;
-
                     // Set the parent and organize
                     obj.transform.SetParent(stationsOrganizer.transform);
+
+                    obj.transform.localPosition = pos;
 
                     // Prepare the station data to be sent to clients
                     Station station = obj.GetComponentInChildren<Station>();
@@ -1003,7 +1003,8 @@ public class MetroGame : NetworkBehaviour, IMixedRealityPointerHandler
                 var color = editingLine.color;
                 color.a = 0.2f;
                 // Debug.Log("drag " + editingIndex + " " + segment + " " + color);
-                try{
+                try
+                {
                     segment.SetColor(color);
                 }
                 catch (Exception e)
