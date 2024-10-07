@@ -16,11 +16,11 @@ dataFolder = args[1]
 video_file = args[2]
 
 # Position Offsets for occulusion view window in video:
-video_offset_estimate = 0
-xMin = 1897
-xMax = 3262
-yMin = 366
-yMax = 1133
+video_offset_estimate = 1
+xMin = 73 
+xMax = 1846 
+yMin = 42 
+yMax = 1039 
 
 screenWidth = int((xMax - xMin) / 2.0)
 screenHeight = int((yMax - yMin))
@@ -120,7 +120,7 @@ while cap.isOpened():
         exit()
     if(syncTimeVideo == -1):
         # Get the current timestamp (in seconds)
-        pixel_color = frame[999, 2582]
+        pixel_color = frame[yMax - 20, xMid]
         b,g,r = pixel_color
         if(current_time > video_offset_estimate and not(b==255 and r==255 and g==255)):
             syncTimeVideo = current_time
