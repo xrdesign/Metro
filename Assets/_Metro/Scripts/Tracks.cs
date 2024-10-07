@@ -108,6 +108,7 @@ public class Tracks : NetworkBehaviour
     void UpdateLengths()
     {
         lengths.Clear();
+        lengthCount = 0;
         totalLength = 0;
 
         for (int i = 0; i < line.stopCount - 1; i++)
@@ -117,6 +118,7 @@ public class Tracks : NetworkBehaviour
 
             // lengths.Add(Vector3.Distance(p0,p1));
             lengthCount = FusionUtils.Add(lengths, lengthCount, Vector3.Distance(p0, p1));
+            Debug.Log("lengths count: " + lengthCount);
 
             // Debug.Log("tracks length: " + this.lengths[i]);
             this.totalLength += this.lengths[i];

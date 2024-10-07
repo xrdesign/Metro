@@ -1785,7 +1785,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4870634095086060614, guid: 0d1aaec7c4bfb924ca553f6b127356ff, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4870634095086060615, guid: 0d1aaec7c4bfb924ca553f6b127356ff, type: 3}
       propertyPath: m_RootOrder
@@ -1862,10 +1862,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63da03afa1f13c2449894934fe7aa5db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  updateClosestGame: 0
   _numGamesToSpawn: 2
   _daysPerNewTrain: 5
   _daysPerNewLine: 15
-  _timeoutDurationOverride: 60
+  _timeoutDurationOverride: 120
   _gameSeeds: 0100000002000000
   _games: []
   secondsPerLogEntry: 20
