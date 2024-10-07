@@ -16,10 +16,17 @@ public class ReplayManager : MonoBehaviour
   JSONObject nextEvent;
 
   [SerializeField]
-  string replayFilePath;
-  StreamReader eventStream;
+  int subjectID;
   [SerializeField]
-  string eyeTrackingReplayFile;
+  int sessionID;
+  [SerializeField]
+  int instanceIdx;
+
+  string dataFolder;
+  string replayFilePath;
+  string positionReplayFile;
+
+  StreamReader eventStream;
   bool useEyeTracking = false;
   StreamReader positionStream;
 
@@ -47,16 +54,144 @@ public class ReplayManager : MonoBehaviour
   Material gazePointMat;
   [SerializeField]
   bool shouldCreateGazePointCSV = false;
+
   [SerializeField]
   string eyetrackingOutputFile;
 
-  /* Built-Ins / LifeCycle */
+  public bool getFixationGameStates = false;
+  [SerializeField]
+  string fixationInputFile;
+  [SerializeField]
+  string fixationOutputFile;
 
+  public IEnumerator GetFixationGameStates(string filename)
+  {
+
+    Reset();
+    yield return new WaitForEndOfFrame();
+    string inputPath = Path.Join(dataFolder, fixationInputFile);
+    if (!File.Exists(inputPath))
+    {
+      Debug.LogError("input file doesn't exists");
+      yield return null;
+    }
+    StreamReader fixationReader = new StreamReader(inputPath);
+    string filepath = Path.Join(dataFolder, filename);
+    if (Directory.Exists(filepath))
+    {
+      Debug.LogError("output file already exists");
+      yield return null;
+    }
+    StreamWriter sw = new StreamWriter(filepath);
+
+    string line = "";
+    bool isFixation = false;
+    Queue<JSONObject> fixations = new Queue<JSONObject>();
+    while ((line = fixationReader.ReadLine()) != null)
+    {
+      JSONObject obj = new JSONObject(line);
+      if (obj == null)
+      {
+        Debug.LogError("NULL JSON Object");
+        continue;
+      }
+      bool currentFixation = obj["FIXATION_IDX"].b;
+      if (isFixation && !currentFixation)
+      {
+        isFixation = false;
+      }
+      else if (!isFixation && currentFixation)
+      {
+        isFixation = true;
+        fixations.Enqueue(obj);
+      }
+    }
+    fixationReader.Close();
+
+    Queue<JSONObject> outQueue = new Queue<JSONObject>();
+    foreach (var fixation in fixations)
+    {
+      float time = fixation["TIME"].f;
+      Debug.Log($"Loading TIME {time}");
+      yield return StartCoroutine(LoadTime(time));
+      Debug.Log("LOADED TIME");
+      JSONObject state = new JSONObject();
+      uint numGames = MetroManager.GetNumGames();
+      var games = new JSONObject(JSONObject.Type.ARRAY);
+      for (uint i = 0; i < numGames; i++)
+      {
+        games.Add(MetroManager.SerializeGame(i));
+      }
+      state.AddField("games", games);
+      JSONObject objects = new JSONObject(JSONObject.Type.ARRAY);
+      JSONObject fixationData = new JSONObject();
+      var o = ParseVector(fixation["GAZE_POSITION"].str);
+      RaycastHit[] hits = Physics.SphereCastAll(o, .1f, Vector3.forward, 0);
+      foreach (var hit in hits)
+      {
+        var go = hit.collider.gameObject;
+        Train t = go.GetComponent<Train>();
+        Station s = go.GetComponent<Station>();
+        TrackSegment l = go.GetComponent<TrackSegment>();
+        if (t != null)
+        {
+          var obj = new JSONObject();
+          obj.AddField("type", "train");
+          obj.AddField("uuid", t.uuid);
+          objects.Add(obj);
+        }
+        else if (s != null)
+        {
+          var obj = new JSONObject();
+          obj.AddField("type", "station");
+          obj.AddField("id", s.id);
+          objects.Add(obj);
+        }
+        else if (l != null)
+        {
+          var obj = new JSONObject();
+          obj.AddField("type", "segment");
+          obj.AddField("id", l.line.uuid);
+          objects.Add(obj);
+        }
+      }
+      state.AddField("objects", objects);
+      sw.WriteLine(state.ToString());
+    }
+
+    sw.Flush();
+    sw.Close();
+  }
+
+  /* Built-Ins / LifeCycle */
   void Awake()
   {
+    string logFolder = Path.Join(Application.persistentDataPath, "Logs");
+    string subjectFolder = Path.Join(logFolder, $"{subjectID}");
+    string sessionFolder = Path.Join(subjectFolder, $"{sessionID}");
+
+    if (!Directory.Exists(sessionFolder))
+    {
+      Debug.LogError("[ReplayManager] No such subject/session folder");
+      return;
+    }
+
+    string[] directories = Directory.GetDirectories(
+        sessionFolder, $"{instanceIdx}*", SearchOption.AllDirectories);
+    if (directories.Length > 1)
+    {
+      Debug.LogWarning("[ReplayManager] Multiple instances matched search " +
+                       "pattern, viewing first replay");
+    }
+    if (directories.Length <= 0)
+    {
+      Debug.LogError("[ReplayManager] Error, no replays match search pattern.");
+      return;
+    }
+
     // Load FILE
-    string replayFile =
-        Path.Join(Application.persistentDataPath, "Logs", replayFilePath);
+    dataFolder = directories[0];
+    string replayFile = Path.Join(dataFolder, "game.replay");
     if (!File.Exists(replayFile))
     {
       Debug.LogError(
@@ -64,12 +199,12 @@ public class ReplayManager : MonoBehaviour
       return;
     }
     eventStream = new StreamReader(replayFile);
-    var eyeTrackingReplayFilePath = Path.Join(Application.persistentDataPath,
-                                              "Logs", eyeTrackingReplayFile);
-    if (File.Exists(eyeTrackingReplayFilePath))
+
+    var positionReplayFilePath = Path.Join(dataFolder, "game.replayposition");
+    if (File.Exists(positionReplayFilePath))
     {
       Debug.Log("Using Eye Tracking Replay");
-      positionStream = new StreamReader(eyeTrackingReplayFilePath);
+      positionStream = new StreamReader(positionReplayFilePath);
       useEyeTracking = true;
       headMarker = GameObject.Instantiate(headMarkerPrefab);
       headMarker.name = "Head";
@@ -111,6 +246,11 @@ public class ReplayManager : MonoBehaviour
     {
       shouldCreateGazePointCSV = false;
       StartCoroutine(CreateGazePointCSV(eyetrackingOutputFile));
+    }
+    else if (getFixationGameStates)
+    {
+      getFixationGameStates = false;
+      StartCoroutine(GetFixationGameStates(fixationOutputFile));
     }
   }
 
@@ -196,6 +336,10 @@ public class ReplayManager : MonoBehaviour
       return;
     }
 
+    if (nextPositionObject == null)
+    {
+      return;
+    }
     // Handle different formats
     if (nextPositionObject["HEAD"])
     {

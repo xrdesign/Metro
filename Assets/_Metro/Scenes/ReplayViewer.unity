@@ -393,8 +393,8 @@ Camera:
   m_GameObject: {fileID: 188905059}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.1981132, g: 0.1981132, b: 0.1981132, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -541,10 +541,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   metroManager: {fileID: 361273077}
   _timePerTick: 0.05
-  replayFilePath: 2024-9-13-13-19-49.replay
-  eyeTrackingReplayFile: 2024-9-13-13-19-49.replayposition
+  subjectID: -1
+  sessionID: -1
+  instanceIdx: -2
   shouldExecuteTick: 0
-  playing: 1
+  playing: 0
   selectedTime: 0
   jumpToSelectedTime: 0
   headMarkerPrefab: {fileID: 3771967270509990888, guid: 6617d2c4671e5424a9e2724b27617ed3, type: 3}
@@ -552,6 +553,11 @@ MonoBehaviour:
   gazeLine: {fileID: 361273079}
   fixationMat: {fileID: 2100000, guid: 302477ffe5025c8418b312bcaf88563f, type: 2}
   gazePointMat: {fileID: 2100000, guid: f0e40fc865770de4cb1577c051163a9d, type: 2}
+  shouldCreateGazePointCSV: 0
+  eyetrackingOutputFile: 
+  getFixationGameStates: 0
+  fixationInputFile: data.replay
+  fixationOutputFile: test.txt
 --- !u!114 &361273077
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -589,6 +595,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enabled: 0
+  subjectNumber: 0
+  sessionID: -1
 --- !u!120 &361273079
 LineRenderer:
   m_ObjectHideFlags: 0
