@@ -28,7 +28,7 @@ To install use the microsoft feature tool:
 [https://docs.microsoft.com/en-us/windows/mixed-reality/develop/unity/welcome-to-mr-feature-tool](https://docs.microsoft.com/en-us/windows/mixed-reality/develop/unity/welcome-to-mr-feature-tool)
 
 #### Mac
-MRTK packages can be directly downloaded from [https://github.com/microsoft/MixedRealityToolkit-Unity/releases/](github)
+MRTK packages can be directly downloaded from [https://github.com/microsoft/MixedRealityToolkit-Unity/releases/](https://github.com/microsoft/MixedRealityToolkit-Unity/releases/)
 
 
 ### Import Oculus Integration
