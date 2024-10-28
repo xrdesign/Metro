@@ -687,6 +687,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   public static Vector3 PointerTarget = new Vector3(0, 0, 0);
   void UpdatePointerState()
   {
+    if (CoreServices.InputSystem == null)
+    {
+      return;
+    }
     // Set PointerTarget vector from primaryPointer
     var p = CoreServices.InputSystem.FocusProvider.PrimaryPointer;
     if (p != null && p.Result != null)
@@ -1034,6 +1038,15 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       ljson.AddField("id", l.id);
       ljson.AddField("unique_id", l.uuid);
       ljson.AddField("type", "line");
+      JSONObject stops = new JSONObject(JSONObject.Type.ARRAY);
+      foreach (var station in l.stops)
+      {
+        JSONObject stop = new JSONObject();
+        stop.AddField("id", station.id);
+        stop.AddField("uuid", station.uuid);
+        stops.Add(stop);
+      }
+      ljson.AddField("stops", stops);
       json.Add(ljson);
     }
     return json;
@@ -1050,7 +1063,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
         var s = l.stops[i];
         var next_s = l.stops[i + 1];
         segment_json.AddField("type", "segment");
-        segment_json.AddField("length", 20);
+        segment_json.AddField("length", 0);
+
+        // Vector3.Distance(s.transform.position, next_s.transform.position));
         segment_json.AddField("which_line", l.uuid);
         segment_json.AddField("from_station", s.uuid);
         segment_json.AddField("to_station", next_s.uuid);
