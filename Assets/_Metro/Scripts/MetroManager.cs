@@ -116,7 +116,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
     if (this.enabled)
       gameObject.AddComponent<Server>();
 
-#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#if Unity_EDITOR_OSX || UNITY_STANDALONE_OSX
 #else
     liblsl.StreamInfo inf = new liblsl.StreamInfo(
         "EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
@@ -178,9 +178,10 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
         this.isDone = true;
     }
     // Send LSL Markers
-#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#if Unity_EDITOR_OSX || UNITY_STANDALONE_OSX
 #else
-    while (markersThisFrame.Count > 0) {
+    while (markersThisFrame.Count > 0)
+    {
       markerStream.push_sample(new string[] { markersThisFrame.Dequeue() });
     }
 #endif
@@ -555,11 +556,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
   {
     Debug.Log("[SendEvent] " + eventString);
     Instance.markersThisFrame.Enqueue(eventString);
-    /*
-    string[] tempSample;
-    tempSample = new string[] { eventString };
-    //Instance.markerStream.push_sample(tempSample);
-    */
   }
 
   public static void ResetGame(uint gameID)
