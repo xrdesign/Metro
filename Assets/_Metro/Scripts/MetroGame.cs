@@ -24,7 +24,8 @@ public delegate void GameSelectionDelegateDef(bool selected);
  * SpaceMetro aims to clone mini metro in VR
  * This singleton object initializes and handles global game state and events
  */
-public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
+public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
+{
   private Random random;
   public uint gameId;
 
@@ -32,6 +33,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   public float time = 0.0f;
   public float gameSpeed = 0.0f;
   public float dt = 0f;
+  public float gameEfficiency = 0;
 
   public int passengersDelivered = 0;
   public float totalPassengerWaitTime = 0;
@@ -70,7 +72,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   public List<float> trackLengths = new List<float>();
   public float totalTrackLength;
 
-#region Organizational Scene Objects
+  #region Organizational Scene Objects
 
   public GameObject stationsOrganizer;
   public GameObject transportLinesOrganizer;
@@ -80,23 +82,23 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   private bool setAlert = false;
   private bool alertValue = false;
 
-#endregion
+  #endregion
 
   public int daysPerTrain = int.MaxValue;
   public int daysPerLine = int.MaxValue;
 
-#region Delegates
+  #region Delegates
 
-#region UI
+  #region UI
 
   // Invoke this to tell Manager to update UI if this game is selected.
   public Action uiUpdateDelegate;
 
-#endregion
+  #endregion
 
   public GameSelectionDelegateDef GameSelectionDelegate;
 
-#endregion
+  #endregion
 
   public int insertions;
   public int deletions;
@@ -106,7 +108,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   public int trainsAdded;
   public int trainsRemoved;
 
-#region Action Queue
+  #region Action Queue
 
   // Replaced normal Unity actions with this delegate so that we don't need to
   // know about the game instance from where we define the logic for the action.
@@ -118,12 +120,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
   // Used to link an action and id together so we can later indicate to
   // MetroManager when we complete the action.
-  private struct TrackedMetroGameAction {
+  private struct TrackedMetroGameAction
+  {
     public MetroGameAction action;
     public uint id;
   }
 
-#endregion
+  #endregion
 
   private volatile bool needReset = false;
   public bool simGame = false;
@@ -138,17 +141,20 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   };
   private int addedLines = 0;
 
-  void OnEnable() {
+  void OnEnable()
+  {
     CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(
         this);
   }
-  void OnDisable() {
+  void OnDisable()
+  {
     CoreServices.InputSystem?.UnregisterHandler<IMixedRealityPointerHandler>(
         this);
   }
 
   // Start is called before the first frame update
-  void Awake() {
+  void Awake()
+  {
     stationsOrganizer = new GameObject("Stations");
     stationsOrganizer.transform.SetParent(this.transform, false);
     transportLinesOrganizer = new GameObject("Transport Lines");
@@ -163,9 +169,11 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     gameSpeed = 0.0f;
   }
 
-  void Start() {
+  void Start()
+  {
     // Create Display Plane:
-    if (random == null) {
+    if (random == null)
+    {
       random = new Random();
     }
     GameObject floor = GameObject.Instantiate(
@@ -180,14 +188,16 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
       StartGame();
   }
 
-  public void StartGame() {
+  public void StartGame()
+  {
     Debug.Log("Start Game " + gameId);
     Debug.Log("freeTrains: " + this.freeTrains);
     this.ResetGameState();
     this.InitializeGameState();
   }
 
-  public void SetAlert(bool active) {
+  public void SetAlert(bool active)
+  {
     Debug.Log("Setting Alert!");
     setAlert = true;
     alertValue = true;
@@ -201,10 +211,11 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         */
   }
 
-#region Notifications
+  #region Notifications
 
   // Only called from MetroManager when the selected game has changed.
-  public void OnSelectionChange(bool selected) {
+  public void OnSelectionChange(bool selected)
+  {
     /*
     if(selected)
         SetAlert(false);
@@ -212,24 +223,28 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     // All we do is invoke our delegate for other objects atm.
     if (GameSelectionDelegate !=
-        null) { // Delegate is null unless assigned to a method.
+        null)
+    { // Delegate is null unless assigned to a method.
       GameSelectionDelegate.Invoke(selected);
     }
     if (uiUpdateDelegate != null)
       uiUpdateDelegate.Invoke();
   }
 
-#endregion
+  #endregion
 
-// Getters. Mostly for info that needs to poll other objects.
-#region Getters
+  // Getters. Mostly for info that needs to poll other objects.
+  #region Getters
 
-  public bool IsGameSelected() {
+  public bool IsGameSelected()
+  {
     return this == MetroManager.GetSelectedGame();
   }
 
-  public Station GetStationFromName(string stationName) {
-    foreach (var station in stations) {
+  public Station GetStationFromName(string stationName)
+  {
+    foreach (var station in stations)
+    {
       if (station.stationName == stationName)
         return station;
     }
@@ -237,9 +252,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     return null;
   }
 
-#endregion
+  #endregion
 
-  public void SetPaused(bool shouldPause) {
+  public void SetPaused(bool shouldPause)
+  {
     this.paused = shouldPause;
 
     // send toggling event
@@ -247,7 +263,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
                            gameId);
   }
 
-  public void SetAIEnabled(bool aiEnabled) {
+  public void SetAIEnabled(bool aiEnabled)
+  {
     this.Ai_paused = aiEnabled;
 
     // send toggling event
@@ -261,7 +278,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   /// </summary>
   /// <param name="gameAction"></param>
   /// <returns></returns>
-  public uint QueueAction(MetroGameAction gameAction) {
+  public uint QueueAction(MetroGameAction gameAction)
+  {
     if (this.Ai_paused)
       throw new Exception(
           "Cannot Queue Action, AI is paused"); // don't accept actions from AI
@@ -280,14 +298,17 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   }
 
   // Update is called once per frame
-  void Update() {
+  void Update()
+  {
     if (setAlert)
       alertCylinder.SetActive(alertValue);
 
     // Execute Server Actions
-    while (ActionQueue.Count > 0) {
+    while (ActionQueue.Count > 0)
+    {
       TrackedMetroGameAction action;
-      lock (ActionQueue.SyncRoot) {
+      lock (ActionQueue.SyncRoot)
+      {
         action = (TrackedMetroGameAction)ActionQueue.Dequeue();
       }
       action.action(this);
@@ -295,7 +316,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
       MetroManager.FulfillQueueAction(action.id);
     }
 
-    if (needReset) {
+    if (needReset)
+    {
       StartGame();
       needReset = false;
       // End this Update step early
@@ -308,7 +330,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     ProcessTick(Time.deltaTime);
   }
 
-  public void ProcessTick(float dt) {
+  public void ProcessTick(float dt)
+  {
     this.dt = dt * gameSpeed;
     // Update Passenger's route
     UpdatePassengerRoute();
@@ -320,22 +343,26 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     UpdatePointerState();
 
-    foreach (var line in lines) {
+    foreach (var line in lines)
+    {
       line.ProcessTick();
     }
   }
 
   public void ScheduleReset() { this.needReset = true; }
 
-  void ResetGameState() {
+  void ResetGameState()
+  {
     Debug.Log("Resetting game state for " + gameObject.name);
-    foreach (var s in stations) {
+    foreach (var s in stations)
+    {
       Destroy(s.gameObject);
     }
     containsStarStation = false;
     stations.Clear();
 
-    foreach (var t in lines) {
+    foreach (var t in lines)
+    {
       t.RemoveAll();
       Destroy(t.tracks.gameObject);
       Destroy(t.gameObject);
@@ -348,9 +375,11 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     addedLines = 0;
   }
 
-  void InitializeGameState() {
+  void InitializeGameState()
+  {
     print("Initializing game state for " + gameObject.name);
-    if (!simGame) {
+    if (!simGame)
+    {
       SpawnStation(StationType.Cube);
       SpawnStation(StationType.Cone);
       SpawnStation(StationType.Sphere);
@@ -381,18 +410,22 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
       uiUpdateDelegate.Invoke();
   }
 
-  public void CheckStationTimers() {
-    foreach (Station station in stations) {
+  public void CheckStationTimers()
+  {
+    foreach (Station station in stations)
+    {
       float overcrowdedTimerLimit =
           station.MaxTimeoutDuration +
           2.0f; // MaxTimeoutDuration from station + 2 second grace period
-      if (station.timer > overcrowdedTimerLimit) {
+      if (station.timer > overcrowdedTimerLimit)
+      {
         GameOver();
       }
     }
   }
 
-  public void GameOver() {
+  public void GameOver()
+  {
     // Debug.Log("TODO: Game Over!");
     // SceneManager.LoadScene(0);
     gameSpeed = 0.0f;
@@ -403,11 +436,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     isGameover = true;
   }
 
-  public void UpdateClock() {
+  public void UpdateClock()
+  {
     float lengthOfDay = 20.0f; // 1 day 20 seconds
 
     float gameSpeed = this.gameSpeed;
-    if (paused) {
+    if (paused)
+    {
       gameSpeed = 0.0f;
     }
 
@@ -421,39 +456,47 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     int newDay = (int)((time / lengthOfDay) % 7);
     int newWeek = (int)(time / (lengthOfDay * 7));
 
-    if (newHour != hour) {
+    if (newHour != hour)
+    {
       // new hour event
       hour = newHour;
-      if (hour % 2 == 0) {
+      if (hour % 2 == 0)
+      {
         if (!simGame)
           SpawnPassengers(); // spawn random passengers if needed
       }
     }
-    if (newDay != day) {
+    if (newDay != day)
+    {
       // new day event
       day = newDay;
       if (!simGame)
         SpawnStations(); // spawn random stations if needed
-      if (day % daysPerTrain == 0) {
+      if (day % daysPerTrain == 0)
+      {
         freeTrains++;
         if (uiUpdateDelegate != null)
           uiUpdateDelegate.Invoke();
       }
-      if (day % daysPerLine == 0) {
+      if (day % daysPerLine == 0)
+      {
         AddTransportLine();
         if (uiUpdateDelegate != null)
           uiUpdateDelegate.Invoke();
       }
     }
 
-    if (newWeek != week) {
+    if (newWeek != week)
+    {
       // new week event
       week = newWeek;
     }
   }
 
-  public void AddTransportLine() {
-    if (addedLines < 0 || addedLines >= lineColors.Length) {
+  public void AddTransportLine()
+  {
+    if (addedLines < 0 || addedLines >= lineColors.Length)
+    {
       return;
     }
     Color color = lineColors[addedLines];
@@ -470,57 +513,65 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     addedLines++;
   }
   public float GetRandomFloat() { return random.Next(0, 10000) / 10000f; }
-  public void SetSeed(int seed) {
+  public void SetSeed(int seed)
+  {
     Debug.Log($"Setting seed: {seed}");
     random = new Random(seed);
   }
 
-  public void SpawnPassengers() {
-    foreach (Station station in stations) {
+  public void SpawnPassengers()
+  {
+    foreach (Station station in stations)
+    {
       var p = GetRandomFloat();
-      if (p < 0.15f) {
+      if (p < 0.15f)
+      {
         station.SpawnRandomPassenger();
       }
     }
   }
 
-  public void SpawnStations() {
+  public void SpawnStations()
+  {
     var p = GetRandomFloat();
-    if (p < 0.8f) {
+    if (p < 0.8f)
+    {
       SpawnRandomStation();
     }
   }
 
-  public void SpawnStation(StationType type) {
+  public void SpawnStation(StationType type)
+  {
     print(this.gameObject.name + " spawning station of type " +
           type.ToString());
     GameObject obj;
-    switch (type) {
-    case StationType.Sphere:
-      GameObject prefab = Resources.Load("Prefabs/StationSphere") as GameObject;
-      obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity)
-                as GameObject;
-      break;
-    case StationType.Cone:
-      prefab = Resources.Load("Prefabs/StationCone") as GameObject;
-      obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity)
-                as GameObject;
-      break;
-    case StationType.Cube:
-      prefab = Resources.Load("Prefabs/StationCube") as GameObject;
-      obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity)
-                as GameObject;
-      break;
-    case StationType.Star:
-      prefab = Resources.Load("Prefabs/StationStar") as GameObject;
-      obj = GameObject.Instantiate(prefab) as GameObject;
-      containsStarStation = true;
-      break;
-    default:
-      prefab = Resources.Load("Prefabs/StationCube") as GameObject;
-      obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity)
-                as GameObject;
-      break;
+    switch (type)
+    {
+      case StationType.Sphere:
+        GameObject prefab = Resources.Load("Prefabs/StationSphere") as GameObject;
+        obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity)
+                  as GameObject;
+        break;
+      case StationType.Cone:
+        prefab = Resources.Load("Prefabs/StationCone") as GameObject;
+        obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity)
+                  as GameObject;
+        break;
+      case StationType.Cube:
+        prefab = Resources.Load("Prefabs/StationCube") as GameObject;
+        obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity)
+                  as GameObject;
+        break;
+      case StationType.Star:
+        prefab = Resources.Load("Prefabs/StationStar") as GameObject;
+        obj = GameObject.Instantiate(prefab) as GameObject;
+        containsStarStation = true;
+        break;
+      default:
+        prefab = Resources.Load("Prefabs/StationCube") as GameObject;
+        obj = GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity)
+                  as GameObject;
+        break;
     }
 
     Station station = obj.GetComponentInChildren<Station>();
@@ -528,7 +579,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     var radius = 1.5f + 0.5f * this.week + 0.1f * this.day;
     var offset = new Vector3(0f, 0f, 2f);
     var pos = new Vector3(0f, 1.0f, 0f) + offset;
-    while (StationTooClose(pos)) {
+    while (StationTooClose(pos))
+    {
       float theta = GetRandomFloat() * 360f;
       float w = GetRandomFloat() * 360f;
       float r = GetRandomFloat();
@@ -559,7 +611,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     LogRecorder.SendEvent(gameId, e);
   }
 
-  public void SpawnRandomStation() {
+  public void SpawnRandomStation()
+  {
     var p = GetRandomFloat();
     var type = StationType.Sphere;
     if (p < .1f && !containsStarStation)
@@ -573,8 +626,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     SpawnStation(type);
   }
 
-  public bool StationTooClose(Vector3 pos) {
-    foreach (var station in this.stations) {
+  public bool StationTooClose(Vector3 pos)
+  {
+    foreach (var station in this.stations)
+    {
       var d = Vector3.Distance(pos, station.transform.localPosition);
       if (d < 0.5f)
         return true;
@@ -582,10 +637,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     return false;
   }
 
-  public TransportLine SelectFreeLine() {
-    foreach (var line in this.lines) {
+  public TransportLine SelectFreeLine()
+  {
+    foreach (var line in this.lines)
+    {
       Debug.Log(line);
-      if (!line.isDeployed) {
+      if (!line.isDeployed)
+      {
         Debug.Log("select");
         editingLine = line;
         return line;
@@ -594,15 +652,18 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     return null;
   }
 
-  public static void DeselectLine() {
+  public static void DeselectLine()
+  {
     var line = editingLine;
-    if (line != null) {
+    if (line != null)
+    {
       line.tracks.DisableUISegments();
       var color = line.color;
       color.a = 0.75f;
       if (line.stops.Count == 1)
         line.RemoveAll();
-      else {
+      else
+      {
         if (editingIndex == -1)
           line.tracks.head.SetColor(color);
         else if (editingIndex == line.tracks.segments.Count)
@@ -615,7 +676,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   }
 
   public static void StartEditingLine(TransportLine line, int trackIndex,
-                                      float dist, bool insert) {
+                                      float dist, bool insert)
+  {
     editingLine = line;
     editingIndex = trackIndex;
     editingDist = dist;
@@ -624,51 +686,63 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   }
 
   public static Vector3 PointerTarget = new Vector3(0, 0, 0);
-  void UpdatePointerState() {
-    if (CoreServices.InputSystem == null) {
+  void UpdatePointerState()
+  {
+    if (CoreServices.InputSystem == null)
+    {
       return;
     }
     // Set PointerTarget vector from primaryPointer
     var p = CoreServices.InputSystem.FocusProvider.PrimaryPointer;
-    if (p != null && p.Result != null) {
+    if (p != null && p.Result != null)
+    {
       var startPoint = p.Position;
       var endPoint = p.Result.Details.Point;
       var hitObject = p.Result.Details.Object;
 
-      if (hitObject != null) {
+      if (hitObject != null)
+      {
         // Debug.Log("Hit object: " + hitObject);
         var dist = p.Result.Details.RayDistance;
         var offset = 0.1f;
         PointerTarget = RayStep.GetPointByDistance(p.Rays, dist - offset);
-      } else {
+      }
+      else
+      {
         PointerTarget = RayStep.GetPointByDistance(p.Rays, 2.5f);
       }
     }
   }
 
-  public void AddScore(int inc) {
+  public void AddScore(int inc)
+  {
     this.score += inc;
     //
   }
 
-  public void UpdatePassengerRoute() {
+  public void UpdatePassengerRoute()
+  {
 
     float score = 0;
-    for (int i = 0; i < stations.Count; i++) {
+    for (int i = 0; i < stations.Count; i++)
+    {
       Station currentStation = stations[i];
       float stationScore = currentStation.UpdateRoutes();
       score += stationScore;
     }
+    this.gameEfficiency = score / stations.Count;
     return;
 
     // OLD CODE BELOW CAN LIKELY REMOVE @TODO
 
     // for all station
-    for (int i = 0; i < stations.Count; i++) {
+    for (int i = 0; i < stations.Count; i++)
+    {
       Station currentStation = stations[i];
 
       // for all passenger in the station
-      for (int j = 0; j < currentStation.passengers.Count; j++) {
+      for (int j = 0; j < currentStation.passengers.Count; j++)
+      {
         Passenger currentPassenger = currentStation.passengers[j];
 
         // TODO: should not always update
@@ -680,7 +754,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
         // Debug print
         string routeString = "";
-        for (int k = 0; k < currentPassenger.route.Count; k++) {
+        for (int k = 0; k < currentPassenger.route.Count; k++)
+        {
           routeString += currentPassenger.route[k].id + " ";
         }
         // Debug.Log("Passenger is going from " + currentStation.uuid + " to " +
@@ -712,10 +787,12 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   }
 
   public List<Station> ReconstructRoute(Station start, Station end,
-                                        Dictionary<Station, Station> cameFrom) {
+                                        Dictionary<Station, Station> cameFrom)
+  {
     List<Station> route = new List<Station>();
     Station current = end;
-    while (current != start) {
+    while (current != start)
+    {
       route.Add(current);
       current = cameFrom[current];
     }
@@ -724,25 +801,31 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     return route;
   }
 
-  public List<Station> FindRouteClosest(Station start, StationType goal) {
+  public List<Station> FindRouteClosest(Station start, StationType goal)
+  {
     var result = FindRoute(start, (x) => x.type == goal);
-    if (result.Item1.Count == 0) {
+    if (result.Item1.Count == 0)
+    {
       // Failed to find a connected route, find the closest station to the
       // closet goal station Find the closest station that is goal type
       float minDist = Single.PositiveInfinity;
       int minIndex = -1;
-      for (int i = 0; i < stations.Count; i++) {
-        if (stations[i].type == goal) {
+      for (int i = 0; i < stations.Count; i++)
+      {
+        if (stations[i].type == goal)
+        {
           float dist = Vector3.Distance(start.transform.position,
                                         stations[i].transform.position);
-          if (dist < minDist) {
+          if (dist < minDist)
+          {
             minDist = dist;
             minIndex = i;
           }
         }
       }
 
-      if (minIndex == -1) {
+      if (minIndex == -1)
+      {
         print("Failure to find path:\nStart Station Type: " +
               start.type.ToString() + "\nGoal: " + goal.ToString() +
               "Available Types: " + stations.ToString());
@@ -752,11 +835,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
       Station closest = stations[minIndex];
       minDist = Single.PositiveInfinity;
       Station closestConnected = null;
-      foreach (var item in result.Item2) {
+      foreach (var item in result.Item2)
+      {
         float dist = Vector3.Distance(closest.transform.position,
                                       item.Key.transform.position) +
                      item.Value; // TODO: weight the fScore and distance
-        if (dist < minDist) {
+        if (dist < minDist)
+        {
           minDist = dist;
           closestConnected = item.Key;
         }
@@ -769,7 +854,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
   // pass in a functor for criteria
   public Tuple<List<Station>, Dictionary<Station, float>>
-  FindRoute(Station start, Func<Station, bool> criteria) {
+  FindRoute(Station start, Func<Station, bool> criteria)
+  {
     // use A * to find a shortest route, if no route found, find the route to
     // the closest station to the target
     List<Station> route = new List<Station>();
@@ -785,10 +871,12 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     openSet.Add(fScore[start], start);
 
-    while (openSet.Count > 0) {
+    while (openSet.Count > 0)
+    {
       // get first station in the openSet
       Station current = openSet.Values[0];
-      if (criteria(current)) {
+      if (criteria(current))
+      {
         // if the station is the goal, reconstruct the route
         route = ReconstructRoute(start, current, cameFrom);
         break;
@@ -800,11 +888,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
       // Find all neighboring stations
       List<KeyValuePair<Station, int>> neighbors = current.GetNeighbors();
 
-      for (int i = 0; i < neighbors.Count; i++) {
+      for (int i = 0; i < neighbors.Count; i++)
+      {
         Station neighbor = neighbors[i].Key;
         int lineId = neighbors[i].Value;
         // if the neighbor is in the closedSet, skip
-        if (closedSet.Contains(neighbor)) {
+        if (closedSet.Contains(neighbor))
+        {
           continue;
         }
         // if the new path to the neighbor is shorter, update the path
@@ -813,15 +903,22 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
                                                neighbor.transform.position);
 
         float neighborgScore = Single.PositiveInfinity;
-        if (gScore.ContainsKey(neighbor)) {
+        if (gScore.ContainsKey(neighbor))
+        {
           neighborgScore = gScore[neighbor];
         }
-        if (tentative_gScore < neighborgScore) {
+        if (tentative_gScore < neighborgScore)
+        {
           cameFrom[neighbor] = current;
           gScore[neighbor] = tentative_gScore;
           fScore[neighbor] =
               gScore[neighbor] + HeuristicCostEstimate(start, neighbor);
-          if (!openSet.ContainsValue(neighbor)) {
+          if (!openSet.ContainsValue(neighbor))
+          {
+            while (openSet.ContainsKey(fScore[neighbor]))
+            {
+              fScore[neighbor] += 0.0001f;
+            }
             openSet.Add(fScore[neighbor], neighbor);
           }
         }
@@ -830,36 +927,45 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     return new Tuple<List<Station>, Dictionary<Station, float>>(route, fScore);
   }
-  public float HeuristicCostEstimate(Station start, Station goal) {
+  public float HeuristicCostEstimate(Station start, Station goal)
+  {
     // TODO for more complicated weighting
     // currently favor crowd to less crowd
     int left = start.passengers.Count;
     int right = goal.passengers.Count;
-    if (left > right) {
+    if (left > right)
+    {
       return 1.0f;
-    } else {
+    }
+    else
+    {
       return 3.0f;
     }
   }
 
   void IMixedRealityPointerHandler.OnPointerDown(
-      MixedRealityPointerEventData eventData) {
+      MixedRealityPointerEventData eventData)
+  {
     Debug.Log("Pointer Clicked");
     MetroManager.SendEvent("Controller clicked: " + gameId);
   }
 
   void IMixedRealityPointerHandler.OnPointerUp(
-      MixedRealityPointerEventData eventData) {
+      MixedRealityPointerEventData eventData)
+  {
     // Debug.Log("MetroManager pointer up");
     DeselectLine();
   }
 
   void IMixedRealityPointerHandler.OnPointerDragged(
-      MixedRealityPointerEventData eventData) {
+      MixedRealityPointerEventData eventData)
+  {
     var point = RayStep.GetPointByDistance(eventData.Pointer.Rays, editingDist);
-    if (editingLine != null) {
+    if (editingLine != null)
+    {
       if (editingIndex <= editingLine.tracks.segments.Count &&
-          editingLine.stops.Count > 1) {
+          editingLine.stops.Count > 1)
+      {
         TrackSegment segment;
         if (editingIndex < 0)
           segment = editingLine.tracks.head;
@@ -879,17 +985,21 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   }
 
   void IMixedRealityPointerHandler.OnPointerClicked(
-      MixedRealityPointerEventData eventData) {}
+      MixedRealityPointerEventData eventData)
+  { }
 
-  public JSONObject SerializeGameState() {
+  public JSONObject SerializeGameState()
+  {
 
-    while (needReset) {
+    while (needReset)
+    {
     }
 
     // JSONObject json = new JSONObject(JsonUtility.ToJson(Instance));
     JSONObject json = new JSONObject();
 
     json.AddField("score", this.score);
+    json.AddField("efficiency", this.gameEfficiency);
     json.AddField("time", this.time);
     json.AddField("isPause", this.paused);
     json.AddField("isGameover", this.isGameover);
@@ -913,21 +1023,25 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     return json;
   }
 
-  public JSONObject SerializeStations() {
+  public JSONObject SerializeStations()
+  {
     JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
-    foreach (var s in this.stations) {
+    foreach (var s in this.stations)
+    {
       JSONObject sjson = new JSONObject();
       sjson.AddField("id", s.id);
       sjson.AddField("unique_id", s.uuid);
       sjson.AddField("type", "station");
       sjson.AddField("shape", s.type.ToString());
+      sjson.AddField("efficiency", s.stationEfficiency);
       sjson.AddField("x", s.position.x);
       sjson.AddField("y", s.position.y);
       sjson.AddField("z", s.position.z);
       sjson.AddField("timer", s.timer);
       sjson.AddField("human_name", s.stationName);
       var passenger_counts = GetPassengerCounts(s.passengers);
-      foreach (var destination in passenger_counts.Keys) {
+      foreach (var destination in passenger_counts.Keys)
+      {
         sjson.AddField("cnt_" + destination.ToLower(),
                        passenger_counts[destination]);
       }
@@ -936,15 +1050,18 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     return json;
   }
 
-  public JSONObject SerializeTransportLines() {
+  public JSONObject SerializeTransportLines()
+  {
     JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
-    foreach (var l in this.lines) {
+    foreach (var l in this.lines)
+    {
       JSONObject ljson = new JSONObject();
       ljson.AddField("id", l.id);
       ljson.AddField("unique_id", l.uuid);
       ljson.AddField("type", "line");
       JSONObject stops = new JSONObject(JSONObject.Type.ARRAY);
-      foreach (var station in l.stops) {
+      foreach (var station in l.stops)
+      {
         JSONObject stop = new JSONObject();
         stop.AddField("id", station.id);
         stop.AddField("uuid", station.uuid);
@@ -956,10 +1073,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     return json;
   }
 
-  public JSONObject SerializeSegments() {
+  public JSONObject SerializeSegments()
+  {
     JSONObject json = new JSONObject(JSONObject.Type.ARRAY);
-    foreach (var l in this.lines) {
-      for (int i = 0; i < l.stops.Count - 1; i++) {
+    foreach (var l in this.lines)
+    {
+      for (int i = 0; i < l.stops.Count - 1; i++)
+      {
         JSONObject segment_json = new JSONObject();
         var s = l.stops[i];
         var next_s = l.stops[i + 1];
@@ -977,23 +1097,31 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   }
 
   public static Dictionary<string, int>
-  GetPassengerCounts(List<Passenger> passengers) {
+  GetPassengerCounts(List<Passenger> passengers)
+  {
     Dictionary<string, int> counts = new Dictionary<string, int>();
-    foreach (var p in passengers) {
-      try {
+    foreach (var p in passengers)
+    {
+      try
+      {
         counts[p.destination.ToString()] += 1;
-      } catch (KeyNotFoundException) {
+      }
+      catch (KeyNotFoundException)
+      {
         counts.Add(p.destination.ToString(), 1);
       }
     }
     return counts;
   }
 
-  public JSONObject SerializeTrains() {
+  public JSONObject SerializeTrains()
+  {
     JSONObject trains_json = new JSONObject(JSONObject.Type.ARRAY);
-    foreach (var l in this.lines) {
+    foreach (var l in this.lines)
+    {
       JSONObject json = new JSONObject();
-      foreach (var t in l.trains) {
+      foreach (var t in l.trains)
+      {
         json.AddField("unique_id", t.uuid);
         json.AddField("type", "train");
         json.AddField("position", t.position);
@@ -1002,7 +1130,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         json.AddField("line_id", l.uuid);
         // is there currently no capacity limit?
         var passenger_counts = GetPassengerCounts(t.passengers);
-        foreach (var destination in passenger_counts.Keys) {
+        foreach (var destination in passenger_counts.Keys)
+        {
           json.AddField("cnt_" + destination.ToLower(),
                         passenger_counts[destination]);
         }
@@ -1026,7 +1155,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
   }
   */
 
-  public void DeserializeGameState(JSONObject gameState) {
+  public void DeserializeGameState(JSONObject gameState)
+  {
     // Reset Game Params
     ResetGameState();
     this.time = gameState["time"].f;
@@ -1035,7 +1165,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     // Spawn Stations
     var jsonStations = gameState["stations"].list;
-    for (int i = 0; i < jsonStations.Count; i++) {
+    for (int i = 0; i < jsonStations.Count; i++)
+    {
       var station = jsonStations[i];
 
       // Create station
@@ -1086,18 +1217,21 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
     // Recreate Transit Lines
     var jsonLines = gameState["lines"].list;
-    for (int i = 0; i < jsonLines.Count; i++) {
+    for (int i = 0; i < jsonLines.Count; i++)
+    {
       this.AddTransportLine();
       lines[i].uuid = (int)jsonLines[i]["unique_id"].i;
     }
 
     int current_line_id = 0;
     TransportLine currLine = null;
-    foreach (var segment in gameState["segments"].list) {
+    foreach (var segment in gameState["segments"].list)
+    {
       int which_line = (int)segment["which_line"].i;
 
       // Check if looking at new line:
-      if (which_line != current_line_id) {
+      if (which_line != current_line_id)
+      {
         currLine = lines.Find(l => l.uuid == (int)segment["which_line"].i);
         if (currLine == null)
           continue;
@@ -1109,7 +1243,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
 
         currLine.AddStation(first);
         currLine.AddStation(second);
-      } else {
+      }
+      else
+      {
         if (currLine == null)
           continue;
 
@@ -1118,8 +1254,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
         currLine.AddStation(station);
       }
     }
-    foreach (var line in lines) {
-      foreach (var train in line.trains) {
+    foreach (var line in lines)
+    {
+      foreach (var train in line.trains)
+      {
         Destroy(train);
       }
       line.trains.Clear();
@@ -1128,13 +1266,16 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     // Arbritary amount of free trains to place
     this.freeTrains = 1000;
     var jsonTrains = gameState["trains"].list;
-    foreach (var train in jsonTrains) {
-      if (train.IsNull) {
+    foreach (var train in jsonTrains)
+    {
+      if (train.IsNull)
+      {
         Debug.Log("Skipping Null Train");
         continue;
       }
       var line = lines.Find(l => l.uuid == (int)train["line_id"].i);
-      if (line == null) {
+      if (line == null)
+      {
         Debug.Log("Can't find line");
         continue;
       }
@@ -1145,25 +1286,33 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler {
     this.freeTrains = (int)gameState["freeTrains"].i;
   }
 
-  public void CalcuateScore() {
+  public void CalcuateScore()
+  {
     StationType[] types = (StationType[])Enum.GetValues(typeof(StationType));
 
     float totalGameScore = 0;
-    foreach (Station station in this.stations) {
+    foreach (Station station in this.stations)
+    {
       float totalStationScore = 0;
-      foreach (StationType type in types) {
+      foreach (StationType type in types)
+      {
         float typeScore = 999999999;
-        if (type == station.type) {
+        if (type == station.type)
+        {
           continue;
-        } else if (type == StationType.Star && !this.containsStarStation) {
+        }
+        else if (type == StationType.Star && !this.containsStarStation)
+        {
           continue;
         }
 
         var result = FindRoute(station, (x) => x.type == type);
         var route = result.Item1; //@TODO Verify if includes start station...
-        if (route.Count != 0) {
+        if (route.Count != 0)
+        {
           typeScore = 0;
-          for (int i = 1; i < route.Count; i++) {
+          for (int i = 1; i < route.Count; i++)
+          {
             Station a = route[i - 1];
             Station b = route[i];
             typeScore +=

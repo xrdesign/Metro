@@ -136,7 +136,12 @@ public class LogRecorder : MonoBehaviour
       log.AddField("GAME_ID", pair.Item1);
       log.AddField("EVENT_TYPE", pair.Item2.EventType());
       log.AddField("EVENT", pair.Item2.ToJson());
-
+      if (pair.Item2.EventType() == "StationSpawnedEvent")
+      {
+        log.AddField(
+            "EFFICIENCY_BEFORE",
+            MetroManager.Instance.games[(int)pair.Item1].gameEfficiency);
+      }
       eventWriter.WriteLine(log.ToString());
     }
   }
