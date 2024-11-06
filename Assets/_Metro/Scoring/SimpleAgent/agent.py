@@ -59,16 +59,24 @@ def connect_unconnect_stations(ws, game):
     lowestCost = 1000000000000
     bestInsert = (0,0,0)
     bestGame = None
+    game.Print()
     for line in game.lines:
+        if(len(line.segments) <= 0):
+            continue
         for insert_index in range(len(line.segments) + 1):
             gameCopy = copy.deepcopy(game)
             gameCopy.InsertStation(new_station.id, line.id, insert_index)
             gameCopy.UpdateSegments();
             gameCopy.UpdateNeighbors();
-            score = gameCopy.Evaluate()
+            score = 0
+            for newline in gameCopy.lines:
+                score += newline.totalLength
             if(score <= lowestCost):
                 lowestCost = score
                 bestInsert = (line.id, new_station.id, insert_index)
+                print("new lowest cost: ")
+                print(lowestCost)
+                print(bestInsert)
                 bestGame = copy.deepcopy(gameCopy)
     print(lowestCost)
     command =  {

@@ -232,6 +232,14 @@ public class Tracks : MonoBehaviour
       return 0.0f;
     var x = p * segments.Count;
     var i = (int)x;
+    if (i < 0)
+    {
+      i = 0;
+    }
+    if (i >= segments.Count)
+    {
+      i = segments.Count - 1;
+    }
     var v = x - i;
     float totalSegmentDistance = 0;
 
@@ -247,8 +255,13 @@ public class Tracks : MonoBehaviour
     // (fullSpeedDistance / roughSegmentDistance) * (roughSegmentDistance /
     // totalSegmentDistance), shortened to fullSpeedDistance /
     // totalSegmentDistance
+    //
+    // Wouldn't it actually be (1/segments.Count) instead of
+    // (roughSegmentDistance / totalSegmentDistance) since the position along
+    // the whole line is described in a 0 to 1 range
 
-    float speedMult = fullSpeedDistance / totalSegmentDistance;
+    float speedMult = fullSpeedDistance /
+                      (segments[i].getRoughSegmentDistance() * segments.Count);
 
     return speedMult;
   }
