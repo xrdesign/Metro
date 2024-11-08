@@ -61,6 +61,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   public int hour;
   public int day;
   public int week;
+  public bool routesNeedUpdating = true;
 
   // TransportLine edit state
   public static bool editing = false;
@@ -333,8 +334,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   public void ProcessTick(float dt)
   {
     this.dt = dt * gameSpeed;
+
     // Update Passenger's route
-    UpdatePassengerRoute();
+    // Only update if tracks updated...
+    if (routesNeedUpdating)
+    {
+      UpdatePassengerRoute();
+    }
 
     // Time progression
     CheckStationTimers(); // check for lose condition
