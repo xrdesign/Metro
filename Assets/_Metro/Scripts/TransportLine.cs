@@ -69,6 +69,8 @@ public class TransportLine : MonoBehaviour
       // TODO
       return;
     }
+
+    gameInstance.routesNeedUpdating = true;
     Debug.Log("insert station");
     stops.Insert(stopIndex, station);
     if (stops.Count == 2)
@@ -101,6 +103,8 @@ public class TransportLine : MonoBehaviour
 
   public void RemoveStation(Station station)
   {
+    gameInstance.routesNeedUpdating = true;
+
     station.lines.Remove(this);
     stops.Remove(station);
     if (stops.Count <= 1)
@@ -117,6 +121,7 @@ public class TransportLine : MonoBehaviour
 
   public void RemoveAll()
   {
+    gameInstance.routesNeedUpdating = true;
     foreach (var s in stops)
     {
       s.lines.Remove(this);

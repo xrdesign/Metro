@@ -250,10 +250,16 @@ public class Station : MonoBehaviour,
             {
               float totalDistance =
                   gameInstance.lines[lineID].tracks.totalLength;
-              float worstCase = totalDistance * 2 + distOnCurrLine;
+
+              // account for number of trains
+              int numTrains = gameInstance.lines[lineID].trains.Count;
+
+              float worstCase =
+                  ((totalDistance * 2) / numTrains) + distOnCurrLine;
               float bestCase = distOnCurrLine;
+
               float avg = (worstCase + bestCase) / 2;
-              waitTime += avg / .75f;
+              waitTime += avg / .75f; // account for train speed
               distOnCurrLine = 0;
             }
             lineID = neighborPair.Value;
@@ -326,10 +332,6 @@ public class Station : MonoBehaviour,
 
     float factor = gameInstance.containsStarStation ? (.25f) : (1.0f / 3.0f);
     totalStationScore *= factor;
-
-    // Train speed ~ .75 units per second...
-    // passengers delivered per second =
-    // passenger spawn rate ~
 
     foreach (var passenger in passengers)
     {
