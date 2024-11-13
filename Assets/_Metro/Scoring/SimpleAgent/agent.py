@@ -26,11 +26,11 @@ def send_and_recieve(ws, message):
 
 def insert_station(ws, line, station, insert):
     command =  {
-        "command":"take_action", 
-        "game_id":0, 
+        "command":"take_action",
+        "game_id":0,
         "arguments":{
-            "action":"insert_station", 
-            "line_index":line, 
+            "action":"insert_station",
+            "line_index":line,
             "station_index":station,
             "insert_index":insert
         }
@@ -49,7 +49,7 @@ def connect_unconnect_stations(ws, game):
 
         insert_station(ws, 2, 2, 0)
         insert_station(ws, 2, 0, 1)
-        
+
         return
 
     print("GameState Before:")
@@ -80,12 +80,12 @@ def connect_unconnect_stations(ws, game):
                 bestGame = copy.deepcopy(gameCopy)
     print(lowestCost)
     command =  {
-        "command":"take_action", 
-        "game_id":0, 
+        "command":"take_action",
+        "game_id":0,
         "arguments":{
-            "action":"insert_station", 
-            "line_index":bestInsert[0], 
-            "station_index":bestInsert[1], 
+            "action":"insert_station",
+            "line_index":bestInsert[0],
+            "station_index":bestInsert[1],
             "insert_index":bestInsert[2]
         }
     }
@@ -108,9 +108,9 @@ def connect_unconnect_stations(ws, game):
     print("Score after action: ")
     print(updatedGame.Evaluate())
     print("")
-    return 
+    return
 
-    # old method: 
+    # old method:
     connected_stations = set()
     for segment in game.segments:
         connected_stations.add(segment.a);
@@ -121,7 +121,7 @@ def connect_unconnect_stations(ws, game):
             continue
 
         nearestSegment = None
-        min = 9999999 
+        min = 9999999
         for segment in game.segments:
             distance = get_distance(station.pos, game, segment)
             if distance < min:
@@ -134,12 +134,12 @@ def connect_unconnect_stations(ws, game):
 
 def connect_along_segment(ws, station, segment):
     command =  {
-        "command":"take_action", 
-        "game_id":0, 
+        "command":"take_action",
+        "game_id":0,
         "arguments":{
-            "action":"insert_station", 
-            "line_index":segment.l, 
-            "station_index":station.id, 
+            "action":"insert_station",
+            "line_index":segment.l,
+            "station_index":station.id,
             "insert_index":segment.index
         }
     }
@@ -168,7 +168,7 @@ def get_distance(stationPos, game, segment):
 
     projAmount = dot(fromToStation, fromToEnd) / dot(fromToEnd, fromToEnd)
     proj = (fromToEnd[0] * projAmount, fromToEnd[1] * projAmount, fromToEnd[2] * projAmount)
-    
+
     nearestPoint = (a[0] + proj[0], a[1] + proj[1], a[2] + proj[2])
     return distance_between_points(nearestPoint, stationPos)
 
