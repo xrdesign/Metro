@@ -83,3 +83,7 @@ Assets/StreamingAssets/EmbodyPythonLib.zip.meta
 Assets/Plugins/Android/*
 Assets/Resources/OculusRuntimeSettings.asset
 Assets/Resources/OculusRuntimeSettings.asset.meta
+
+# Ignore Python cache files
+*.pyc
+__pycache__/
