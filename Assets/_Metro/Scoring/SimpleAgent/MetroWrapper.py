@@ -1,3 +1,4 @@
+
 import sys
 import math
 import json
@@ -33,7 +34,7 @@ class GameState:
             line = Line(lineData)
             self.lines.append(line)
             self.lineMappings[line.uuid] = line.id
-        
+
         self.UpdateSegments()
         self.UpdateNeighbors()
         """
@@ -83,7 +84,7 @@ class GameState:
             self.stations[b].neighbors.append((a,l,d))
             self.lines[l].segments.append(segment)
             self.lines[l].totalLength += segment.length
-            
+
             i+=1
             j+=1
 
@@ -95,7 +96,7 @@ class GameState:
         for l, line in enumerate(self.lines):
             line.segments = []
             line.totalLength = 0
-            i = 0 
+            i = 0
             j = 1
             if(len(line.stops) <= 1):
                 continue
@@ -104,11 +105,11 @@ class GameState:
                 b = line.stops[j]
                 d = GetDistance(self.stations[a].pos, self.stations[b].pos)
 
-                segment = Segment(line = l, a = line.stops[i], b = line.stops[j], length = d, index = i) 
+                segment = Segment(line = l, a = line.stops[i], b = line.stops[j], length = d, index = i)
                 self.segments.append(segment)
                 line.segments.append(segment)
                 line.totalLength += d
-                
+
                 i += 1
                 j += 1
 
@@ -145,7 +146,7 @@ class GameState:
             totalCrowdingRate += stationCrowdingRate
         avgWaitTime /= len(self.stations)
         totalCrowdingRate = .09003 - (1/avgWaitTime)
-        return totalCrowdingRate 
+        return totalCrowdingRate
 
     def CalculateWaitTime(self, station, shape):
         route, fScore = self.FindRoute(station, lambda x : x.shape == shape)
@@ -194,7 +195,7 @@ class GameState:
         route.append(start.id)
         route.reverse()
         return route
-        
+
     def FindRoute(self, start, criteria):
         # use A * to find a shortest route, if no route found, find the route to
         # the closest station to the target
@@ -227,7 +228,7 @@ class GameState:
             neighbors = current.neighbors
             for neighborPair in neighbors:
                 neighbor = self.stations[neighborPair[0]]
-                if neighbor.id in closedSet: 
+                if neighbor.id in closedSet:
                     continue
                 tentative_gScore = gScore[current.id] + GetDistance(current.pos, neighbor.pos)
                 neighborGScore = PositiveInfinity
@@ -262,7 +263,7 @@ class GameState:
             print(f"Segment: {i}")
             segment.Print()
             print("")
-         
+
 class Station:
     def __init__(self, stationJson):
         self.id = stationJson['id']
@@ -288,7 +289,7 @@ class Line:
         for stop in lineJson['stops']:
             self.stops.append(stop['id'])
     def Print(self):
-        print(f"id: {self.id}") 
+        print(f"id: {self.id}")
         print(f"uuid: {self.uuid}")
         print(f"length: {self.totalLength}")
 
@@ -300,7 +301,7 @@ class Segment:
             self.b = b
             self.length = length
             self.index = index
-        else: 
+        else:
             self.l = lineMappings[segmentJson['which_line']]
             self.a = stationMappings[segmentJson['from_station']]
             self.b = stationMappings[segmentJson['to_station']]
