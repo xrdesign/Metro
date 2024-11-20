@@ -157,7 +157,7 @@ def vec_from_points(a, b):
 
 def distance_between_points(a,b):
     l = vec_from_points(a,b)
-    return math.sqrt(dot(a,b))
+    return math.sqrt(dot(l,l))
 
 def get_distance(stationPos, game, segment):
     a = game.stations[segment.a].pos
@@ -193,9 +193,7 @@ class Agent:
         closest = None
         min_distance = float('inf')
         for station in stations:
-            distance = math.sqrt((station.pos[0] - current_station.pos[0]) ** 2 +
-                                 (station.pos[1] - current_station.pos[1]) ** 2 +
-                                 (station.pos[2] - current_station.pos[2]) ** 2)
+            distance = distance_between_points(station.pos, current_station.pos)
             if distance < min_distance:
                 min_distance = distance
                 closest = station
