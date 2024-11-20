@@ -216,7 +216,7 @@ class Agent:
 
         return ordered_list
 
-class DummyAgent(Agent):
+class BruteForceAgent(Agent):
     def generate_paths(self, game_state):
         # Initialize paths based on the current game state
         self.initialize_paths(game_state)
@@ -252,32 +252,9 @@ class DummyAgent(Agent):
                 insert_station(self.ws, line_index, station.id, insert_index)
 
 if __name__ == "__main__":
-    ws = websocket.create_connection('ws://localhost:3000/metro')
-
-    numStations = 0
-    getGamesCommand = {
-        'command': 'get_state',
-        'game_id': 0
-    }
-
-    while True:
-        # get next game state:
-        gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand))
-        try:
-            gameState = json.loads(gameStateRaw)
-        except:
-            print(gameStateRaw)
-            exit()
-        game = MetroWrapper.GameState(gameState)
-        stations = game.stations
-        if len(stations) > numStations:
-            numStations = len(stations)
-            connect_unconnect_stations(ws, game)
-        sleep(1)
-
     # ws = websocket.create_connection('ws://localhost:3000/metro')
-    # agent = DummyAgent(ws)
 
+    # numStations = 0
     # getGamesCommand = {
     #     'command': 'get_state',
     #     'game_id': 0
@@ -293,7 +270,30 @@ if __name__ == "__main__":
     #         exit()
     #     game = MetroWrapper.GameState(gameState)
     #     stations = game.stations
-    #     if len(stations) > 0:
-    #         agent.generate_paths(game)
+    #     if len(stations) > numStations:
+    #         numStations = len(stations)
+    #         connect_unconnect_stations(ws, game)
     #     sleep(1)
+
+    ws = websocket.create_connection('ws://localhost:3000/metro')
+    agent = BruteForceAgent(ws)
+
+    getGamesCommand = {
+        'command': 'get_state',
+        'game_id': 0
+    }
+
+    while True:
+        # get next game state:
+        gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand))
+        try:
+            gameState = json.loads(gameStateRaw)
+        except:
+            print(gameStateRaw)
+            exit()
+        game = MetroWrapper.GameState(gameState)
+        stations = game.stations
+        if len(stations) > 0:
+            agent.generate_paths(game)
+        sleep(1)
 
