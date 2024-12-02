@@ -302,39 +302,70 @@ class Agent:
             if update_to_game:
                 for line_index, station_list in enumerate(self.planned_paths):
                     for insert_index, station in enumerate(station_list):
+                        # TODO: 'remove_station' or 'remove_track' in case an existing path is modified
                         insert_station(self.ws, line_index, station.id, insert_index)
+
+# class BruteForceAgent(Agent):
+#     def get_paths(self):
+#         # Initialize paths
+#         planned_paths = [[] for _ in range(self.num_paths)]
+
+#         # Assign each station to at least one path randomly
+#         for station in self.all_stations:
+#             selected_path_id = random.randint(0, self.num_paths - 1)
+#             planned_paths[selected_path_id].append(station)
+
+#         # Ensure all lines connect to at least two different stations
+#         for station_list in planned_paths:
+#             if len(station_list) < 1:
+#                 station_id = random.randint(0, len(self.all_stations) - 1)
+#                 station_list.append(self.all_stations[station_id])
+#             if len(station_list) < 2:
+#                 station_id = random.randint(0, len(self.all_stations) - 1)
+#                 while self.all_stations[station_id] == station_list[0]:
+#                     station_id = random.randint(0, len(self.all_stations) - 1)
+#                 station_list.append(self.all_stations[station_id])
+
+#         # Optionally, each path can randomly include additional stations
+#         for station_list_id in range(len(planned_paths)):
+#             station_list = planned_paths[station_list_id]
+#             additional_stations = random.sample(self.all_stations, random.randint(0, len(self.all_stations) // 2))
+#             for station in additional_stations:
+#                 station_list.append(station)
+#             # Order the List
+#             planned_paths[station_list_id] = self.order_stations(station_list)
+
+#         return planned_paths
+    
 
 class BruteForceAgent(Agent):
     def get_paths(self):
-        # Initialize paths
-        planned_paths = [[] for _ in range(self.num_paths)]
-
-        # Assign each station to at least one path randomly
+        planned_paths = [set() for _ in range(self.num_paths)]
+        
+        # Initial assignment with duplicate checking
         for station in self.all_stations:
             selected_path_id = random.randint(0, self.num_paths - 1)
-            planned_paths[selected_path_id].append(station)
-
-        # Ensure all lines connect to at least two different stations
+            planned_paths[selected_path_id].add(station)
+        
+        # Ensure minimum stations with duplicate checking
         for station_list in planned_paths:
-            if len(station_list) < 1:
-                station_id = random.randint(0, len(self.all_stations) - 1)
-                station_list.append(self.all_stations[station_id])
-            if len(station_list) < 2:
-                station_id = random.randint(0, len(self.all_stations) - 1)
-                while self.all_stations[station_id] == station_list[0]:
-                    station_id = random.randint(0, len(self.all_stations) - 1)
-                station_list.append(self.all_stations[station_id])
-
-        # Optionally, each path can randomly include additional stations
-        for station_list_id in range(len(planned_paths)):
-            station_list = planned_paths[station_list_id]
-            additional_stations = random.sample(self.all_stations, random.randint(0, len(self.all_stations) // 2))
-            for station in additional_stations:
-                station_list.append(station)
-            # Order the List
-            planned_paths[station_list_id] = self.order_stations(station_list)
-
-        return planned_paths
+            while len(station_list) < 2:
+                available = set(self.all_stations) - station_list
+                if available:
+                    station_list.add(random.choice(list(available)))
+        
+        # Add additional stations without duplicates
+        for station_list in planned_paths:
+            available = set(self.all_stations) - station_list
+            if available:
+                num_to_add = random.randint(0, len(available) // 2)
+                additional = random.sample(available, num_to_add)
+                station_list.update(additional)
+        
+        # Convert sets back to ordered lists
+        ordered_paths = [self.order_stations(list(station_list)) for station_list in planned_paths]
+        
+        return ordered_paths
 
 if __name__ == "__main__":
     # ws = websocket.create_connection('ws://localhost:3000/metro')
