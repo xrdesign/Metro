@@ -300,9 +300,21 @@ class Agent:
             self.cost = new_cost
             # Send the planned paths to the game using WebSocket
             if update_to_game:
+                # # remove all tracks in the game
+                # TODO: only do this once the agent has a better rule (aka ensure each track has all type of stations)
+                # for line in game_state.lines:
+                #     commend = {
+                #         "command":"take_action",
+                #         "game_id":0,
+                #         "arguments":{
+                #             "action":"remove_track",
+                #             "line_index":line.id
+                #         }
+                #     }
+                #     res = send_and_recieve(self.ws, json.dumps(commend))
+
                 for line_index, station_list in enumerate(self.planned_paths):
                     for insert_index, station in enumerate(station_list):
-                        # TODO: 'remove_station' or 'remove_track' in case an existing path is modified
                         insert_station(self.ws, line_index, station.id, insert_index)
 
 # class BruteForceAgent(Agent):
@@ -359,7 +371,7 @@ class BruteForceAgent(Agent):
             available = set(self.all_stations) - station_list
             if available:
                 num_to_add = random.randint(0, len(available) // 2)
-                additional = random.sample(available, num_to_add)
+                additional = random.sample(list(available), num_to_add)
                 station_list.update(additional)
         
         # Convert sets back to ordered lists
