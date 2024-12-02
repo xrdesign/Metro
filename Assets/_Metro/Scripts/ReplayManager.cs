@@ -5,14 +5,16 @@ using System.Collections.Generic;
 
 public class ReplayManager : MonoBehaviour
 {
-  const int VERSION = 0;
+  const int VERSION = 1;
+
   [SerializeField]
   MetroManager metroManager;
 
   [SerializeField]
-  float _timePerTick = .05f;
+  float _timePerTick = .02f; // Time.fixedDeltaTime;
+  int currTick = 0;
   float currTime;
-  float nextEventTimeStamp;
+  int nextEventTick;
   JSONObject nextEvent;
 
   [SerializeField]
@@ -64,18 +66,36 @@ public class ReplayManager : MonoBehaviour
   [SerializeField]
   string fixationOutputFile;
 
-  public IEnumerator GetFixationGameStates(string filename)
-  {
+  [Header("Replay - Game State Recording")]
+  [SerializeField]
+  bool shouldRecordGameStates = false;
 
+  [Header("\tEvents To Record Game States")]
+  [SerializeField]
+  bool onFixation;
+  [SerializeField]
+  List<string> onEventTypes;
+
+  /*
+  public IEnumerator GetGameStates(string filename)
+  {
     Reset();
-    yield return new WaitForEndOfFrame();
-    string inputPath = Path.Join(dataFolder, fixationInputFile);
-    if (!File.Exists(inputPath))
+
+    // Open fixation data if needed:
+    StreamReader fixationReader = null;
+    if (onFixation)
     {
-      Debug.LogError("input file doesn't exists");
-      yield return null;
+      yield return new WaitForEndOfFrame();
+      string inputPath = Path.Join(dataFolder, fixationInputFile);
+      if (!File.Exists(inputPath))
+      {
+        Debug.LogError("input file doesn't exists");
+        yield return null;
+      }
+      fixationReader = new StreamReader(inputPath);
     }
-    StreamReader fixationReader = new StreamReader(inputPath);
+
+    // Open output file:
     string filepath = Path.Join(dataFolder, filename);
     if (Directory.Exists(filepath))
     {
@@ -84,31 +104,88 @@ public class ReplayManager : MonoBehaviour
     }
     StreamWriter sw = new StreamWriter(filepath);
 
-    string line = "";
-    bool isFixation = false;
     Queue<JSONObject> fixations = new Queue<JSONObject>();
-    while ((line = fixationReader.ReadLine()) != null)
+    if (onFixation)
     {
-      JSONObject obj = new JSONObject(line);
-      if (obj == null)
+      string line = "";
+      bool isFixation = false;
+      while ((line = fixationReader.ReadLine()) != null)
       {
-        Debug.LogError("NULL JSON Object");
-        continue;
+        JSONObject obj = new JSONObject(line);
+        if (obj == null)
+        {
+          Debug.LogError("NULL JSON Object");
+          continue;
+        }
+        bool currentFixation = obj["FIXATION_IDX"].b;
+        if (isFixation && !currentFixation)
+        {
+          isFixation = false;
+        }
+        else if (!isFixation && currentFixation)
+        {
+          isFixation = true;
+          fixations.Enqueue(obj);
+        }
       }
-      bool currentFixation = obj["FIXATION_IDX"].b;
-      if (isFixation && !currentFixation)
+      fixationReader.Close();
+    }
+
+    JSONObject nextFixation = null;
+    float nextFixationTimeStamp = -1;
+    while (nextEventTick >= 0 ||
+           (currTime < nextFixationTimeStamp &&
+            nextFixationTimeStamp != Mathf.Infinity))
+    {
+      if (currTime >= nextFixationTimeStamp)
       {
-        isFixation = false;
+        if (nextFixation != null)
+        {
+          // Log Fixation:
+          //@TODO
+        }
+        if (fixations.Count > 0)
+        {
+          nextFixation = fixations.Dequeue();
+          nextFixationTimeStamp = nextFixation["TIME"].f;
+        }
       }
-      else if (!isFixation && currentFixation)
+
+      if (currTime + _timePerTick >= nextEventTimeStamp)
       {
-        isFixation = true;
-        fixations.Enqueue(obj);
+        if (IsDesiredEvent())
+        {
+          JSONObject eventTriggered = new JSONObject();
+          eventTriggered.AddField("event", nextEvent);
+
+          var gamesBefore = new JSONObject(JSONObject.Type.ARRAY);
+          uint numGames = MetroManager.GetNumGames();
+          for (uint i = 0; i < numGames; i++)
+          {
+            gamesBefore.Add(MetroManager.SerializeGame(i));
+          }
+          eventTriggered.AddField("games_before", gamesBefore);
+
+          SimulateTick(_timePerTick);
+
+          var gamesAfter = new JSONObject(JSONObject.Type.ARRAY);
+          for (uint i = 0; i < numGames; i++)
+          {
+            gamesAfter.Add(MetroManager.SerializeGame(i));
+          }
+          eventTriggered.AddField("games_after", gamesAfter);
+        }
+        else
+        {
+          SimulateTick(_timePerTick);
+        }
+      }
+      else
+      {
+        SimulateTick(_timePerTick);
       }
     }
-    fixationReader.Close();
 
-    Queue<JSONObject> outQueue = new Queue<JSONObject>();
     foreach (var fixation in fixations)
     {
       float time = fixation["TIME"].f;
@@ -162,6 +239,20 @@ public class ReplayManager : MonoBehaviour
     sw.Flush();
     sw.Close();
   }
+
+  private bool IsDesiredEvent()
+  {
+    string type = nextEvent["TYPE"].str;
+    foreach (string t in onEventTypes)
+    {
+      if (t == type)
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+  */
 
   /* Built-Ins / LifeCycle */
   void Awake()
@@ -225,15 +316,22 @@ public class ReplayManager : MonoBehaviour
 
   void Start() { Reset(); }
 
+  void FixedUpdate()
+  {
+    if (playing)
+    {
+      SimulateTick(Time.fixedDeltaTime);
+    }
+  }
   void Update()
   {
     if (playing)
     {
-      SimulateTick(Time.deltaTime);
+
     }
     else if (shouldExecuteTick)
     {
-      SimulateTick(_timePerTick);
+      SimulateTick(Time.fixedDeltaTime);
       shouldExecuteTick = false;
     }
     //@TODO remove
@@ -247,11 +345,13 @@ public class ReplayManager : MonoBehaviour
       shouldCreateGazePointCSV = false;
       StartCoroutine(CreateGazePointCSV(eyetrackingOutputFile));
     }
+    /*
     else if (getFixationGameStates)
     {
       getFixationGameStates = false;
       StartCoroutine(GetFixationGameStates(fixationOutputFile));
     }
+    */
   }
 
   /* Interface */
@@ -265,16 +365,20 @@ public class ReplayManager : MonoBehaviour
       loading = true;
       playing = false;
 
-      if (targetTime < currTime)
+      int targetTick =
+          (int)(targetTime /
+                Time.fixedDeltaTime); // Truncate time to nearest tick
+
+      if (targetTick < currTick)
       {
         Reset();
         yield return new WaitForEndOfFrame();
       }
-      if (targetTime < 0)
+      if (targetTick <= 0)
       {
         yield return null;
       }
-      while (currTime < targetTime && nextEventTimeStamp >= 0)
+      while (currTick < targetTick && nextEventTick >= 0)
       {
         SimulateTick(_timePerTick);
       }
@@ -290,19 +394,20 @@ public class ReplayManager : MonoBehaviour
           "[ReplayManager] Trying to simulate tick on unitialized replay");
       return;
     }
-    if (nextEventTimeStamp < 0)
+    if (nextEventTick < 0)
     {
       Debug.Log("[ReplayManager] Reached end of replay");
       Pause();
       return;
     }
 
-    currTime += dt;
-    while (currTime > nextEventTimeStamp)
+    currTick++;
+    currTime = currTick * Time.fixedDeltaTime;
+    while (currTick >= nextEventTick)
     {
       ExecuteNextEvent();
       GetNextEvent();
-      if (nextEventTimeStamp < 0)
+      if (nextEventTick < 0)
       {
         break;
       }
@@ -316,18 +421,18 @@ public class ReplayManager : MonoBehaviour
     if (useEyeTracking)
     {
       // Place head and gaze markers
-      while (currTime > nextPositionTimeStamp)
+      while (currTick > nextPositionTick)
       {
         PlaceMarkers();
         GetNextMarker();
-        if (nextPositionTimeStamp < 0)
+        if (nextPositionTick < 0)
         {
           break;
         }
       }
     }
   }
-  float nextPositionTimeStamp = 0;
+  int nextPositionTick = 0;
   JSONObject nextPositionObject;
   void PlaceMarkers()
   {
@@ -406,11 +511,9 @@ public class ReplayManager : MonoBehaviour
 
     Reset();
     yield return new WaitForEndOfFrame();
-    float time = 0;
-    while (nextPositionTimeStamp >= 0)
+    while (nextPositionTick >= 0)
     {
-      time += _timePerTick;
-      SimulateTick(_timePerTick);
+      SimulateTick(Time.fixedDeltaTime);
       if (gazeMarker != null)
       {
         Vector3 screenPoint =
@@ -418,7 +521,7 @@ public class ReplayManager : MonoBehaviour
         Vector2 normalizedScreenPoint = new Vector2(
             screenPoint.x / Screen.width, screenPoint.y / Screen.height);
         sw.WriteLine(
-            $"{time}, {normalizedScreenPoint.x}, {normalizedScreenPoint.y}");
+            $"{currTick * Time.fixedDeltaTime}, {normalizedScreenPoint.x}, {normalizedScreenPoint.y}");
       }
       // Wait for camera position to update
       yield return new WaitForEndOfFrame();
@@ -440,7 +543,7 @@ public class ReplayManager : MonoBehaviour
     if (l == "")
     {
       Debug.Log("TEST! EOF");
-      nextPositionTimeStamp = -1;
+      nextPositionTick = -1;
       nextPositionObject = null;
       return;
     }
@@ -451,10 +554,10 @@ public class ReplayManager : MonoBehaviour
       Debug.Log("TEST! NO TIME");
       Debug.Log(l);
       nextPositionObject = null;
-      nextPositionTimeStamp = -1;
+      nextPositionTick = -1;
       return;
     }
-    nextPositionTimeStamp = nextPositionObject["TIME"].f;
+    nextPositionTick = (int)nextPositionObject["TICK"].i;
   }
 
   /* Helpers */
@@ -523,7 +626,7 @@ public class ReplayManager : MonoBehaviour
     Debug.Log("EXECUTING EVENT");
     if (nextEvent == null)
     {
-      nextEventTimeStamp = -1;
+      nextEventTick = -1;
       return;
     }
     int gameID = (int)nextEvent["GAME_ID"].i;
@@ -620,7 +723,7 @@ public class ReplayManager : MonoBehaviour
     // reached EOF
     if (l == "")
     {
-      nextEventTimeStamp = -1;
+      nextEventTick = -1;
       nextEvent = null;
       return;
     }
@@ -629,9 +732,9 @@ public class ReplayManager : MonoBehaviour
     if (!nextEvent.HasField("TIME"))
     {
       nextEvent = null;
-      nextEventTimeStamp = -1;
+      nextEventTick = -1;
       return;
     }
-    nextEventTimeStamp = nextEvent["TIME"].f;
+    nextEventTick = (int)nextEvent["TICK"].i;
   }
 }
