@@ -2090,8 +2090,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enabled: 1
-  subjectNumber: 0
-  sessionID: -1
+  subjectNumber: 222
+  sessionID: 0
 --- !u!4 &1200828281
 Transform:
   m_ObjectHideFlags: 0
@@ -2136,12 +2136,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63da03afa1f13c2449894934fe7aa5db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numGamesToSpawn: 4
+  numGamesToSpawn: 1
   daysPerNewTrain: 5
   daysPerNewLine: 15
   timeoutDurationOverride: 45
-  gameSeeds: 01000000
+  gameSeeds: 0b000000
   logRecorder: {fileID: 0}
+  currTick: 0
   games: []
   menuUI: {fileID: 0}
   metroUI: {fileID: 4500513732196729373}

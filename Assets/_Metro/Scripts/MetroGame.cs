@@ -35,6 +35,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   public float dt = 0f;
   public float gameEfficiency = 0;
 
+  public int tickCount = 0;
+
   public int passengersDelivered = 0;
   public float totalPassengerWaitTime = 0;
   public float totalPassengerTravelTime = 0;
@@ -324,16 +326,19 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       // End this Update step early
       return;
     }
+  }
 
+  void FixedUpdate()
+  {
     if (simGame)
       return;
-
-    ProcessTick(Time.deltaTime);
+    ProcessTick(Time.fixedDeltaTime);
   }
 
   public void ProcessTick(float dt)
   {
     this.dt = dt * gameSpeed;
+    tickCount++;
 
     // Update Passenger's route
     // Only update if tracks updated...
@@ -359,6 +364,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
 
   void ResetGameState()
   {
+    tickCount = 0;
     Debug.Log("Resetting game state for " + gameObject.name);
     foreach (var s in stations)
     {

@@ -45,6 +45,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
   #region Logging
 
   public LogRecorder logRecorder;
+  public int currTick = 0;
 
   // OLD LOGGING:
   // private float _logTimer;
