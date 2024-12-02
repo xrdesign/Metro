@@ -5,6 +5,7 @@ using UnityEngine.XR;
 using UnityEngine.UI;
 using System.IO;
 using System;
+using LSL;
 
 public class ScreenPositionRecorder : MonoBehaviour
 {
@@ -29,8 +30,18 @@ public class ScreenPositionRecorder : MonoBehaviour
   float time = 0;
   string filename;
 
+  private liblsl.StreamOutlet markerStream;
+
   void Start()
   {
+#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#else
+    liblsl.StreamInfo inf =
+        new liblsl.StreamInfo("ScreenPositionEyeTracking", "Markers", 1, 0,
+                              liblsl.channel_format_t.cf_string);
+    markerStream = new liblsl.StreamOutlet(inf);
+#endif
+
     startImage.enabled = true;
     output = new StreamWriter(
         Path.Join(LogRecorder.logDir, "EyetrackingScreenPosition.csv"));
@@ -49,7 +60,7 @@ public class ScreenPositionRecorder : MonoBehaviour
     }
     if (running)
     {
-      time += Time.deltaTime;
+      time = MetroManager.GetSelectedGame().time;
       var s = target.position;
 
       Matrix4x4 lpm =
@@ -71,6 +82,12 @@ public class ScreenPositionRecorder : MonoBehaviour
       rPos += Vector2.one * .5f;
       output.WriteLine(
           $"{lPos.x},{lPos.y},{EyeTracking.leftPupilDiamter},{rPos.x},{rPos.y},{EyeTracking.rightPupilDiameter},{time}");
+#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#else
+      markerStream.push_sample(new string[] {
+        $"{lPos.x},{lPos.y},{EyeTracking.leftPupilDiamter},{rPos.x},{rPos.y},{EyeTracking.rightPupilDiameter},{time}"
+      });
+#endif
     }
   }
 }

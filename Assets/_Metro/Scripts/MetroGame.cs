@@ -339,6 +339,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   {
     this.dt = dt * gameSpeed;
     tickCount++;
+    this.time = tickCount * Time.fixedDeltaTime;
 
     // Update Passenger's route
     // Only update if tracks updated...
