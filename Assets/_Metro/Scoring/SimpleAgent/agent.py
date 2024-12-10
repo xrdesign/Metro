@@ -363,15 +363,14 @@ def check_whether_loop(station, station_list=[]):
 
 class RandomMind(Agent):
     def get_paths(self):
-        # Initialize paths
-        planned_paths = [[] for _ in range(self.num_paths)]
+        planned_paths = [set() for _ in range(self.num_paths)]
 
-        # Assign each station to at least one path randomly
+        # Initial assignment with duplicate checking
         for station in self.all_stations:
             selected_path_id = random.randint(0, self.num_paths - 1)
-            planned_paths[selected_path_id].append(station)
+            planned_paths[selected_path_id].add(station)
 
-        # Ensure all lines connect to at least two different stations
+        # Ensure minimum stations with duplicate checking
         for station_list in planned_paths:
             if len(station_list) < 1:
                 station_id = random.randint(0, len(self.all_stations) - 1)
