@@ -42,6 +42,29 @@ def insert_station(ws, line, station, insert, game_id = 0):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
+def remove_station(ws, line, station):
+    command =  {
+        "command":"take_action",
+        "game_id":0,
+        "arguments":{
+            "action":"remove_station",
+            "line_index":line,
+            "station_index":station
+        }
+    }
+    res = send_and_recieve(ws, json.dumps(command))
+
+def remove_track(ws, line):
+    command =  {
+        "command":"take_action",
+        "game_id":0,
+        "arguments":{
+            "action":"remove_track",
+            "line_index":line
+        }
+    }
+    res = send_and_recieve(ws, json.dumps(command))
+
 def connect_unconnect_stations(ws, game):
     stations = game.stations
     if len(stations) == 3:
@@ -216,6 +239,7 @@ class Agent:
         self.planned_paths = []  # List to store planned paths
         self.cost = float('inf')
         self.init = False
+        self.times = 0
         self.game_id = game_id
 
     def initialize_records(self, game_state):
@@ -301,94 +325,86 @@ class Agent:
         # Step 3: If the cost is lower than the current self.cost, update planned_paths and self.cost
         if new_cost < self.cost:
             print(f"Found a better path with a lower cost: {new_cost} (previous cost: {self.cost})!")
+            previous_paths = self.planned_paths
             self.planned_paths = new_paths
             self.cost = new_cost
             # Send the planned paths to the game using WebSocket
             if update_to_game:
-                # # remove all tracks in the game
-                # TODO: only do this once the agent has a better rule (aka ensure each track has all type of stations)
-                # for line in game_state.lines:
-                #     commend = {
-                #         "command":"take_action",
-                #         "game_id":0,
-                #         "arguments":{
-                #             "action":"remove_track",
-                #             "line_index":line.id
-                #         }
-                #     }
-                #     res = send_and_recieve(self.ws, json.dumps(commend))
+                for line_index, station_list in enumerate(previous_paths):
+                    remove_track(self.ws, line_index)
 
+                print("Insert: ")
                 for line_index, station_list in enumerate(self.planned_paths):
+                    # remove_track(self.ws, line_index)
+                    print(f"line_index: {line_index}")
                     for insert_index, station in enumerate(station_list):
-                        insert_station(self.ws, line_index, station.id, insert_index, self.game_id)
+                        print(f"{station.id} ", end=" ")
+                        insert_station(self.ws, line_index, station.id, insert_index)
+                    print("\n")
 
-# class BruteForceAgent(Agent):
-#     def get_paths(self):
-#         # Initialize paths
-#         planned_paths = [[] for _ in range(self.num_paths)]
 
-#         # Assign each station to at least one path randomly
-#         for station in self.all_stations:
-#             selected_path_id = random.randint(0, self.num_paths - 1)
-#             planned_paths[selected_path_id].append(station)
+def check_whether_not_crossed(station, station_list):
+    assert station_list is not None
+    # print("checking============================")
+    whether_not_crossed = True
+    if len(station_list)<=1:
+        return whether_not_crossed
+    for other_station in station_list:
+        # print("??????????????????????")
+        # print(f"other_station: {other_station.id}\nstation: {station.id}")
+        if other_station.id == station.id:
+            whether_not_crossed = False
+    return whether_not_crossed
 
-#         # Ensure all lines connect to at least two different stations
-#         for station_list in planned_paths:
-#             if len(station_list) < 1:
-#                 station_id = random.randint(0, len(self.all_stations) - 1)
-#                 station_list.append(self.all_stations[station_id])
-#             if len(station_list) < 2:
-#                 station_id = random.randint(0, len(self.all_stations) - 1)
-#                 while self.all_stations[station_id] == station_list[0]:
-#                     station_id = random.randint(0, len(self.all_stations) - 1)
-#                 station_list.append(self.all_stations[station_id])
-
-#         # Optionally, each path can randomly include additional stations
-#         for station_list_id in range(len(planned_paths)):
-#             station_list = planned_paths[station_list_id]
-#             additional_stations = random.sample(self.all_stations, random.randint(0, len(self.all_stations) // 2))
-#             for station in additional_stations:
-#                 station_list.append(station)
-#             # Order the List
-#             planned_paths[station_list_id] = self.order_stations(station_list)
-
-#         return planned_paths
-    
+def check_whether_loop(station, station_list=[]):
+    if station_list is None:
+        station_list = self.path_being_created.stations
+    assert station_list is not None
+    assert len(station_list)>1
+    if station_list[0] == station:
+        return True
+    else:
+        return False
 
 class StochasticGreedyAgent(Agent):
-    def __init__(self, ws, game_id):
-        super().__init__(ws, game_id)
-
     def get_paths(self):
         # if num_paths is empty, then return empty list
         if self.num_paths == 0:
             return []
         planned_paths = [set() for _ in range(self.num_paths)]
-        
+
         # Initial assignment with duplicate checking
         for station in self.all_stations:
             selected_path_id = random.randint(0, self.num_paths - 1)
             planned_paths[selected_path_id].add(station)
-        
+
         # Ensure minimum stations with duplicate checking
         for station_list in planned_paths:
-            while len(station_list) < 2:
-                available = set(self.all_stations) - station_list
-                if available:
-                    station_list.add(random.choice(list(available)))
-        
-        # Add additional stations without duplicates
-        for station_list in planned_paths:
-            available = set(self.all_stations) - station_list
-            if available:
-                num_to_add = random.randint(0, len(available) // 2)
-                additional = random.sample(list(available), num_to_add)
-                station_list.update(additional)
-        
-        # Convert sets back to ordered lists
-        ordered_paths = [self.order_stations(list(station_list)) for station_list in planned_paths]
-        
-        return ordered_paths
+            if len(station_list) < 1:
+                station_id = random.randint(0, len(self.all_stations) - 1)
+                station_list.append(self.all_stations[station_id])
+            if len(station_list) < 2:
+                station_id = random.randint(0, len(self.all_stations) - 1)
+                while self.all_stations[station_id] == station_list[0]:
+                    station_id = random.randint(0, len(self.all_stations) - 1)
+                station_list.append(self.all_stations[station_id])
+
+        # Optionally, each path can randomly include additional stations
+        for station_list_id in range(len(planned_paths)):
+            station_list = planned_paths[station_list_id]
+            additional_stations = random.sample(self.all_stations, random.randint(0, len(self.all_stations) // 2))
+            whether_loop = False
+            for station in additional_stations:
+                if station == station_list[0]:
+                    whether_loop = True
+                if check_whether_not_crossed(station, station_list):
+                    station_list.append(station)
+            # Order the List
+            planned_paths[station_list_id] = self.order_stations(station_list)
+            # if whether_loop:
+            #     planned_paths[station_list_id].append(planned_paths[station_list_id][0])
+
+        return planned_paths
 
 if __name__ == "__main__":
     # ws = websocket.create_connection('ws://192.168.1.18:3000/metro')
@@ -433,7 +449,7 @@ if __name__ == "__main__":
             'command': 'get_state',
             'game_id': game_id
         }
-    
+
     for i in range(game_count): # two games for now
         agent = StochasticGreedyAgent(ws, i)
         agents.append(agent)
