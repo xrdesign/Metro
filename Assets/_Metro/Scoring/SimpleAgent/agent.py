@@ -38,6 +38,29 @@ def insert_station(ws, line, station, insert):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
+def remove_station(ws, line, station):
+    command =  {
+        "command":"take_action",
+        "game_id":0,
+        "arguments":{
+            "action":"remove_station",
+            "line_index":line,
+            "station_index":station
+        }
+    }
+    res = send_and_recieve(ws, json.dumps(command))
+
+def remove_track(ws, line):
+    command =  {
+        "command":"take_action",
+        "game_id":0,
+        "arguments":{
+            "action":"remove_track",
+            "line_index":line
+        }
+    }
+    res = send_and_recieve(ws, json.dumps(command))
+
 def connect_unconnect_stations(ws, game):
     stations = game.stations
     if len(stations) == 3:
@@ -212,6 +235,7 @@ class Agent:
         self.planned_paths = []  # List to store planned paths
         self.cost = float('inf')
         self.init = False
+        self.times = 0
 
     def initialize_records(self, game_state):
         # Initialize paths based on the game state
@@ -296,15 +320,48 @@ class Agent:
         # Step 3: If the cost is lower than the current self.cost, update planned_paths and self.cost
         if new_cost < self.cost:
             print(f"Found a better path with a lower cost: {new_cost} (previous cost: {self.cost})!")
+            previous_paths = self.planned_paths
             self.planned_paths = new_paths
             self.cost = new_cost
             # Send the planned paths to the game using WebSocket
             if update_to_game:
-                for line_index, station_list in enumerate(self.planned_paths):
-                    for insert_index, station in enumerate(station_list):
-                        insert_station(self.ws, line_index, station.id, insert_index)
+                for line_index, station_list in enumerate(previous_paths):
+                    remove_track(self.ws, line_index)
 
-class BruteForceAgent(Agent):
+                print("Insert: ")
+                for line_index, station_list in enumerate(self.planned_paths):
+                    # remove_track(self.ws, line_index)
+                    print(f"line_index: {line_index}")
+                    for insert_index, station in enumerate(station_list):
+                        print(f"{station.id} ", end=" ")
+                        insert_station(self.ws, line_index, station.id, insert_index)
+                    print("\n")
+
+
+def check_whether_not_crossed(station, station_list):
+    assert station_list is not None
+    # print("checking============================")
+    whether_not_crossed = True
+    if len(station_list)<=1:
+        return whether_not_crossed
+    for other_station in station_list:
+        # print("??????????????????????")
+        # print(f"other_station: {other_station.id}\nstation: {station.id}")
+        if other_station.id == station.id:
+            whether_not_crossed = False
+    return whether_not_crossed
+
+def check_whether_loop(station, station_list=[]):
+    if station_list is None:
+        station_list = self.path_being_created.stations
+    assert station_list is not None
+    assert len(station_list)>1
+    if station_list[0] == station:
+        return True
+    else:
+        return False
+
+class RandomMind(Agent):
     def get_paths(self):
         # Initialize paths
         planned_paths = [[] for _ in range(self.num_paths)]
@@ -329,10 +386,16 @@ class BruteForceAgent(Agent):
         for station_list_id in range(len(planned_paths)):
             station_list = planned_paths[station_list_id]
             additional_stations = random.sample(self.all_stations, random.randint(0, len(self.all_stations) // 2))
+            whether_loop = False
             for station in additional_stations:
-                station_list.append(station)
+                if station == station_list[0]:
+                    whether_loop = True
+                if check_whether_not_crossed(station, station_list):
+                    station_list.append(station)
             # Order the List
             planned_paths[station_list_id] = self.order_stations(station_list)
+            # if whether_loop:
+            #     planned_paths[station_list_id].append(planned_paths[station_list_id][0])
 
         return planned_paths
 
@@ -361,7 +424,7 @@ if __name__ == "__main__":
     #     sleep(1)
 
     ws = websocket.create_connection('ws://localhost:3000/metro')
-    agent = BruteForceAgent(ws)
+    agent = RandomMind(ws)
 
     numStations = 0
     getGamesCommand = {
@@ -370,6 +433,7 @@ if __name__ == "__main__":
     }
 
     while True:
+        # random.seed(10)
         # get next game state:
         gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand))
         try:
