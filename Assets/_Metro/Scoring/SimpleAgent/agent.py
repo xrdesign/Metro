@@ -76,8 +76,13 @@ class CostHandler:
 
     @staticmethod
     def dijkstra_routes_cost(all_stations, planned_paths):
-        dij_path_finder = DijkstraPathFinder(stations=all_stations, planned_paths=planned_paths)
-        return dij_path_finder.find_all_routes(print_data=False)
+        path_finder = DijkstraPathFinder(stations=all_stations, planned_paths=planned_paths)
+        return path_finder.find_all_routes(print_data=False)
+
+    @staticmethod
+    def astar_routes_cost(all_stations, planned_paths):
+        path_finder = AStarPathFinder(stations=all_stations, planned_paths=planned_paths)
+        return path_finder.find_all_routes(print_data=False)
 
 
 
