@@ -318,7 +318,7 @@ if __name__ == "__main__":
     for i in range(game_count): # two games for now
         agent = StochasticGreedyAgent(ws, i)
         agents.append(agent)
-
+    cnt = 0
     while True:
         for i in range(game_count):
             gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand(i)))
@@ -337,6 +337,12 @@ if __name__ == "__main__":
                     update_to_game=True
                 )
         sleep(0.2)
+        cnt += 1
+        if cnt % 10 == 1:
+            print("score: ", game.score)
+            print("time: ", game.time)
+    print("score: ", game.score)
+    print("time: ", game.time)
 
         # # get next game state:
         # gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand()))
