@@ -274,7 +274,6 @@ if __name__ == "__main__":
     }
     cnt = 0
     while True:
-        # random.seed(10)
         # get next game state:
         gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand))
         try:
@@ -290,11 +289,11 @@ if __name__ == "__main__":
                 game_state=game,
                 update_to_game=True
             )
+        sleep(1)
+        cnt += 1
         if cnt % 10 == 1:
             print("score: ", game.score)
             print("time: ", game.time)
-        cnt += 1
-        sleep(1)
     print("score: ", game.score)
     print("time: ", game.time)
 
