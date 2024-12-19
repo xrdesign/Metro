@@ -19,16 +19,20 @@ def send_and_recieve(ws, message):
         try:
             data = ws.recv()
             return data
-        except:
-            print("recieve failed trying again")
+        except websocket.WebSocketException as e:
+            print(f"Receive failed: {e}, trying again")
             tries += 1
-            ws = websocket.create_connection('ws://localhost:3000/metro')
-            ws.send(message)
+            try:
+                ws = websocket.create_connection('ws://192.168.1.18:3000/metro')
+                ws.send(message)
+            except websocket.WebSocketException as e:
+                print(f"Connection failed: {e}")
+                tries += 1
 
-def insert_station(ws, line, station, insert):
+def insert_station(ws, line, station, insert, game_id = 0):
     command =  {
         "command":"take_action",
-        "game_id":0,
+        "game_id":game_id,
         "arguments":{
             "action":"insert_station",
             "line_index":line,
@@ -133,10 +137,10 @@ def connect_unconnect_stations(ws, game):
         connected_stations.add(station.id)
         continue
 
-def connect_along_segment(ws, station, segment):
+def connect_along_segment(ws, station, segment, game_id = 0):
     command =  {
         "command":"take_action",
-        "game_id":0,
+        "game_id": game_id,
         "arguments":{
             "action":"insert_station",
             "line_index":segment.l,
@@ -205,13 +209,14 @@ class CostHandler:
 
 # New Agent and BruteForceAgent classes for SpaceTransit
 class Agent:
-    def __init__(self, ws):
+    def __init__(self, ws, game_id = 0):
         self.ws = ws  # WebSocket instance to communicate with SpaceTransit
         self.num_paths = None  # Number of paths, initialized later
         self.all_stations = None  # All available stations, initialized later
         self.planned_paths = []  # List to store planned paths
         self.cost = float('inf')
         self.init = False
+        self.game_id = game_id
 
     def initialize_records(self, game_state):
         # Initialize paths based on the game state
@@ -315,7 +320,7 @@ class Agent:
 
                 for line_index, station_list in enumerate(self.planned_paths):
                     for insert_index, station in enumerate(station_list):
-                        insert_station(self.ws, line_index, station.id, insert_index)
+                        insert_station(self.ws, line_index, station.id, insert_index, self.game_id)
 
 # class BruteForceAgent(Agent):
 #     def get_paths(self):
@@ -350,8 +355,14 @@ class Agent:
 #         return planned_paths
     
 
-class BruteForceAgent(Agent):
+class StochasticGreedyAgent(Agent):
+    def __init__(self, ws, game_id):
+        super().__init__(ws, game_id)
+
     def get_paths(self):
+        # if num_paths is empty, then return empty list
+        if self.num_paths == 0:
+            return []
         planned_paths = [set() for _ in range(self.num_paths)]
         
         # Initial assignment with duplicate checking
@@ -380,7 +391,7 @@ class BruteForceAgent(Agent):
         return ordered_paths
 
 if __name__ == "__main__":
-    # ws = websocket.create_connection('ws://localhost:3000/metro')
+    # ws = websocket.create_connection('ws://192.168.1.18:3000/metro')
 
     # numStations = 0
     # getGamesCommand = {
@@ -403,30 +414,63 @@ if __name__ == "__main__":
     #         connect_unconnect_stations(ws, game)
     #     sleep(1)
 
-    ws = websocket.create_connection('ws://localhost:3000/metro')
-    agent = BruteForceAgent(ws)
+    game_count = 2
+
+    # ws = websocket.create_connection('ws://192.168.1.18:3000/metro')
+    # retry until connection is established, block call here
+    while True:
+        try:
+            ws = websocket.create_connection('ws://192.168.1.18:3000/metro')
+            break
+        except:
+            print("Failed to connect to websocket, retrying...")
+            sleep(0.5)
+    agents = []
 
     numStations = 0
-    getGamesCommand = {
-        'command': 'get_state',
-        'game_id': 0
-    }
+    def getGamesCommand(game_id = 0):
+        return {
+            'command': 'get_state',
+            'game_id': game_id
+        }
+    
+    for i in range(game_count): # two games for now
+        agent = StochasticGreedyAgent(ws, i)
+        agents.append(agent)
 
     while True:
-        # get next game state:
-        gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand))
-        try:
-            gameState = json.loads(gameStateRaw)
-        except:
-            print(gameStateRaw)
-            exit()
-        game = GameState(gameState)
-        stations = game.stations
-        if len(stations) > 0:
-            agent.get_better_paths(
-                cost_function=CostHandler.calculate_path_length,
-                game_state=game,
-                update_to_game=True
-            )
-        sleep(1)
+        for i in range(game_count):
+            gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand(i)))
+            try:
+                gameState = json.loads(gameStateRaw)
+            except:
+                print("Failed to parse game state:")
+                print(gameStateRaw)
+                continue
+            game = MetroWrapper.GameState(gameState)
+            stations = game.stations
+            if len(stations) > 0:
+                agents[i].get_better_paths(
+                    cost_function=CostHandler.calculate_path_length,
+                    game_state=game,
+                    update_to_game=True
+                )
+        sleep(0.2)
+
+        # # get next game state:
+        # gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand()))
+        # try:
+        #     gameState = json.loads(gameStateRaw)
+        # except:
+        #     print(gameStateRaw)
+        #     exit()
+        # game = GameState(gameState)
+        # stations = game.stations
+        # if len(stations) > 0:
+        #     agent.get_better_paths(
+        #         cost_function=CostHandler.calculate_path_length,
+        #         game_state=game,
+        #         update_to_game=True
+        #     )
+        # sleep(1)
 
