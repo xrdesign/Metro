@@ -27,11 +27,14 @@ public delegate void GameSelectionDelegateDef(bool selected);
 public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
 {
   private Random random;
+  private int seed = 0;
   public uint gameId;
 
   public float score = 0.0f;
   public float time = 0.0f;
   public float gameSpeed = 0.0f;
+
+  public float targetGameSpeed = 1.0f;
   public float dt = 0f;
   public float gameEfficiency = 0;
 
@@ -321,6 +324,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
 
     if (needReset)
     {
+      freeTrains = 3; // todo: need proper reset
       StartGame();
       needReset = false;
       // End this Update step early
@@ -386,6 +390,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     totalPassengerWaitTime = 0;
     totalPassengerTravelTime = 0;
     addedLines = 0;
+
+    // want to create a new Random with the same seed to ensure the same
+    // sequence of random numbers
+    random = new Random(this.seed);
   }
 
   void InitializeGameState()
@@ -404,7 +412,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     AddTransportLine();
 
     paused = false;
-    gameSpeed = 1.0f;
+    gameSpeed = targetGameSpeed;
     isGameover = false;
     // Debug.Log(lines[0]);
     // Debug.Log(stations[0]);
@@ -447,6 +455,8 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     MetroManager.SendEvent("Game Over: " + gameId + ", " +
                            SerializeGameState().ToString());
     isGameover = true;
+
+    MetroManager.Instance.OnGameover(gameId);
   }
 
   public void UpdateClock()
@@ -528,8 +538,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   public float GetRandomFloat() { return random.Next(0, 10000) / 10000f; }
   public void SetSeed(int seed)
   {
-    Debug.Log($"Setting seed: {seed}");
-    random = new Random(seed);
+    this.seed = seed;
+    Debug.Log($"Setting seed: {this.seed}");
+    random = new Random(this.seed);
   }
 
   public void SpawnPassengers()
@@ -1004,9 +1015,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   public JSONObject SerializeGameState()
   {
 
-    while (needReset)
-    {
-    }
+    // while (needReset)
+    // {
+    // }
 
     // JSONObject json = new JSONObject(JsonUtility.ToJson(Instance));
     JSONObject json = new JSONObject();
