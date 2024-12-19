@@ -74,9 +74,9 @@ public class Tracks : MonoBehaviour
 
       lengths.Add(Vector3.Distance(p0, p1));
 
-      Debug.Log("tracks length: " + this.lengths[i]);
+      // Debug.Log("tracks length: " + this.lengths[i]);
       this.totalLength += this.lengths[i];
-      Debug.Log("total tracks length update: " + this.totalLength);
+      // Debug.Log("total tracks length update: " + this.totalLength);
 
       gameInstance.totalTrackLength = this.totalLength;
     }
