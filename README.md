@@ -30,19 +30,7 @@ To install use the microsoft feature tool:
 #### Mac
 MRTK packages can be directly downloaded from [https://github.com/microsoft/MixedRealityToolkit-Unity/releases/](https://github.com/microsoft/MixedRealityToolkit-Unity/releases/)
 
-
-### Import Oculus Integration
-
-The project currently uses Oculus Integration SDK v40.0, to install download from:
-
-[https://developer.oculus.com/downloads/package/unity-integration/40.0](https://developer.oculus.com/downloads/package/unity-integration/40.0)
-
-Open the Unity editor, import the Oculus Integration package by clicking the menu item "Assets > Import Package > Custom Package.." navigate to the downloaded SDK file.
-
-
 ### Additional Steps
-
-- Run Oculus / MRTK integration: click menu item "Mixed Reality > Toolkit > Utilities > Oculus > Integrate Oculus Integration Unity Modules"
 
 - Upgrad MRTK shaders for Universal Render Pipeline: click menu item "Mixed Reality > Toolkit > Utilities > Upgrade MRTK Standard Shader for Universal Render Pipeline"
 
