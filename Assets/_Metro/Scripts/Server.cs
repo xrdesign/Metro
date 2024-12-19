@@ -12,7 +12,7 @@ public class Server : MonoBehaviour
   public void Start()
   {
     SetupLogs();
-    var wssv = new WebSocketServer("ws://localhost:3000");
+    var wssv = new WebSocketServer("ws://0.0.0.0:3000");
 
     wssv.AddWebSocketService<MetroService>("/metro");
     wssv.AddWebSocketService<MetroService>("/multiplayer");
@@ -22,7 +22,7 @@ public class Server : MonoBehaviour
     // wssv.WaitTime = System.Threading.Timeout.InfiniteTimeSpan;
 
     Debug.Log("[Server] WebSocket opened for MetroService at url " +
-              "ws://localhost:3000/metro");
+              "ws://0.0.0.0:3000/metro");
     // wssv.Stop ();
   }
 
