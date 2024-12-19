@@ -85,6 +85,22 @@ public class Station : MonoBehaviour,
     _stationText.text = stationName;
   }
 
+  void FixedUpdate()
+  {
+    // Update overcrowding status
+    if (passengers.Count > 6)
+    {
+      timer += gameInstance.dt;
+      Debug.Log("Overcrowded station: " + id);
+    }
+    else
+    {
+      timer -= gameInstance.dt;
+      if (timer < 0f)
+        timer = 0f;
+    }
+  }
+
   // Update is called once per frame
   void Update()
   {
@@ -123,18 +139,6 @@ public class Station : MonoBehaviour,
         seats[i + 1].sprite = Resources.Load<Sprite>("Images/star");
     }
 
-    // Update overcrowding status
-    if (passengers.Count > 6)
-    {
-      timer += gameInstance.dt;
-
-    }
-    else
-    {
-      timer -= gameInstance.dt;
-      if (timer < 0f)
-        timer = 0f;
-    }
     timerImage.enabled = true;
     timerImage.fillAmount = timer / MaxTimeoutDuration;
 
@@ -219,8 +223,8 @@ public class Station : MonoBehaviour,
       var route = result.Item1; //@TODO Verify if includes start station...
       if (route.Count != 0)
       {
-        Debug.Log("HERE");
-        Debug.Log("ROUTECOUNT: " + route.Count);
+        // Debug.Log("HERE");
+        // Debug.Log("ROUTECOUNT: " + route.Count);
         Station current = this;
         typeScore = 0;
         int lineID = -1;
@@ -230,7 +234,7 @@ public class Station : MonoBehaviour,
         {
           Station next = route[i];
           var neighbors = current.GetNeighbors();
-          Debug.Log("Neighbors n: " + neighbors.Count);
+          // Debug.Log("Neighbors n: " + neighbors.Count);
           foreach (var neighborPair in current.GetNeighbors())
           {
             if (neighborPair.Key != next)
@@ -239,12 +243,12 @@ public class Station : MonoBehaviour,
             }
             else
             {
-              Debug.Log("GOTHERE");
+              // Debug.Log("GOTHERE");
             }
             if (lineID == -1)
             {
               lineID = neighborPair.Value;
-              Debug.Log("LINEID: " + lineID);
+              // Debug.Log("LINEID: " + lineID);
             }
             else if (neighborPair.Value != lineID)
             {
