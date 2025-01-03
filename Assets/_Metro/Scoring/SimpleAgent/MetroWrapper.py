@@ -21,8 +21,6 @@ class GameState:
         #create stations:
         self.stations = []
         self.stationMappings = {}
-        self.score = gameJson['score']
-        self.time = gameJson['time']
         stationsData = gameJson['stations']
         for stationData in stationsData:
             station = Station(stationData)

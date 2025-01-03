@@ -394,7 +394,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.1981132, g: 0.1981132, b: 0.1981132, a: 1}
+  m_BackGroundColor: {r: 0.8396226, g: 0.8396226, b: 0.8396226, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -541,9 +541,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   metroManager: {fileID: 361273077}
   _timePerTick: 0.05
-  subjectID: -1
-  sessionID: -1
-  instanceIdx: -2
+  subjectID: 222
+  sessionID: 0
+  instanceIdx: 0
   shouldExecuteTick: 0
   playing: 0
   selectedTime: 0
@@ -558,6 +558,10 @@ MonoBehaviour:
   getFixationGameStates: 0
   fixationInputFile: data.replay
   fixationOutputFile: test.txt
+  shouldRecordGameStates: 0
+  onFixation: 0
+  onEventTypes:
+  - 
 --- !u!114 &361273077
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -576,6 +580,7 @@ MonoBehaviour:
   timeoutDurationOverride: 45
   gameSeeds: 
   logRecorder: {fileID: 0}
+  currTick: 0
   games: []
   menuUI: {fileID: 0}
   metroUI: {fileID: 1694931102}
