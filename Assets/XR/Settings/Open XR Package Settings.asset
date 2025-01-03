@@ -36,7 +36,7 @@ MonoBehaviour:
   nameUi: Mock Runtime
   version: 0.0.2
   featureIdInternal: com.unity.openxr.feature.mockruntime
-  openxrExtensionStrings: XR_UNITY_null_gfx XR_UNITY_android_present
+  openxrExtensionStrings: XR_UNITY_null_gfx
   company: Unity
   priority: 0
   required: 0
@@ -311,28 +311,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   features:
   - {fileID: 5721047661630208985}
-  - {fileID: 1993665297015178870}
   - {fileID: 2438410840714296801}
-  - {fileID: -1142675716945876272}
-  - {fileID: 5895378971041647941}
   - {fileID: 214425700060589247}
-  - {fileID: -3234793727133619678}
-  - {fileID: 8803628751201358404}
-  - {fileID: -996973275693246124}
   - {fileID: -1923302192400635073}
-  - {fileID: -8489601006708970387}
   - {fileID: -2897327141736662568}
   - {fileID: 8832672348502243010}
-  - {fileID: -5463657565603919133}
+  - {fileID: 6148147906630536920}
   - {fileID: -7452671674391756271}
-  - {fileID: 5796090293816757812}
   m_renderMode: 1
-  m_autoColorSubmissionMode: 1
-  m_colorSubmissionModes:
-    m_List: 00000000
   m_depthSubmissionMode: 0
-  m_optimizeBufferDiscards: 1
-  m_symmetricProjection: 0
 --- !u!114 &-3711990851145062433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -455,8 +442,6 @@ MonoBehaviour:
   company: Unity
   priority: 0
   required: 0
-  targetQuest: 1
-  targetQuest2: 1
 --- !u!114 &-2867694959572882273
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1382,30 +1367,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   features:
   - {fileID: 8015013877376309293}
-  - {fileID: -6446588101732406270}
   - {fileID: 3771125338942948545}
-  - {fileID: 1289896942512326602}
-  - {fileID: -3108686960371191931}
-  - {fileID: -4718750077894065024}
   - {fileID: 4195464098342847896}
   - {fileID: -1745759938121047907}
-  - {fileID: 4349138679444577359}
-  - {fileID: -1485692583621592650}
   - {fileID: -5649669450862051786}
   - {fileID: -1087188936993546340}
   - {fileID: -8647786514308130770}
   - {fileID: 652590783216617731}
-  - {fileID: -3711990851145062433}
+  - {fileID: 8680053635040586564}
   - {fileID: -3014103557172192820}
   - {fileID: -8029940560599859431}
-  - {fileID: -2657483389779799061}
   m_renderMode: 1
-  m_autoColorSubmissionMode: 1
-  m_colorSubmissionModes:
-    m_List: 00000000
   m_depthSubmissionMode: 0
-  m_optimizeBufferDiscards: 0
-  m_symmetricProjection: 0
 --- !u!114 &6063297076414599192
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1418,15 +1391,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5a1f07dc5afe854f9f12a4194aca3fb, type: 3}
   m_Name: iPhone
   m_EditorClassIdentifier: 
-  features:
-  - {fileID: 8430974140325053053}
+  features: []
   m_renderMode: 1
-  m_autoColorSubmissionMode: 1
-  m_colorSubmissionModes:
-    m_List: 00000000
   m_depthSubmissionMode: 0
-  m_optimizeBufferDiscards: 0
-  m_symmetricProjection: 0
 --- !u!114 &6106555049988018601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1445,6 +1412,37 @@ MonoBehaviour:
   featureIdInternal: com.unity.openxr.feature.input.hpreverb
   openxrExtensionStrings: XR_EXT_hp_mixed_reality_controller
   company: Unity
+  priority: 0
+  required: 0
+--- !u!114 &6148147906630536920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1927c045052a06d49a9b21fdcaa26db6, type: 3}
+  m_Name: OculusXRFeature Android
+  m_EditorClassIdentifier: 
+  m_enabled: 1
+  nameUi: OculusXR Feature
+  version: 0.0.1
+  featureIdInternal: com.oculus.openxr.feature.oculusxr
+  openxrExtensionStrings: 'XR_KHR_vulkan_enable XR_KHR_D3D11_enable XR_OCULUS_common_reference_spaces
+    XR_FB_display_refresh_rate XR_EXT_performance_settings XR_FB_composition_layer_image_layout
+    XR_KHR_android_surface_swapchain XR_FB_android_surface_swapchain_create XR_KHR_composition_layer_color_scale_bias
+    XR_FB_color_space XR_EXT_hand_tracking XR_FB_swapchain_update_state XR_FB_swapchain_update_state_opengl_es
+    XR_FB_swapchain_update_state_vulkan XR_FB_foveation XR_FB_foveation_configuration
+    XR_FB_foveation_vulkan XR_FB_composition_layer_alpha_blend XR_KHR_composition_layer_depth
+    XR_KHR_composition_layer_cylinder XR_KHR_composition_layer_cube XR_KHR_composition_layer_equirect2
+    XR_KHR_convert_timespec_time XR_KHR_visibility_mask XR_FB_render_model XR_FB_spatial_entity
+    XR_FB_spatial_entity_query XR_FB_spatial_entity_storage XR_FB_keyboard_tracking
+    XR_FB_passthrough XR_FB_triangle_mesh XR_FB_passthrough_keyboard_hands XR_OCULUS_audio_device_guid
+    XR_FB_common_events XR_FB_space_warp XR_FB_hand_tracking_capsules XR_FB_hand_tracking_mesh
+    XR_FB_hand_tracking_aim '
+  company: Oculus
   priority: 0
   required: 0
 --- !u!114 &6319164976308845367
@@ -1493,29 +1491,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   features:
   - {fileID: -2867694959572882273}
-  - {fileID: -1680638848974892369}
   - {fileID: -4641154656255689294}
-  - {fileID: -2376530852330170935}
-  - {fileID: -8369950397364653332}
-  - {fileID: 6106555049988018601}
   - {fileID: -2322406305535200227}
   - {fileID: 7586265866560678850}
-  - {fileID: -676278225901509303}
-  - {fileID: -8971022105913042646}
   - {fileID: -4212939879817157431}
   - {fileID: -2675581916692680291}
   - {fileID: 3052619204951731772}
-  - {fileID: -134492036120657508}
   - {fileID: 7398642843719706230}
   - {fileID: 5831775163015815789}
-  - {fileID: 4971582191235134160}
   m_renderMode: 1
-  m_autoColorSubmissionMode: 1
-  m_colorSubmissionModes:
-    m_List: 00000000
   m_depthSubmissionMode: 0
-  m_optimizeBufferDiscards: 0
-  m_symmetricProjection: 0
 --- !u!114 &7398642843719706230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1627,6 +1612,37 @@ MonoBehaviour:
   featureIdInternal: com.unity.openxr.feature.extension.performance_settings
   openxrExtensionStrings: XR_EXT_performance_settings
   company: Unity
+  priority: 0
+  required: 0
+--- !u!114 &8680053635040586564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1927c045052a06d49a9b21fdcaa26db6, type: 3}
+  m_Name: OculusXRFeature Standalone
+  m_EditorClassIdentifier: 
+  m_enabled: 1
+  nameUi: OculusXR Feature
+  version: 0.0.1
+  featureIdInternal: com.oculus.openxr.feature.oculusxr
+  openxrExtensionStrings: 'XR_KHR_vulkan_enable XR_KHR_D3D11_enable XR_OCULUS_common_reference_spaces
+    XR_FB_display_refresh_rate XR_EXT_performance_settings XR_FB_composition_layer_image_layout
+    XR_KHR_android_surface_swapchain XR_FB_android_surface_swapchain_create XR_KHR_composition_layer_color_scale_bias
+    XR_FB_color_space XR_EXT_hand_tracking XR_FB_swapchain_update_state XR_FB_swapchain_update_state_opengl_es
+    XR_FB_swapchain_update_state_vulkan XR_FB_foveation XR_FB_foveation_configuration
+    XR_FB_foveation_vulkan XR_FB_composition_layer_alpha_blend XR_KHR_composition_layer_depth
+    XR_KHR_composition_layer_cylinder XR_KHR_composition_layer_cube XR_KHR_composition_layer_equirect2
+    XR_KHR_convert_timespec_time XR_KHR_visibility_mask XR_FB_render_model XR_FB_spatial_entity
+    XR_FB_spatial_entity_query XR_FB_spatial_entity_storage XR_FB_keyboard_tracking
+    XR_FB_passthrough XR_FB_triangle_mesh XR_FB_passthrough_keyboard_hands XR_OCULUS_audio_device_guid
+    XR_FB_common_events XR_FB_space_warp XR_FB_hand_tracking_capsules XR_FB_hand_tracking_mesh
+    XR_FB_hand_tracking_aim '
+  company: Oculus
   priority: 0
   required: 0
 --- !u!114 &8803628751201358404
