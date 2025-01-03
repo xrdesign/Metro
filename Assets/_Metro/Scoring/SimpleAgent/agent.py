@@ -1,16 +1,11 @@
-import sys
-import math
 import websocket
-import importlib
 import json
-from nltk import edit_distance
 from time import sleep
-from pprint import pprint
-from functools import partial
-import copy, random
-from typing import Tuple, List
+import random
+from typing import List
 from MetroWrapper import GameState
 import MetroWrapper
+from path_finder_utils import GeometryUtils, AStarPathFinder, DijkstraPathFinder
 
 def send_and_recieve(ws, message):
     tries = 0
@@ -42,169 +37,50 @@ def insert_station(ws, line, station, insert, game_id = 0):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
-def connect_unconnect_stations(ws, game):
-    stations = game.stations
-    if len(stations) == 3:
-        # Initial Condition
-        insert_station(ws, 0, 0, 0)
-        insert_station(ws, 0, 1, 1)
-
-        insert_station(ws, 1, 1, 0)
-        insert_station(ws, 1, 2, 1)
-
-        insert_station(ws, 2, 2, 0)
-        insert_station(ws, 2, 0, 1)
-
-        return
-
-    print("GameState Before:")
-    print(game.Evaluate())
-    new_station = stations[-1]
-
-    lowestCost = 1000000000000
-    bestInsert = (0,0,0)
-    bestGame = None
-    game.Print()
-    for line in game.lines:
-        if(len(line.segments) <= 0):
-            continue
-        for insert_index in range(len(line.segments) + 1):
-            gameCopy = copy.deepcopy(game)
-            gameCopy.InsertStation(new_station.id, line.id, insert_index)
-            gameCopy.UpdateSegments();
-            gameCopy.UpdateNeighbors();
-            score = 0
-            for newline in gameCopy.lines:
-                score += newline.totalLength
-            if(score <= lowestCost):
-                lowestCost = score
-                bestInsert = (line.id, new_station.id, insert_index)
-                print("new lowest cost: ")
-                print(lowestCost)
-                print(bestInsert)
-                bestGame = copy.deepcopy(gameCopy)
-    print(lowestCost)
+def remove_station(ws, line, station):
     command =  {
         "command":"take_action",
         "game_id":0,
         "arguments":{
-            "action":"insert_station",
-            "line_index":bestInsert[0],
-            "station_index":bestInsert[1],
-            "insert_index":bestInsert[2]
+            "action":"remove_station",
+            "line_index":line,
+            "station_index":station
         }
     }
-
     res = send_and_recieve(ws, json.dumps(command))
 
-
-    # Evaluate:
-    sleep(1)
-    getGamesCommand = {
-        'command': 'get_state',
-        'game_id': 0
-    }
-    gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand))
-    gameState = json.loads(gameStateRaw)
-    updatedGame = MetroWrapper.GameState(gameState)
-
-    print("Expected GameState:")
-    print(bestGame.Evaluate())
-    print("Score after action: ")
-    print(updatedGame.Evaluate())
-    print("")
-    return
-
-    # old method:
-    connected_stations = set()
-    for segment in game.segments:
-        connected_stations.add(segment.a);
-        connected_stations.add(segment.b);
-
-    for station in stations:
-        if station.id in connected_stations:
-            continue
-
-        nearestSegment = None
-        min = 9999999
-        for segment in game.segments:
-            distance = get_distance(station.pos, game, segment)
-            if distance < min:
-                min = distance
-                nearestSegment = segment
-
-        connect_along_segment(ws, station, nearestSegment)
-        connected_stations.add(station.id)
-        continue
-
-def connect_along_segment(ws, station, segment, game_id = 0):
+def remove_track(ws, line):
     command =  {
         "command":"take_action",
-        "game_id": game_id,
+        "game_id":0,
         "arguments":{
-            "action":"insert_station",
-            "line_index":segment.l,
-            "station_index":station.id,
-            "insert_index":segment.index
+            "action":"remove_track",
+            "line_index":line
         }
     }
-    print("Sending Command: ")
-    print(command)
     res = send_and_recieve(ws, json.dumps(command))
-    print("Connected Staiton!")
-    print(station.id)
-
-def dot(a, b):
-    return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])
-
-def vec_from_points(a, b):
-    return (b[0] - a[0], b[1] - a[1], b[2] - a[2])
-
-def distance_between_points(a,b):
-    l = vec_from_points(a,b)
-    return math.sqrt(dot(l,l))
-
-def get_distance(stationPos, game, segment):
-    a = game.stations[segment.a].pos
-    b = game.stations[segment.b].pos
-
-    fromToStation = vec_from_points(a, stationPos)
-    fromToEnd = vec_from_points(a, b)
-
-    projAmount = dot(fromToStation, fromToEnd) / dot(fromToEnd, fromToEnd)
-    proj = (fromToEnd[0] * projAmount, fromToEnd[1] * projAmount, fromToEnd[2] * projAmount)
-
-    nearestPoint = (a[0] + proj[0], a[1] + proj[1], a[2] + proj[2])
-    return distance_between_points(nearestPoint, stationPos)
-
-class GeometryUtils:
-    @staticmethod
-    def dot(a: Tuple[float, float, float], b: Tuple[float, float, float]) -> float:
-        """Calculate dot product of two 3D vectors."""
-        return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])
-
-    @staticmethod
-    def vec_from_points(a: Tuple[float, float, float], b: Tuple[float, float, float]) -> Tuple[float, float, float]:
-        """Calculate the vector from point a to point b."""
-        return (b[0] - a[0], b[1] - a[1], b[2] - a[2])
-
-    @staticmethod
-    def distance_between_points(a: Tuple[float, float, float], b: Tuple[float, float, float]) -> float:
-        """Calculate Euclidean distance between two 3D points."""
-        vector = GeometryUtils.vec_from_points(a, b)
-        return math.sqrt(GeometryUtils.dot(vector, vector))
 
 
 class CostHandler:
     @staticmethod
-    def calculate_path_length(planned_paths):
+    def calculate_path_length(all_stations, planned_paths):
         total_length = 0
         for path in planned_paths:
             for i in range(len(path) - 1):
                 station_a = path[i].pos
                 station_b = path[i + 1].pos
-                total_length += distance_between_points(station_a, station_b)
+                total_length += GeometryUtils.distance_between_points(station_a, station_b)
         return total_length
+
+    @staticmethod
+    def dijkstra_routes_cost(all_stations, planned_paths):
+        path_finder = DijkstraPathFinder(stations=all_stations, planned_paths=planned_paths)
+        return path_finder.find_all_routes(print_data=False)
+
+    @staticmethod
+    def astar_routes_cost(all_stations, planned_paths):
+        path_finder = AStarPathFinder(stations=all_stations, planned_paths=planned_paths)
+        return path_finder.find_all_routes(print_data=False)
 
 
 # New Agent and BruteForceAgent classes for SpaceTransit
@@ -216,7 +92,6 @@ class Agent:
         self.planned_paths = []  # List to store planned paths
         self.cost = float('inf')
         self.init = False
-        self.times = 0
         self.game_id = game_id
 
     def initialize_records(self, game_state):
@@ -297,29 +172,22 @@ class Agent:
             return
 
         # Step 2: Calculate the cost of the new paths using the specified cost function
-        new_cost = cost_function(new_paths)
+        new_cost = cost_function(all_stations=self.all_stations, planned_paths=new_paths)
 
         # Step 3: If the cost is lower than the current self.cost, update planned_paths and self.cost
         if new_cost < self.cost:
             print(f"Found a better path with a lower cost: {new_cost} (previous cost: {self.cost})!")
+            previous_paths = self.planned_paths
             self.planned_paths = new_paths
             self.cost = new_cost
             # Send the planned paths to the game using WebSocket
             if update_to_game:
-                # # remove all tracks in the game
-                # TODO: only do this once the agent has a better rule (aka ensure each track has all type of stations)
-                # for line in game_state.lines:
-                #     commend = {
-                #         "command":"take_action",
-                #         "game_id":0,
-                #         "arguments":{
-                #             "action":"remove_track",
-                #             "line_index":line.id
-                #         }
-                #     }
-                #     res = send_and_recieve(self.ws, json.dumps(commend))
+                for line_index, station_list in enumerate(previous_paths):
+                    remove_track(self.ws, line_index)
 
+                # print("Insert: ")
                 for line_index, station_list in enumerate(self.planned_paths):
+                    # print(f"line_index: {line_index}")
                     for insert_index, station in enumerate(station_list):
                         # print(f"{station.id} ", end=" ")
                         insert_station(self.ws, line_index, station.id, insert_index)
@@ -356,10 +224,7 @@ def check_whether_loop(station, station_list):
 
 class StochasticGreedyAgent(Agent):
     def get_paths(self):
-        # if num_paths is empty, then return empty list
-        if self.num_paths == 0:
-            return []
-        planned_paths = [set() for _ in range(self.num_paths)]
+        planned_paths = [[] for _ in range(self.num_paths)]
 
         # Initial assignment with duplicate checking
         for station in self.all_stations:
@@ -368,52 +233,34 @@ class StochasticGreedyAgent(Agent):
 
         # Ensure minimum stations with duplicate checking
         for station_list in planned_paths:
-            while len(station_list) < 2:
-                available = set(self.all_stations) - station_list
-                if available:
-                    station_list.add(random.choice(list(available)))
+            if len(station_list) < 1:
+                station_id = random.randint(0, len(self.all_stations) - 1)
+                station_list.append(self.all_stations[station_id])
+            if len(station_list) < 2:
+                station_id = random.randint(0, len(self.all_stations) - 1)
+                while self.all_stations[station_id] == station_list[0]:
+                    station_id = random.randint(0, len(self.all_stations) - 1)
+                station_list.append(self.all_stations[station_id])
 
-        # Add additional stations without duplicates
-        for station_list in planned_paths:
-            available = set(self.all_stations) - station_list
-            if available:
-                num_to_add = random.randint(0, len(available) // 2)
-                additional = random.sample(list(available), num_to_add)
-                station_list.update(additional)
+        # Optionally, each path can randomly include additional stations
+        for station_list_id in range(len(planned_paths)):
+            station_list = planned_paths[station_list_id]
+            additional_stations = random.sample(self.all_stations, random.randint(0, len(self.all_stations) // 2))
+            whether_loop = False
+            for station in additional_stations:
+                if station == station_list[0]:
+                    whether_loop = True
+                if check_whether_not_crossed(station, station_list):
+                    station_list.append(station)
+            # Order the List
+            planned_paths[station_list_id] = self.order_stations(station_list)
+            # if whether_loop:
+            #     planned_paths[station_list_id].append(planned_paths[station_list_id][0])
 
-        # Convert sets back to ordered lists
-        ordered_paths = [self.order_stations(list(station_list)) for station_list in planned_paths]
-
-        return ordered_paths
+        return planned_paths
 
 if __name__ == "__main__":
-    # ws = websocket.create_connection('ws://192.168.1.18:3000/metro')
-
-    # numStations = 0
-    # getGamesCommand = {
-    #     'command': 'get_state',
-    #     'game_id': 0
-    # }
-
-    # while True:
-    #     # get next game state:
-    #     gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand))
-    #     try:
-    #         gameState = json.loads(gameStateRaw)
-    #     except:
-    #         print(gameStateRaw)
-    #         exit()
-    #     game = MetroWrapper.GameState(gameState)
-    #     stations = game.stations
-    #     if len(stations) > numStations:
-    #         numStations = len(stations)
-    #         connect_unconnect_stations(ws, game)
-    #     sleep(1)
-
     game_count = 2
-
-    # ws = websocket.create_connection('ws://192.168.1.18:3000/metro')
-    # retry until connection is established, block call here
     while True:
         try:
             ws = websocket.create_connection('ws://192.168.1.18:3000/metro')
@@ -433,11 +280,7 @@ if __name__ == "__main__":
     for i in range(game_count): # two games for now
         agent = StochasticGreedyAgent(ws, i)
         agents.append(agent)
-
-    for i in range(game_count): # two games for now
-        agent = StochasticGreedyAgent(ws, i)
-        agents.append(agent)
-    cnt = 0
+    cnt = [0, 0]
     while True:
         for i in range(game_count):
             gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand(i)))
@@ -455,13 +298,13 @@ if __name__ == "__main__":
                     game_state=game,
                     update_to_game=True
                 )
+            cnt[i] += 1
+            if cnt[i] % 10 == 1:
+                print(f"game {i} status update:")
+                print(f"score: {game.score}")
+                print(f"time: {game.time} \n")
         sleep(0.2)
         cnt += 1
-        if cnt % 10 == 1:
-            print("score: ", game.score)
-            print("time: ", game.time)
-    print("score: ", game.score)
-    print("time: ", game.time)
 
         # # get next game state:
         # gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand()))
