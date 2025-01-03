@@ -332,7 +332,7 @@ if __name__ == "__main__":
             stations = game.stations
             if len(stations) > 0:
                 agents[i].get_better_paths(
-                    cost_function=CostHandler.calculate_path_length,
+                    cost_function=CostHandler.astar_routes_cost,
                     game_state=game,
                     update_to_game=True
                 )
