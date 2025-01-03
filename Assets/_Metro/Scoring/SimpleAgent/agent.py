@@ -285,7 +285,7 @@ if __name__ == "__main__":
         stations = game.stations
         if len(stations) > 0:
             agent.get_better_paths(
-                cost_function=CostHandler.dijkstra_routes_cost,
+                cost_function=CostHandler.astar_routes_cost,
                 game_state=game,
                 update_to_game=True
             )
