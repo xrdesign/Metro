@@ -433,6 +433,10 @@ if __name__ == "__main__":
     for i in range(game_count): # two games for now
         agent = StochasticGreedyAgent(ws, i)
         agents.append(agent)
+
+    for i in range(game_count): # two games for now
+        agent = StochasticGreedyAgent(ws, i)
+        agents.append(agent)
     cnt = 0
     while True:
         for i in range(game_count):
