@@ -27,7 +27,7 @@ public delegate void GameSelectionDelegateDef(bool selected);
 public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
 {
   private Random random;
-  private int seed = 0;
+  private int seed = 21;
   public uint gameId;
 
   public float score = 0.0f;

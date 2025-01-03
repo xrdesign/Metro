@@ -229,7 +229,7 @@ class StochasticGreedyAgent(Agent):
         # Initial assignment with duplicate checking
         for station in self.all_stations:
             selected_path_id = random.randint(0, self.num_paths - 1)
-            planned_paths[selected_path_id].add(station)
+            planned_paths[selected_path_id].append(station)
 
         # Ensure minimum stations with duplicate checking
         for station_list in planned_paths:
@@ -261,13 +261,7 @@ class StochasticGreedyAgent(Agent):
 
 if __name__ == "__main__":
     game_count = 2
-    while True:
-        try:
-            ws = websocket.create_connection('ws://192.168.1.18:3000/metro')
-            break
-        except:
-            print("Failed to connect to websocket, retrying...")
-            sleep(0.5)
+    ws = websocket.create_connection('ws://localhost:3000/metro')
     agents = []
 
     numStations = 0
@@ -304,7 +298,6 @@ if __name__ == "__main__":
                 print(f"score: {game.score}")
                 print(f"time: {game.time} \n")
         sleep(0.2)
-        cnt += 1
 
         # # get next game state:
         # gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand()))
