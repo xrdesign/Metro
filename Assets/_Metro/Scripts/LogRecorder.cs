@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 using System;
+using LSL;
 
 // Centralized location for creating replay files
 public class LogRecorder : MonoBehaviour
@@ -23,6 +24,8 @@ public class LogRecorder : MonoBehaviour
 
   static LogRecorder instance;
 
+  private liblsl.StreamOutlet markerStream;
+
   private string _logDir = "";
   public static string logDir
   {
@@ -30,7 +33,10 @@ public class LogRecorder : MonoBehaviour
   }
 
   // Constants:
-  const int VERSION = 0;
+  const int VERSION =
+      1; // V0 uses time.deltaTime accumulation causing rounding error
+         // V1 - new replays store integer TICK count where each tick is
+         //      time.fixedDeltaTime to try and avoid rounding errors
 
   ///
   /// Functions
@@ -52,7 +58,14 @@ public class LogRecorder : MonoBehaviour
     else
     {
       instance = this;
+#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#else
+      liblsl.StreamInfo inf = new liblsl.StreamInfo(
+          "ReplayMarkers", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
+      markerStream = new liblsl.StreamOutlet(inf);
+#endif
     }
+
     if (!enabled)
     {
       return;
@@ -127,12 +140,14 @@ public class LogRecorder : MonoBehaviour
     {
       return;
     }
-    currentTime += Time.deltaTime;
+    currentTime = Time.time;
     while (eventsThisFrame.Count > 0)
     {
       Tuple<uint, BaseEvent> pair = eventsThisFrame.Dequeue();
       JSONObject log = new JSONObject();
       log.AddField("TIME", currentTime);
+      log.AddField("TICK",
+                   MetroManager.Instance.games[(int)pair.Item1].tickCount);
       log.AddField("GAME_ID", pair.Item1);
       log.AddField("EVENT_TYPE", pair.Item2.EventType());
       log.AddField("EVENT", pair.Item2.ToJson());
@@ -143,6 +158,10 @@ public class LogRecorder : MonoBehaviour
             MetroManager.Instance.games[(int)pair.Item1].gameEfficiency);
       }
       eventWriter.WriteLine(log.ToString());
+#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#else
+      markerStream.push_sample(new string[] { log.ToString() });
+#endif
     }
   }
 
@@ -150,7 +169,8 @@ public class LogRecorder : MonoBehaviour
                                     Vector3 gazePoint)
   {
     JSONObject logStep = new JSONObject();
-    logStep.AddField("TIME", instance.currentTime);
+    logStep.AddField("TIME", Time.time);
+    logStep.AddField("TICK", MetroManager.Instance.games[0].tickCount);
     logStep.AddField("HEAD_POSITION", headPos.ToString());
     logStep.AddField("HEAD_ROTATION", headRot.ToString());
     logStep.AddField("GAZE_POSITION", gazePoint.ToString());

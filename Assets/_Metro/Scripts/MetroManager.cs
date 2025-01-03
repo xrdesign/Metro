@@ -33,10 +33,14 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
   public uint daysPerNewTrain = 5;
   public uint daysPerNewLine = 15;
 
+  public float targetGameSpeed = 1;
+
   #region Game Parameters
 
   public float timeoutDurationOverride = 45.0f;
   public int[] gameSeeds;
+
+  public bool autoReset = false;
 
   #endregion
 
@@ -45,6 +49,10 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
   #region Logging
 
   public LogRecorder logRecorder;
+  public int currTick = 0;
+
+  public StreamWriter states;
+  public StreamWriter scores;
 
   // OLD LOGGING:
   // private float _logTimer;
@@ -102,6 +110,15 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
     return false;
   }
 
+  public void OnGameover(uint game_id)
+  {
+    if (autoReset)
+    {
+      // reset all the games
+      ResetScene();
+    }
+  }
+
   #region Monobehavior Overrides
   void Awake()
   {
@@ -134,6 +151,27 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
 
     lineUIs = metroUI.GetComponentsInChildren<TransportLineUI>(true);
 
+    // create stream writers for logging
+    var date = DateTime.Now;
+    string logDir = Path.Combine(Application.persistentDataPath, "Logs/");
+    if (!Directory.Exists(logDir))
+    {
+      Directory.CreateDirectory(logDir);
+    }
+    // prepend the time to the log directory avoid overwriting
+    var logDirTime = Path.Combine(logDir, date.ToString("yyyy-MM-dd_HH-mm-ss"));
+
+    if (!Directory.Exists(logDirTime))
+    {
+      Directory.CreateDirectory(logDirTime);
+    }
+
+    string logFile = Path.Combine(logDirTime, "states.csv");
+    states = new StreamWriter(logFile);
+
+    logFile = Path.Combine(logDirTime, "scores.csv");
+    scores = new StreamWriter(logFile);
+
     SpawnGames();
     if (games.Count > 0)
       SelectGame(games[0]);
@@ -158,6 +196,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
         {
           newMetroGame.SetSeed(gameSeeds[i]);
         }
+        newMetroGame.targetGameSpeed = targetGameSpeed;
       }
       /*
       if (jsonGames != null)
@@ -180,7 +219,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
     // Send LSL Markers
 #if Unity_EDITOR_OSX || UNITY_STANDALONE
 #else
-    while (markersThisFrame.Count > 0) {
+    while (markersThisFrame.Count > 0)
+    {
       markerStream.push_sample(new string[] { markersThisFrame.Dequeue() });
     }
 #endif
@@ -551,6 +591,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
     selectedGame.OnSelectionChange(true);
   }
 
+  public void OnDestroy()
+  {
+    states.Close();
+    scores.Close();
+  }
+
   public static void SendEvent(string eventString)
   {
     Debug.Log("[SendEvent] " + eventString);
@@ -564,10 +610,24 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
 
   public static void ResetScene()
   {
+    string score_str = "";
+    var date = DateTime.Now;
+    score_str += date.ToString() + ",";
     foreach (var metroGame in Instance.games)
     {
+      // log the game state and score in states.csv, and scores.csv
+      // date now
+      date = DateTime.Now;
+      var state_str = date.ToString() + metroGame.gameId + ", " +
+                           metroGame.SerializeGameState().ToString();
+      Instance.states.WriteLine(state_str);
+      score_str += metroGame.score + "," + metroGame.passengersDelivered + "," + metroGame.totalPassengerWaitTime + "," + metroGame.totalPassengerTravelTime + "," + metroGame.time + ",";
       metroGame.ScheduleReset();
     }
+    Instance.scores.WriteLine(score_str);
+    // flush
+    Instance.states.Flush();
+    Instance.scores.Flush();
   }
 
   // Starts every game simultaneously.

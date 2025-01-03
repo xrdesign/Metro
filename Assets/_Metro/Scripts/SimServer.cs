@@ -10,14 +10,15 @@ public class SimServer : MonoBehaviour
 {
 
     WebSocketServer wssv;
-    public void Start(){
+    public void Start()
+    {
         metroManager = GameObject.FindGameObjectWithTag("MetroManager").GetComponent<MetroManager>();
-        wssv = new WebSocketServer ("ws://localhost:3000");
+        wssv = new WebSocketServer("ws://0.0.0.0:3000");
 
-        wssv.AddWebSocketService<SimService> ("/metroSim");
+        wssv.AddWebSocketService<SimService>("/metroSim");
         wssv.Start();
 
-        Debug.Log("[Server] WebSocket opened for MetroService at url ws://localhost:3000/metro");
+        Debug.Log("[Server] WebSocket opened for MetroService at url ws://0.0.0.0:3000/metro");
         SimServer.setupGames = false;
     }
 
@@ -26,22 +27,25 @@ public class SimServer : MonoBehaviour
     public static JSONObject setupArgs;
     public static MetroManager metroManager;
 
-    public void Update(){
-        if(SimServer.setupGames)
+    public void Update()
+    {
+        if (SimServer.setupGames)
             this.SetupGames(SimServer.setupArgs);
     }
 
-    public void OnDisable(){
+    public void OnDisable()
+    {
         wssv.Stop();
     }
 
 
-    public void SetupGames(JSONObject args){
+    public void SetupGames(JSONObject args)
+    {
         Debug.Log("Setting up Games");
         var games = args["games"].list;
         SimServer.metroManager.enabled = true;
         SimServer.metroManager.numGamesToSpawn = (uint)games.Count;
-        SimServer.metroManager.SetupSim(games, 10, 120); 
+        SimServer.metroManager.SetupSim(games, 10, 120);
         setupGames = false;
         Debug.Log("Finished Setting Up Games");
     }
@@ -50,14 +54,16 @@ public class SimServer : MonoBehaviour
 public class SimService : WebSocketBehavior
 {
 
-    protected override void OnOpen(){
+    protected override void OnOpen()
+    {
         Debug.Log("[Server][Sim Service] Client connected.");
     }
-    protected override void OnClose(CloseEventArgs e){
+    protected override void OnClose(CloseEventArgs e)
+    {
         Debug.Log("[Server][Sim Service] Client disconnected.");
     }
 
-    protected override void OnMessage (MessageEventArgs e)
+    protected override void OnMessage(MessageEventArgs e)
     {
         var res = new JSONObject();
         var json = new JSONObject(e.Data);
@@ -65,10 +71,13 @@ public class SimService : WebSocketBehavior
         Debug.Log(command);
 
         res.AddField("Status", "None");
-        try {
-            switch (command) {
+        try
+        {
+            switch (command)
+            {
                 case "noop":
-                    if(SimServer.metroManager.isDone){
+                    if (SimServer.metroManager.isDone)
+                    {
                         res.Clear();
                         res.AddField("Status", "Complete");
                         res.AddField("Scores", SimServer.metroManager.GetSimScores());
@@ -90,7 +99,8 @@ public class SimService : WebSocketBehavior
                     break;
             }
         }
-        catch (Exception exception) {
+        catch (Exception exception)
+        {
             res.Clear();
             res.AddField("Status", "Error");
             res.AddField("Error Message", exception.Message);
@@ -98,7 +108,8 @@ public class SimService : WebSocketBehavior
 
 
         Send(res.ToString());
-        if(res.ToString().Length > 0){
+        if (res.ToString().Length > 0)
+        {
             Server.sw.WriteLineAsync(res.ToString());
             Server.sw.FlushAsync();
         }
