@@ -192,11 +192,6 @@ class Agent:
                         # print(f"{station.id} ", end=" ")
                         insert_station(self.ws, line_index, station.id, insert_index)
                     # print("\n")
-            # dij_path_finder = DijkstraPathFinder(stations=self.all_stations, planned_paths=self.planned_paths)
-            # dij_path_finder.find_all_routes(print_data=True)
-
-            # ast_path_finder = AStarPathFinder(stations=self.all_stations, planned_paths=self.planned_paths)
-            # ast_path_finder.find_all_routes(print_data=True)
 
 
 
@@ -260,7 +255,7 @@ class StochasticGreedyAgent(Agent):
         return planned_paths
 
 if __name__ == "__main__":
-    game_count = 2
+    game_count = 1
     ws = websocket.create_connection('ws://localhost:3000/metro')
     agents = []
 
@@ -293,11 +288,11 @@ if __name__ == "__main__":
                     update_to_game=True
                 )
             cnt[i] += 1
-            if cnt[i] % 10 == 1:
+            if cnt[i] % 1000 == 1:
                 print(f"game {i} status update:")
                 print(f"score: {game.score}")
                 print(f"time: {game.time} \n")
-        sleep(0.2)
+        # sleep(1/1000000)
 
         # # get next game state:
         # gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand()))
