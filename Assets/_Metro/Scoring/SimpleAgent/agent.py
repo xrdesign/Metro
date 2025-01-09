@@ -37,10 +37,10 @@ def insert_station(ws, line, station, insert, game_id = 0):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
-def remove_station(ws, line, station):
+def remove_station(ws, line, station, game_id = 0):
     command =  {
         "command":"take_action",
-        "game_id":0,
+        "game_id":game_id,
         "arguments":{
             "action":"remove_station",
             "line_index":line,
@@ -49,10 +49,10 @@ def remove_station(ws, line, station):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
-def remove_track(ws, line):
+def remove_track(ws, line, game_id = 0):
     command =  {
         "command":"take_action",
-        "game_id":0,
+        "game_id":game_id,
         "arguments":{
             "action":"remove_track",
             "line_index":line
@@ -183,14 +183,14 @@ class Agent:
             # Send the planned paths to the game using WebSocket
             if update_to_game:
                 for line_index, station_list in enumerate(previous_paths):
-                    remove_track(self.ws, line_index)
+                    remove_track(self.ws, line_index, self.game_id)
 
                 # print("Insert: ")
                 for line_index, station_list in enumerate(self.planned_paths):
                     # print(f"line_index: {line_index}")
                     for insert_index, station in enumerate(station_list):
                         # print(f"{station.id} ", end=" ")
-                        insert_station(self.ws, line_index, station.id, insert_index)
+                        insert_station(self.ws, line_index, station.id, insert_index, self.game_id)
                     # print("\n")
 
 
@@ -255,7 +255,7 @@ class StochasticGreedyAgent(Agent):
         return planned_paths
 
 if __name__ == "__main__":
-    game_count = 1
+    game_count = 2
     ws = websocket.create_connection('ws://localhost:3000/metro')
     agents = []
 
@@ -275,6 +275,7 @@ if __name__ == "__main__":
             gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand(i)))
             try:
                 gameState = json.loads(gameStateRaw)
+                # print(f"game {i} status update:" + gameStateRaw)
             except:
                 print("Failed to parse game state:")
                 print(gameStateRaw)
