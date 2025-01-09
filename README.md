@@ -9,9 +9,9 @@ API Documentation is available in [API.md](https://github.com/xrdesign/Metro/blo
 
 ## Getting Started
 
-Install Unity, this project is using Unity version 2020.3.28f1.
+Install Unity, this project is using Unity version 2022.3.45f1.
 
-To get started using this repo you will have to import the MRTK and Oculus Integration packages manually, as I didn't want to bloat the git repo with readily available packages.
+To get started using this repo you will have to import the MRTK manually (note: Oculus Integration packages is no longer needed), as I didn't want to bloat the git repo with readily available packages.
 
 ### Import MRTK 
 
