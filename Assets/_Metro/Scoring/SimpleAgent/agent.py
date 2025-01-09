@@ -5,7 +5,7 @@ import random
 from typing import List
 from MetroWrapper import GameState
 import MetroWrapper
-from path_finder_utils import GeometryUtils, AStarPathFinder, DijkstraPathFinder, StationCostManager
+from path_finder_utils import GeometryUtils, AStarPathFinder, DijkstraPathFinder, StationCostManager, DijkstraCostManager, AStarCostManager
 
 def send_and_recieve(ws, message):
     tries = 0
@@ -100,21 +100,14 @@ class Agent:
         self.init = False
         self.game_id = game_id
 
-    def initialize_records(self, game_state):
-        # Initialize paths based on the game state
-        self.num_paths = len(game_state.lines)
-        self.all_stations = game_state.stations
-        # TODO: initialize planned_paths using game_state.lines
-        self.planned_paths = [[] for _ in range(self.num_paths)]
-        self.cost = float('inf')
-        self.cost_manager_of_current_game = self.get_cost_manager(all_stations=self.all_stations, planned_paths=self.planned_paths)
-        self.cost = self.cost_manager_of_current_game.total_cost()
-        self.init = True
-
     def update_records(self, game_state):
         # Initialize paths based on the game state
         self.num_paths = len(game_state.lines)
         self.all_stations = game_state.stations
+        self.planned_paths = [[] for _ in range(self.num_paths)]
+        for i, line in enumerate(game_state.lines):
+            for station_id in line.stops:
+                self.planned_paths[i].append(self.all_stations[station_id])
         self.cost_manager_of_current_game = self.get_cost_manager(all_stations=self.all_stations, planned_paths=self.planned_paths)
         self.cost = self.cost_manager_of_current_game.total_cost()
         self.init = True
@@ -177,9 +170,7 @@ class Agent:
         """
 
         # Check if the game state has changed and reinitialize paths if needed
-        if not self.init:
-            self.initialize_records(game_state=game_state)
-        elif self.check_for_changes(game_state=game_state):
+        if not self.init or self.check_for_changes(game_state=game_state):
             self.update_records(game_state=game_state)
 
         # Step 1: Use get_paths to generate new paths
@@ -212,8 +203,6 @@ class Agent:
                         # print(f"{station.id} ", end=" ")
                         insert_station(self.ws, line_index, station.id, insert_index)
                     # print("\n")
-
-
 
 
 def check_whether_not_crossed(station, station_list):
