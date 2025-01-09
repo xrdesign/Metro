@@ -149,6 +149,28 @@ class PathFinder(ABC):
         route.reverse()
         return route
 
+    def compute_all_station_costs(self):
+        station_costs = []
+        existed_types = list({station.shape for station in self.stations})
+        for station in self.stations:
+            type_list = existed_types.copy()
+            type_list.remove(station.shape)
+            station_cost = 0
+            for type in type_list:
+                possible_dsts = self.get_stations_for_shape_type(type)
+                min_cost = float('inf')
+                for dst in possible_dsts:
+                    _, cost = self.find_route(station.id, dst.id)
+                    min_cost = min(min_cost, cost)
+                station_cost += min_cost
+            station_costs.append(StationCost(station, station_cost))
+        return station_costs
+
+    def get_stations_for_shape_type(self, shape_type):
+        stations =  [station for station in self.stations if station.shape == shape_type]
+        random.shuffle(stations)
+        return stations
+
     def get_cost_manager(self, print_data=False) -> StationCostManager:
         existed_types = []
         stations_cost = 0
@@ -263,6 +285,23 @@ class AStarPathFinder(PathFinder):
                     heapq.heappush(priority_queue, (f_score, neighbor_id))
 
         return [], float('inf')
+
+# Refactored Classes
+class DijkstraCostManager(StationCostManager):
+    def __init__(self, all_stations, planned_paths):
+        super().__init__()
+        self.update_info(all_stations, planned_paths)
+
+    def _create_path_finder(self, all_stations, planned_paths):
+        return DijkstraPathFinder(stations=all_stations, planned_paths=planned_paths)
+
+class AStarCostManager(StationCostManager):
+    def __init__(self, all_stations, planned_paths):
+        super().__init__()
+        self.update_info(all_stations, planned_paths)
+
+    def _create_path_finder(self, all_stations, planned_paths):
+        return AStarPathFinder(stations=all_stations, planned_paths=planned_paths)
 
 class Segment:
     def __init__(self, line=0, a=0, b=1, length=0, index=0):
