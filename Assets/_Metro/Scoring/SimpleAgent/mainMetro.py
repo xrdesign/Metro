@@ -3,7 +3,6 @@ import sys
 import math
 import json
 import heapq
-from path_finder_utils import GeometryUtils, PathUtils, AStarPathFinder, DijkstraPathFinder
 
 SHAPES = ["Sphere", "Cone", "Cube"]
 PositiveInfinity = 100000000
@@ -23,8 +22,6 @@ class GameState:
         self.stations = []
         self.stationMappings = {}
         stationsData = gameJson['stations']
-        self.score = gameJson['score']
-        self.time = gameJson['time']
         for stationData in stationsData:
             station = Station(stationData)
             self.stations.append(station)
