@@ -71,6 +71,9 @@ class StationCost:
 class StationCostManager:
     def __init__(self):
         self.station_costs = []
+        self.all_stations = []
+        self.planned_paths = []
+        self.path_finder = None
 
     def add_cost(self, station, cost):
         self.station_costs.append(StationCost(station, cost))
@@ -79,22 +82,33 @@ class StationCostManager:
         for station_cost in self.station_costs:
             if station_cost.station_id == station_id:
                 return station_cost.cost
-        raise ValueError(f"Station with ID {station_id} has no recorded cost.")
+        return None
+
+    def update_info(self, all_stations, planned_paths):
+        self.all_stations = all_stations
+        self.planned_paths = planned_paths
+        self.station_costs = []  # Reset costs
+        self.path_finder = self._create_path_finder(all_stations, planned_paths)
+        self.station_costs = self.path_finder.compute_all_station_costs()
 
     def get_line_cost(self, line):
         line_cost = 0
-        for station in line:
-            station_cost = self.get_station_cost_by_id(station.id)
+        for station_id in line:
+            station_cost = self.get_station_cost_by_id(station_id)
             if station_cost is not None:
                 line_cost += station_cost
             else:
-                raise ValueError(f"Station with ID {station.id} has no recorded cost.")
+                return None
         return line_cost
 
     def total_cost(self):
         if self.station_costs == []:
             return float('inf')
         return sum(station_cost.cost for station_cost in self.station_costs)
+
+    def _create_path_finder(self, all_stations, planned_paths):
+        # To be overridden by subclasses
+        pass
 
     def __repr__(self):
         return f"StationCostManager(station_costs={self.station_costs})"
@@ -150,8 +164,21 @@ class PathFinder(ABC):
         return route
 
     def compute_all_station_costs(self):
+        cost_to_start = self.compute_costs_to_start
+        cost_to_destination = self.compute_costs_to_destination
+        assert len(cost_to_start) == len(self.stations)
+        assert len(cost_to_destination) == len(self.stations)
+        station_costs = []
+        for i, station in enumerate( self.stations):
+            cost = cost_to_start[i].cost + cost_to_destination[i].cost
+            station_costs.append(StationCost(station, cost))
+        return station_costs
+
+    def compute_costs_to_destination(self):
         station_costs = []
         existed_types = list({station.shape for station in self.stations})
+
+        # total cost over all types of passengers after metro picking them up
         for station in self.stations:
             type_list = existed_types.copy()
             type_list.remove(station.shape)
@@ -165,6 +192,42 @@ class PathFinder(ABC):
                 station_cost += min_cost
             station_costs.append(StationCost(station, station_cost))
         return station_costs
+
+    def compute_costs_to_start(self):
+        station_costs = []
+        existed_types = list({station.shape for station in self.stations})
+
+        for station in self.stations:
+            station_cost = 0
+            for path in self.planned_paths:
+                if station in path:
+                    start = station.id
+                    # calculate distance from end_x to starting station
+                    cost_on_path = 0
+                    x_to_start = 0
+                    for i in range(len(path)-1):
+                        if i == start:
+                            continue
+                        station_a = path[i].pos
+                        station_b = path[i+1].pos
+                        x_to_start += GeometryUtils.distance_between_points(station_a, station_b)
+                        if i+1 == start:
+                            continue
+                    y_to_start = 0
+                    for i in range(len(path)-1, 0, -1):
+                        if i == start:
+                            continue
+                        station_a = path[i].pos
+                        station_b = path[i-1].pos
+                        y_to_start += GeometryUtils.distance_between_points(station_a, station_b)
+                    # worst cost for each type is twice of the distance to reach farer end
+                    cost_on_path = 2*max(x_to_start, y_to_start)
+                    # the total worst cost depends on the number of existed types of passengers
+                    cost_on_path = cost_on_path*len(existed_types)
+                station_cost += cost_on_path
+            station_costs.append(StationCost(station, station_cost))
+        return station_costs
+
 
     def get_stations_for_shape_type(self, shape_type):
         stations =  [station for station in self.stations if station.shape == shape_type]
@@ -210,16 +273,6 @@ class PathFinder(ABC):
             print("stations_cost: ", stations_cost)
 
         return station_cost_manager
-
-    def get_stations_for_shape_type(self, shape_type):
-        stations = []
-        for station in self.stations:
-            if station.shape == shape_type:
-                stations.append(station)
-        random.shuffle(stations)
-
-        return stations
-
 
 
 class DijkstraPathFinder(PathFinder):

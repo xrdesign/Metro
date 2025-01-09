@@ -85,20 +85,16 @@ class CostManagerFunction:
 
 # New Agent and BruteForceAgent classes for SpaceTransit
 class Agent:
-    def __init__(self, ws, game_id = 0, cost_manager_function=CostManagerFunction.astar_cost_manager):
+    def __init__(self, ws, game_id = 0):
         self.ws = ws  # WebSocket instance to communicate with SpaceTransit
         self.num_paths = None  # Number of paths, initialized later
-        self.all_stations = None  # All available stations, initialized later
+        self.all_stations = []  # All available stations, initialized later
         self.planned_paths = []  # List to store planned paths
         self.cost = float('inf')
-        if not callable(cost_manager_function):
-            print(f"Error: The provided cost function is not callable.")
-            return
-        else:
-            self.cost_manager_function = cost_manager_function
-        self.cost_manager_of_current_game = None
+        self.cost_manager = AStarCostManager(all_stations=self.all_stations, planned_paths=self.all_stations)
         self.init = False
         self.game_id = game_id
+
 
     def update_records(self, game_state):
         # Initialize paths based on the game state
@@ -108,8 +104,8 @@ class Agent:
         for i, line in enumerate(game_state.lines):
             for station_id in line.stops:
                 self.planned_paths[i].append(self.all_stations[station_id])
-        self.cost_manager_of_current_game = self.get_cost_manager(all_stations=self.all_stations, planned_paths=self.planned_paths)
-        self.cost = self.cost_manager_of_current_game.total_cost()
+        self.cost_manager.update_info( all_stations=self.all_stations, planned_paths=self.planned_paths)
+        self.cost = self.cost_manager.total_cost()
         self.init = True
 
 
@@ -181,8 +177,8 @@ class Agent:
             return
 
         # Step 2: Calculate the cost of the new paths using the specified cost function
-        cost_manager = self.get_cost_manager(all_stations=self.all_stations, planned_paths=new_paths)
-        new_cost = cost_manager.total_cost()
+        self.cost_manager.update_info(all_stations=self.all_stations, planned_paths=new_paths)
+        new_cost = self.cost_manager.total_cost()
 
         # Step 3: If the cost is lower than the current self.cost, update planned_paths and self.cost
         if new_cost < self.cost:
@@ -190,7 +186,7 @@ class Agent:
             previous_paths = self.planned_paths
             self.planned_paths = new_paths
             self.cost = new_cost
-            self.cost_manager = cost_manager
+            # self.cost_manager = cost_manager
             # Send the planned paths to the game using WebSocket if update_to_game is set to True
             if update_to_game:
                 for line_index, station_list in enumerate(previous_paths):
@@ -273,7 +269,7 @@ if __name__ == "__main__":
         }
 
     for i in range(game_count): # two games for now
-        agent = StochasticGreedyAgent(ws, i, cost_manager_function=CostManagerFunction.astar_cost_manager)
+        agent = StochasticGreedyAgent(ws, i)
         agents.append(agent)
     cnt = [0, 0]
     while True:
