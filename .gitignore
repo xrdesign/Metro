@@ -14,7 +14,9 @@
 # Ignore 3rd party package files
 /[Aa]ssets/MRTK/
 /[Aa]ssets/MRTK.meta
-/[Aa]ssets/MixedRealityToolkit.Generated/
+/[Aa]ssets/MixedRealityToolkit.Generated/**
+!/[Aa]ssets/MixedRealityToolkit.Generated/CustomProfiles/
+!/[Aa]ssets/MixedRealityToolkit.Generated/CustomProfiles/**
 /[Aa]ssets/Oculus/
 /[Aa]ssets/Oculus.meta
 /[Aa]ssets/TextMesh Pro/
