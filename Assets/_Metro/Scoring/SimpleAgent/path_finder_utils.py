@@ -164,8 +164,8 @@ class PathFinder(ABC):
         return route
 
     def compute_all_station_costs(self):
-        cost_to_start = self.compute_costs_to_start
-        cost_to_destination = self.compute_costs_to_destination
+        cost_to_start = self.compute_costs_to_start()
+        cost_to_destination = self.compute_costs_to_destination()
         assert len(cost_to_start) == len(self.stations)
         assert len(cost_to_destination) == len(self.stations)
         station_costs = []
@@ -199,11 +199,13 @@ class PathFinder(ABC):
 
         for station in self.stations:
             station_cost = 0
+            cost_on_path = 0
             for path in self.planned_paths:
+                cost_on_this_path = 0
                 if station in path:
                     start = station.id
                     # calculate distance from end_x to starting station
-                    cost_on_path = 0
+                    cost_on_this_path = 0
                     x_to_start = 0
                     for i in range(len(path)-1):
                         if i == start:
@@ -221,9 +223,10 @@ class PathFinder(ABC):
                         station_b = path[i-1].pos
                         y_to_start += GeometryUtils.distance_between_points(station_a, station_b)
                     # worst cost for each type is twice of the distance to reach farer end
-                    cost_on_path = 2*max(x_to_start, y_to_start)
+                    cost_on_this_path = 2*max(x_to_start, y_to_start)
                     # the total worst cost depends on the number of existed types of passengers
-                    cost_on_path = cost_on_path*len(existed_types)
+                    cost_on_this_path = cost_on_this_path*len(existed_types)
+                cost_on_path = max(cost_on_path, cost_on_this_path)
                 station_cost += cost_on_path
             station_costs.append(StationCost(station, station_cost))
         return station_costs
