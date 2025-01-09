@@ -5,7 +5,7 @@ import random
 from typing import List
 from MetroWrapper import GameState
 import MetroWrapper
-from path_finder_utils import GeometryUtils, AStarPathFinder, DijkstraPathFinder
+from path_finder_utils import GeometryUtils, AStarPathFinder, DijkstraPathFinder, StationCostManager
 
 def send_and_recieve(ws, message):
     tries = 0
@@ -60,7 +60,6 @@ def remove_track(ws, line):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
-
 class CostHandler:
     @staticmethod
     def calculate_path_length(all_stations, planned_paths):
@@ -72,25 +71,32 @@ class CostHandler:
                 total_length += GeometryUtils.distance_between_points(station_a, station_b)
         return total_length
 
+class CostManagerFunction:
     @staticmethod
-    def dijkstra_routes_cost(all_stations, planned_paths):
+    def dijkstra_cost_manager(all_stations, planned_paths) -> StationCostManager:
         path_finder = DijkstraPathFinder(stations=all_stations, planned_paths=planned_paths)
-        return path_finder.find_all_routes(print_data=False)
+        return path_finder.get_cost_manager(print_data=False)
 
     @staticmethod
-    def astar_routes_cost(all_stations, planned_paths):
+    def astar_cost_manager(all_stations, planned_paths) -> StationCostManager:
         path_finder = AStarPathFinder(stations=all_stations, planned_paths=planned_paths)
-        return path_finder.find_all_routes(print_data=False)
+        return path_finder.get_cost_manager(print_data=False)
 
 
 # New Agent and BruteForceAgent classes for SpaceTransit
 class Agent:
-    def __init__(self, ws, game_id = 0):
+    def __init__(self, ws, game_id = 0, cost_manager_function=CostManagerFunction.astar_cost_manager):
         self.ws = ws  # WebSocket instance to communicate with SpaceTransit
         self.num_paths = None  # Number of paths, initialized later
         self.all_stations = None  # All available stations, initialized later
         self.planned_paths = []  # List to store planned paths
         self.cost = float('inf')
+        if not callable(cost_manager_function):
+            print(f"Error: The provided cost function is not callable.")
+            return
+        else:
+            self.cost_manager_function = cost_manager_function
+        self.cost_manager_of_current_game = None
         self.init = False
         self.game_id = game_id
 
@@ -98,8 +104,19 @@ class Agent:
         # Initialize paths based on the game state
         self.num_paths = len(game_state.lines)
         self.all_stations = game_state.stations
+        # TODO: initialize planned_paths using game_state.lines
         self.planned_paths = [[] for _ in range(self.num_paths)]
         self.cost = float('inf')
+        self.cost_manager_of_current_game = self.get_cost_manager(all_stations=self.all_stations, planned_paths=self.planned_paths)
+        self.cost = self.cost_manager_of_current_game.total_cost()
+        self.init = True
+
+    def update_records(self, game_state):
+        # Initialize paths based on the game state
+        self.num_paths = len(game_state.lines)
+        self.all_stations = game_state.stations
+        self.cost_manager_of_current_game = self.get_cost_manager(all_stations=self.all_stations, planned_paths=self.planned_paths)
+        self.cost = self.cost_manager_of_current_game.total_cost()
         self.init = True
 
 
@@ -146,23 +163,24 @@ class Agent:
 
         return ordered_list
 
-    def get_better_paths(self, cost_function, game_state, update_to_game):
+    def get_cost_manager(self, all_stations, planned_paths):
+        return self.cost_manager_function(all_stations=all_stations, planned_paths=planned_paths)
+
+    def get_better_paths(self, game_state, update_to_game):
         """
         Iteratively generates new paths and evaluates their cost using a specified cost function.
         Updates the planned paths if a better (lower cost) set of paths is found.
         The process continues for a maximum of 'num_steps' iterations or until no better path is found.
 
         Args:
-            cost_function (callable): The name of the static method from CostHandler to use for calculating the cost.
+            cost_manager_function (callable): The name of the static method from CostHandler to use for calculating the cost.
         """
-        # Ensure that the cost function provided is callable
-        if not callable(cost_function):
-            print(f"Error: The provided cost function is not callable.")
-            return
 
         # Check if the game state has changed and reinitialize paths if needed
-        if not self.init or self.check_for_changes(game_state):
-            self.initialize_records(game_state)
+        if not self.init:
+            self.initialize_records(game_state=game_state)
+        elif self.check_for_changes(game_state=game_state):
+            self.update_records(game_state=game_state)
 
         # Step 1: Use get_paths to generate new paths
         try:
@@ -172,7 +190,8 @@ class Agent:
             return
 
         # Step 2: Calculate the cost of the new paths using the specified cost function
-        new_cost = cost_function(all_stations=self.all_stations, planned_paths=new_paths)
+        cost_manager = self.get_cost_manager(all_stations=self.all_stations, planned_paths=new_paths)
+        new_cost = cost_manager.total_cost()
 
         # Step 3: If the cost is lower than the current self.cost, update planned_paths and self.cost
         if new_cost < self.cost:
@@ -180,7 +199,8 @@ class Agent:
             previous_paths = self.planned_paths
             self.planned_paths = new_paths
             self.cost = new_cost
-            # Send the planned paths to the game using WebSocket
+            self.cost_manager = cost_manager
+            # Send the planned paths to the game using WebSocket if update_to_game is set to True
             if update_to_game:
                 for line_index, station_list in enumerate(previous_paths):
                     remove_track(self.ws, line_index)
@@ -198,13 +218,10 @@ class Agent:
 
 def check_whether_not_crossed(station, station_list):
     assert station_list is not None
-    # print("checking============================")
     whether_not_crossed = True
     if len(station_list)<=1:
         return whether_not_crossed
     for other_station in station_list:
-        # print("??????????????????????")
-        # print(f"other_station: {other_station.id}\nstation: {station.id}")
         if other_station.id == station.id:
             whether_not_crossed = False
     return whether_not_crossed
@@ -267,7 +284,7 @@ if __name__ == "__main__":
         }
 
     for i in range(game_count): # two games for now
-        agent = StochasticGreedyAgent(ws, i)
+        agent = StochasticGreedyAgent(ws, i, cost_manager_function=CostManagerFunction.astar_cost_manager)
         agents.append(agent)
     cnt = [0, 0]
     while True:
@@ -283,7 +300,6 @@ if __name__ == "__main__":
             stations = game.stations
             if len(stations) > 0:
                 agents[i].get_better_paths(
-                    cost_function=CostHandler.astar_routes_cost,
                     game_state=game,
                     update_to_game=True
                 )

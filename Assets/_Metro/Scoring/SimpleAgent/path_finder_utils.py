@@ -59,6 +59,46 @@ class PathUtils:
             adjacency_list[segment.b].append((segment.a, segment.length))
         return adjacency_list
 
+class StationCost:
+    def __init__(self, station, cost):
+        self.id = station.id
+        self.cost = cost
+
+    def __repr__(self):
+        return f"StationCost(station_id={self.id}, cost={self.cost})"
+
+
+class StationCostManager:
+    def __init__(self):
+        self.station_costs = []
+
+    def add_cost(self, station, cost):
+        self.station_costs.append(StationCost(station, cost))
+
+    def get_cost_by_id(self, station_id):
+        for station_cost in self.station_costs:
+            if station_cost.station_id == station_id:
+                return station_cost.cost
+        raise ValueError(f"Station with ID {station_id} has no recorded cost.")
+
+    def get_line_cost(self, line):
+        line_cost = 0
+        for station in line:
+            station_cost = self.get_station_cost_by_id(station.id)
+            if station_cost is not None:
+                line_cost += station_cost
+            else:
+                raise ValueError(f"Station with ID {station.id} has no recorded cost.")
+        return line_cost
+
+    def total_cost(self):
+        if self.station_costs == []:
+            return float('inf')
+        return sum(station_cost.cost for station_cost in self.station_costs)
+
+    def __repr__(self):
+        return f"StationCostManager(station_costs={self.station_costs})"
+
 class PathFinder(ABC):
     def __init__(self, stations, segments=None, planned_paths=None):
         """
@@ -69,6 +109,7 @@ class PathFinder(ABC):
             planned_paths (list, optional): List of planned paths. Defaults to None.
         """
         self.stations = stations
+        self.planned_paths = planned_paths
         if segments:
             self.adjacency_list = PathUtils.generate_adjacency_list(segments)
         elif planned_paths:
@@ -108,9 +149,10 @@ class PathFinder(ABC):
         route.reverse()
         return route
 
-    def find_all_routes(self, print_data=False):
+    def get_cost_manager(self, print_data=False) -> StationCostManager:
         existed_types = []
         stations_cost = 0
+        station_cost_manager = StationCostManager()
         # record the types, existed in the game.
         for station in self.stations:
             existed_types.append(station.shape)
@@ -140,11 +182,12 @@ class PathFinder(ABC):
             if print_data:
                 print("station_cost: ", station_cost)
                 print("=============")
+            station_cost_manager.add_cost(station=station, cost=station_cost)
             stations_cost += station_cost
         if print_data:
             print("stations_cost: ", stations_cost)
 
-        return stations_cost
+        return station_cost_manager
 
     def get_stations_for_shape_type(self, shape_type):
         stations = []
