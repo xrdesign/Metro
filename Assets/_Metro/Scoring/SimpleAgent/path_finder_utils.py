@@ -84,11 +84,21 @@ class StationCostManager:
                 return station_cost.cost
         return None
 
-    def update_info(self, all_stations, planned_paths):
+    def update_info_using_gamesinfo(self, all_stations, lines):
+        self.all_stations = all_stations
+        self.planned_paths = [[] for _ in range(len(lines))]
+        for i, line in enumerate(lines):
+            for station_id in line.stops:
+                self.planned_paths [i].append(self.all_stations[station_id])
+        self.station_costs = []  # Reset costs
+        self.path_finder = self._create_path_finder(self.all_stations, self.planned_paths)
+        self.station_costs = self.path_finder.compute_all_station_costs()
+
+    def update_info_using_plan(self, all_stations, planned_paths):
         self.all_stations = all_stations
         self.planned_paths = planned_paths
         self.station_costs = []  # Reset costs
-        self.path_finder = self._create_path_finder(all_stations, planned_paths)
+        self.path_finder = self._create_path_finder(self.all_stations, self.planned_paths)
         self.station_costs = self.path_finder.compute_all_station_costs()
 
     def get_line_cost(self, line):
@@ -105,6 +115,11 @@ class StationCostManager:
         if self.station_costs == []:
             return float('inf')
         return sum(station_cost.cost for station_cost in self.station_costs)
+
+    def highest_cost(self):
+        if self.station_costs == []:
+            return float('-inf')
+        return max(self.station_costs, key=lambda sc: sc.cost).cost
 
     def _create_path_finder(self, all_stations, planned_paths):
         # To be overridden by subclasses
@@ -215,6 +230,7 @@ class PathFinder(ABC):
                         x_to_start += GeometryUtils.distance_between_points(station_a, station_b)
                         if i+1 == start:
                             continue
+                    # calculate distance from end_y to starting station
                     y_to_start = 0
                     for i in range(len(path)-1, 0, -1):
                         if i == start:
@@ -344,17 +360,18 @@ class AStarPathFinder(PathFinder):
 
 # Refactored Classes
 class DijkstraCostManager(StationCostManager):
-    def __init__(self, all_stations, planned_paths):
+    def __init__(self, all_stations, lines):
         super().__init__()
-        self.update_info(all_stations, planned_paths)
+        self.update_info_using_gamesinfo(all_stations, lines)
 
     def _create_path_finder(self, all_stations, planned_paths):
         return DijkstraPathFinder(stations=all_stations, planned_paths=planned_paths)
 
 class AStarCostManager(StationCostManager):
-    def __init__(self, all_stations, planned_paths):
+    def __init__(self, all_stations, lines):
         super().__init__()
-        self.update_info(all_stations, planned_paths)
+        if lines:
+            self.update_info_using_gamesinfo(all_stations, lines)
 
     def _create_path_finder(self, all_stations, planned_paths):
         return AStarPathFinder(stations=all_stations, planned_paths=planned_paths)

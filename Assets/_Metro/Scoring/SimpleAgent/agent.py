@@ -60,28 +60,6 @@ def remove_track(ws, line):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
-class CostHandler:
-    @staticmethod
-    def calculate_path_length(all_stations, planned_paths):
-        total_length = 0
-        for path in planned_paths:
-            for i in range(len(path) - 1):
-                station_a = path[i].pos
-                station_b = path[i + 1].pos
-                total_length += GeometryUtils.distance_between_points(station_a, station_b)
-        return total_length
-
-class CostManagerFunction:
-    @staticmethod
-    def dijkstra_cost_manager(all_stations, planned_paths) -> StationCostManager:
-        path_finder = DijkstraPathFinder(stations=all_stations, planned_paths=planned_paths)
-        return path_finder.get_cost_manager(print_data=False)
-
-    @staticmethod
-    def astar_cost_manager(all_stations, planned_paths) -> StationCostManager:
-        path_finder = AStarPathFinder(stations=all_stations, planned_paths=planned_paths)
-        return path_finder.get_cost_manager(print_data=False)
-
 
 # New Agent and BruteForceAgent classes for SpaceTransit
 class Agent:
@@ -91,7 +69,7 @@ class Agent:
         self.all_stations = []  # All available stations, initialized later
         self.planned_paths = []  # List to store planned paths
         self.cost = float('inf')
-        self.cost_manager = AStarCostManager(all_stations=self.all_stations, planned_paths=self.all_stations)
+        self.cost_manager = AStarCostManager(all_stations=self.all_stations, lines=None)
         self.init = False
         self.game_id = game_id
 
@@ -100,14 +78,9 @@ class Agent:
         # Initialize paths based on the game state
         self.num_paths = len(game_state.lines)
         self.all_stations = game_state.stations
-        self.planned_paths = [[] for _ in range(self.num_paths)]
-        for i, line in enumerate(game_state.lines):
-            for station_id in line.stops:
-                self.planned_paths[i].append(self.all_stations[station_id])
-        self.cost_manager.update_info( all_stations=self.all_stations, planned_paths=self.planned_paths)
+        self.cost_manager.update_info_using_gamesinfo(all_stations=self.all_stations, lines=game_state.lines)
         self.cost = self.cost_manager.total_cost()
         self.init = True
-
 
     def check_for_changes(self, game_state):
         if self.num_paths != len(game_state.lines) or len(self.all_stations) != len(game_state.stations):
@@ -157,14 +130,10 @@ class Agent:
 
     def get_better_paths(self, game_state, update_to_game):
         """
-        Iteratively generates new paths and evaluates their cost using a specified cost function.
+        Iteratively generates new paths and evaluates their cost using a cost_manager's extracted cost.
         Updates the planned paths if a better (lower cost) set of paths is found.
         The process continues for a maximum of 'num_steps' iterations or until no better path is found.
-
-        Args:
-            cost_manager_function (callable): The name of the static method from CostHandler to use for calculating the cost.
         """
-
         # Check if the game state has changed and reinitialize paths if needed
         if not self.init or self.check_for_changes(game_state=game_state):
             self.update_records(game_state=game_state)
@@ -177,7 +146,7 @@ class Agent:
             return
 
         # Step 2: Calculate the cost of the new paths using the specified cost function
-        self.cost_manager.update_info(all_stations=self.all_stations, planned_paths=new_paths)
+        self.cost_manager.update_info_using_plan(all_stations=self.all_stations, planned_paths=new_paths)
         new_cost = self.cost_manager.total_cost()
 
         # Step 3: If the cost is lower than the current self.cost, update planned_paths and self.cost
@@ -186,19 +155,14 @@ class Agent:
             previous_paths = self.planned_paths
             self.planned_paths = new_paths
             self.cost = new_cost
-            # self.cost_manager = cost_manager
             # Send the planned paths to the game using WebSocket if update_to_game is set to True
             if update_to_game:
                 for line_index, station_list in enumerate(previous_paths):
                     remove_track(self.ws, line_index)
 
-                # print("Insert: ")
                 for line_index, station_list in enumerate(self.planned_paths):
-                    # print(f"line_index: {line_index}")
                     for insert_index, station in enumerate(station_list):
-                        # print(f"{station.id} ", end=" ")
                         insert_station(self.ws, line_index, station.id, insert_index)
-                    # print("\n")
 
 
 def check_whether_not_crossed(station, station_list):
@@ -251,8 +215,6 @@ class StochasticGreedyAgent(Agent):
                     station_list.append(station)
             # Order the List
             planned_paths[station_list_id] = self.order_stations(station_list)
-            # if whether_loop:
-            #     planned_paths[station_list_id].append(planned_paths[station_list_id][0])
 
         return planned_paths
 
@@ -293,22 +255,4 @@ if __name__ == "__main__":
                 print(f"game {i} status update:")
                 print(f"score: {game.score}")
                 print(f"time: {game.time} \n")
-        # sleep(1/1000000)
-
-        # # get next game state:
-        # gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand()))
-        # try:
-        #     gameState = json.loads(gameStateRaw)
-        # except:
-        #     print(gameStateRaw)
-        #     exit()
-        # game = GameState(gameState)
-        # stations = game.stations
-        # if len(stations) > 0:
-        #     agent.get_better_paths(
-        #         cost_function=CostHandler.calculate_path_length,
-        #         game_state=game,
-        #         update_to_game=True
-        #     )
-        # sleep(1)
 
