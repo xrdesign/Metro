@@ -3,7 +3,6 @@ import sys
 import math
 import json
 import heapq
-from path_finder_utils import GeometryUtils, PathUtils, AStarPathFinder, DijkstraPathFinder
 
 SHAPES = ["Sphere", "Cone", "Cube"]
 PositiveInfinity = 100000000
