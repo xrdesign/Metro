@@ -116,10 +116,24 @@ class StationCostManager:
             return float('inf')
         return sum(station_cost.cost for station_cost in self.station_costs)
 
-    def highest_cost(self):
+    def the_most_expensive_station(self):
         if self.station_costs == []:
-            return float('-inf')
-        return max(self.station_costs, key=lambda sc: sc.cost).cost
+            return None
+        return max(self.station_costs, key=lambda sc: sc.cost)
+
+    def the_most_expensive_station_cost(self):
+        station = self.the_most_expensive_station
+        if station is not None:
+            return station.cost
+        else:
+            return float['inf']
+
+    def the_most_expensive_station_id(self):
+        station = self.the_most_expensive_station
+        if station is not None:
+            return station.id
+        else:
+            return None
 
     def _create_path_finder(self, all_stations, planned_paths):
         # To be overridden by subclasses
