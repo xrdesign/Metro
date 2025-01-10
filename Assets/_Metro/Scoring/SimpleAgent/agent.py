@@ -5,7 +5,7 @@ import random
 from typing import List
 from MetroWrapper import GameState
 import MetroWrapper
-from path_finder_utils import GeometryUtils, AStarPathFinder, DijkstraPathFinder, StationCostManager, DijkstraCostManager, AStarCostManager
+from path_finder_utils import GeometryUtils, DijkstraCostManager, AStarCostManager
 
 def send_and_recieve(ws, message):
     tries = 0
