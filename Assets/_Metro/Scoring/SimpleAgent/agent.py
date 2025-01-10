@@ -86,9 +86,9 @@ class Agent:
         if self.num_paths != len(game_state.lines) or len(self.all_stations) != len(game_state.stations):
             print("Gamestate Update!!!")
             if self.num_paths != len(game_state.lines):
-                print(f"Number of paths has changed from {self.num_paths} to {len(game_state.lines)}.")
+                print(f"Number of paths has changed from {self.num_paths} to {len(game_state.lines)} on game {self.game_id}.")
             if len(self.all_stations) != len(game_state.stations):
-                print(f"Number of stations has changed from {len(self.all_stations)} to {len(game_state.stations)}.")
+                print(f"Number of stations has changed from {len(self.all_stations)} to {len(game_state.stations)} on game {self.game_id}.")
             return True
         return False
 
