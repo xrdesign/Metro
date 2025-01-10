@@ -49,6 +49,7 @@ def remove_station(ws, line, station, game_id):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
+
 def remove_track(ws, line, game_id):
     command =  {
         "command":"take_action",
@@ -241,6 +242,7 @@ if __name__ == "__main__":
             gameStateRaw = send_and_recieve(ws, json.dumps(getGamesCommand(i)))
             try:
                 gameState = json.loads(gameStateRaw)
+                # print(f"game {i} status update:" + gameStateRaw)
             except:
                 print("Failed to parse game state:")
                 print(gameStateRaw)
