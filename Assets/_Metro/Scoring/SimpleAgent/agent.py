@@ -37,7 +37,7 @@ def insert_station(ws, line, station, insert, game_id):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
-def remove_station(ws, line, station, game_id = 0):
+def remove_station(ws, line, station, game_id):
     command =  {
         "command":"take_action",
         "game_id":game_id,
@@ -49,7 +49,7 @@ def remove_station(ws, line, station, game_id = 0):
     }
     res = send_and_recieve(ws, json.dumps(command))
 
-def remove_track(ws, line, game_id = 0):
+def remove_track(ws, line, game_id):
     command =  {
         "command":"take_action",
         "game_id":game_id,
