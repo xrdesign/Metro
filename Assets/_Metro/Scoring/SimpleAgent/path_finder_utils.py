@@ -3,6 +3,14 @@ from abc import ABC, abstractmethod
 import heapq
 import math, random
 
+import websocket
+from MetroWrapper import GameState
+import MetroWrapper
+import json
+from time import sleep
+import copy
+
+
 class GeometryUtils:
     @staticmethod
     def dot(a: Tuple[float, float, float], b: Tuple[float, float, float]) -> float:
@@ -122,14 +130,14 @@ class StationCostManager:
         return max(self.station_costs, key=lambda sc: sc.cost)
 
     def the_most_expensive_station_cost(self):
-        station = self.the_most_expensive_station
+        station = self.the_most_expensive_station()
         if station is not None:
             return station.cost
         else:
-            return float['inf']
+            return float('inf')
 
     def the_most_expensive_station_id(self):
-        station = self.the_most_expensive_station
+        station = self.the_most_expensive_station()
         if station is not None:
             return station.id
         else:
@@ -397,3 +405,97 @@ class Segment:
         self.b = b
         self.length = length
         self.index = index
+
+class GameHandler:
+    def __init__(self, game_id, game_address="'ws://localhost:3000/metro'"):
+        self.game_address = game_address
+        self.ws = websocket.create_connection(self.game_address)
+        self.game_id = game_id
+        self.raw_log = None
+        self.game_state = None
+        self.stations = []
+        self.lines = []
+        self.update_gamestate()
+
+    def update_gamestate(self):
+        self.raw_log = self.send_and_recieve(json.dumps(self.get_game_log()))
+        try:
+            temp_game_state = json.loads(self.raw_log)
+        except:
+            print("Failed to parse game state:")
+            print(self.raw_log)
+        gamestate_update = False
+        if temp_game_state:
+            self.game_state = MetroWrapper.GameState(temp_game_state)
+            if self.check_for_station_changes_and_update(whether_print=True) or self.check_for_line_changes_and_update(whether_print=True):
+                gamestate_update = True
+        return gamestate_update
+
+    def check_for_station_changes_and_update(self, whether_print=False):
+        num_stations = len(self.stations)
+        if num_stations != len(self.game_state.stations):
+            if whether_print: print(f"Number of stations has changed from {num_stations} to {len(self.game_state.stations)} on game {self.game_id}.")
+            self.stations = copy.deepcopy(self.game_state.stations)
+            return True
+        return False
+
+    def check_for_line_changes_and_update(self, whether_print=False):
+        line_update = False
+        if self.lines == []:
+            line_update = True
+        elif len(self.game_state.lines) != len(self.lines):
+            if whether_print: print(f"Number of lines has changed from {len(self.lines)} to {len(self.game_state.lines)} on game {self.game_id}.")
+            line_update = True
+        else:
+            for i, line in enumerate(self.game_state.lines):
+                pre_line = self.lines[i].stops
+                for j, stop_id in enumerate(line.stops):
+                    if stop_id != pre_line[j]:
+                        if whether_print: print(f"Metro Lines' designs have changed on game {self.game_id}!!!")
+                        line_update = True
+                        break
+                if line_update:
+                    break
+        if line_update:
+            self.lines = copy.deepcopy(self.game_state.lines)
+        return line_update
+
+    def send_and_recieve(self, message):
+        tries = 0
+        self.ws.send(message)
+        while tries < 3:
+            try:
+                data = self.ws.recv()
+                return data
+            except websocket.WebSocketException as e:
+                print(f"Receive failed: {e}, trying again")
+                tries += 1
+                try:
+                    self.ws = websocket.create_connection(self.game_address)
+                    self.ws.send(message)
+                except websocket.WebSocketException as e:
+                    print(f"Connection failed: {e}")
+                    tries += 1
+
+    def get_game_log(self):
+        return {
+            'command': 'get_state',
+            'game_id': self.game_id
+        }
+
+if __name__ == "__main__":
+    game_count = 2
+    game_address = 'ws://localhost:3000/metro'
+    game_handlers = [GameHandler(game_id=i, game_address=game_address) for i in range(game_count)]
+    cost_managers = [AStarCostManager(all_stations=game_handlers[i].stations, lines=game_handlers[i].lines) for i in range(game_count)]
+    for cost_manager in cost_managers:
+        print("initial total cost: ", cost_manager.total_cost())
+        print(f"the most expensive station informaion: id: {cost_manager.the_most_expensive_station_id()} cost: {cost_manager.the_most_expensive_station_cost()}")
+    while True:
+        for i in range(game_count):
+            whether_update = game_handlers[i].update_gamestate()
+            if whether_update:
+                cost_managers[i].update_info_using_gamesinfo(all_stations=game_handlers[i].stations, lines=game_handlers[i].lines)
+                print("total cost: ", cost_managers[i].total_cost())
+                print(f"the most expensive station informaion: id: {cost_manager.the_most_expensive_station_id()} cost: {cost_manager.the_most_expensive_station_cost()}")
+        sleep(1)
