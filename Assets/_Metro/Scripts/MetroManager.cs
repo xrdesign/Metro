@@ -396,6 +396,16 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
   #region Utility
 
   /// <summary>
+  /// Set the costs of stations for a specific game.
+  /// </summary>
+  /// <param name="gameID"></param> ID of game to set costs for
+  /// <param name="costs"></param> JSON object containing costs per station
+  public static void SetStationCosts(uint gameID, JSONObject costs)
+  {
+    GetGameWithID(gameID).SetStationCosts(costs);
+  }
+
+  /// <summary>
   /// Find the nearest game to supplied world position.
   /// </summary>
   /// <param name="position">Position to compare against</param>
@@ -484,6 +494,13 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
   {
     Debug.Log("added instructions: " + i);
     instructionQueue.Enqueue(i);
+  }
+
+
+  public static void SetResponse(string response)
+  {
+    // send to deepgram to do text to speech
+
   }
 
   #endregion

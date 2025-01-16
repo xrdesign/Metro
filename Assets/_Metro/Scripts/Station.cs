@@ -24,6 +24,8 @@ public class Station : MonoBehaviour,
 
   // This will be unique because it's set to its unity instance ID.
   public int uuid;
+
+  public float cost;
   public StationType type;
 
   // This is a randomly generated human recognizable name. Unique within game.
@@ -91,7 +93,7 @@ public class Station : MonoBehaviour,
     if (passengers.Count > 6)
     {
       timer += gameInstance.dt;
-      Debug.Log("Overcrowded station: " + id);
+      // Debug.Log("Overcrowded station: " + id);
     }
     else
     {

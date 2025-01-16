@@ -122,11 +122,23 @@ public class MetroService : WebSocketBehavior
           else
             res.AddField("Status", "Failure");
           break;
+
+
+        case "set_station_costs":
+          uint gameIDSetStationCosts = (uint)json["game_id"].i;
+          var stationCosts = json["station_costs"];
+          MetroManager.SetStationCosts(gameIDSetStationCosts, stationCosts);
+          break;
         case "get_state":
           uint gameIDGetState = (uint)json["game_id"].i;
           res = MetroManager.SerializeGame(gameIDGetState);
           res.AddField("new_instructions", MetroManager.HasInstructions());
           res.AddField("instruction_text", MetroManager.GetInstructions());
+          break;
+
+        case "set_response":
+          var response = json["arguments"];
+          // MetroManager.SetResponse(response);
           break;
         case "get_all_states":
           var games = new JSONObject(JSONObject.Type.ARRAY);

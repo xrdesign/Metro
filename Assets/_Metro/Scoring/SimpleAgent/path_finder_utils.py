@@ -449,6 +449,10 @@ class GameHandler:
         else:
             for i, line in enumerate(self.game_state.lines):
                 pre_line = self.lines[i].stops
+                if(len(line.stops) != len(pre_line)):
+                    if whether_print: print(f"Number of stops in line {i} has changed from {len(pre_line)} to {len(line.stops)} on game {self.game_id}.")
+                    line_update = True
+                    break
                 for j, stop_id in enumerate(line.stops):
                     if stop_id != pre_line[j]:
                         if whether_print: print(f"Metro Lines' designs have changed on game {self.game_id}!!!")
@@ -463,25 +467,39 @@ class GameHandler:
     def send_and_recieve(self, message):
         tries = 0
         self.ws.send(message)
-        while tries < 3:
+        while True:
             try:
                 data = self.ws.recv()
                 return data
-            except websocket.WebSocketException as e:
+            except Exception as e:
                 print(f"Receive failed: {e}, trying again")
                 tries += 1
                 try:
                     self.ws = websocket.create_connection(self.game_address)
                     self.ws.send(message)
-                except websocket.WebSocketException as e:
+                except Exception as e:
                     print(f"Connection failed: {e}")
                     tries += 1
+                    sleep(1)
 
     def get_game_log(self):
         return {
             'command': 'get_state',
             'game_id': self.game_id
         }
+    
+    def send_station_costs_to_game(self, cost_manager):
+        station_costs = []
+        for station_cost in cost_manager.station_costs:
+            station_costs.append({
+                'station_id': station_cost.id,
+                'cost': station_cost.cost
+            })
+        self.send_and_recieve(json.dumps({
+            'command': 'set_station_costs',
+            'game_id': self.game_id,
+            'station_costs': station_costs
+        }))
 
 if __name__ == "__main__":
     game_count = 2
@@ -498,4 +516,5 @@ if __name__ == "__main__":
                 cost_managers[i].update_info_using_gamesinfo(all_stations=game_handlers[i].stations, lines=game_handlers[i].lines)
                 print("total cost: ", cost_managers[i].total_cost())
                 print(f"the most expensive station informaion: id: {cost_manager.the_most_expensive_station_id()} cost: {cost_manager.the_most_expensive_station_cost()}")
+                game_handlers[i].send_station_costs_to_game(cost_managers[i])
         sleep(1)
