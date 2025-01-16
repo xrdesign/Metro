@@ -24,7 +24,7 @@ public delegate void GameSelectionDelegateDef(bool selected);
  * SpaceMetro aims to clone mini metro in VR
  * This singleton object initializes and handles global game state and events
  */
-public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler, IMixedRealityInputHandler
+public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
 {
   private Random random;
   private int seed = 21;
@@ -151,13 +151,11 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler, IMixedReali
   {
     CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(
         this);
-    CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputHandler>(this);
   }
   void OnDisable()
   {
     CoreServices.InputSystem?.UnregisterHandler<IMixedRealityPointerHandler>(
         this);
-    CoreServices.InputSystem?.UnregisterHandler<IMixedRealityInputHandler>(this);
   }
 
   // Start is called before the first frame update
@@ -988,15 +986,6 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler, IMixedReali
     }
   }
 
-  void IMixedRealityInputHandler.OnInputDown(InputEventData eventData)
-  {
-    Debug.Log("Input Down:" + eventData.MixedRealityInputAction.Description);
-  }
-
-  void IMixedRealityInputHandler.OnInputUp(InputEventData eventData)
-  {
-    Debug.Log("Input Up:" + eventData.MixedRealityInputAction.Description);
-  }
 
   void IMixedRealityPointerHandler.OnPointerDown(
       MixedRealityPointerEventData eventData)

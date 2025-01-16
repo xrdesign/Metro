@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LSL;
 using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Teleport;
 using Unity.Mathematics;
 using UnityEngine;
@@ -9,7 +10,7 @@ using Random = System.Random;
 using System.IO;
 using System;
 
-public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
+public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedRealityInputHandler
 {
   #region Fields
 
@@ -92,6 +93,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
   #region Public
 
   public Random random = new Random();
+
+  public DeepgramConnection deepgramConnection;
 
   #endregion
 
@@ -233,6 +236,9 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
       CoreServices.TeleportSystem.RegisterHandler<IMixedRealityTeleportHandler>(
           this);
     }
+
+    CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputHandler>(
+        this);
   }
 
   private void OnDisable()
@@ -295,6 +301,27 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler
     sw.Write("{\"time_steps\":[");
   }
   */
+
+
+  void IMixedRealityInputHandler.OnInputDown(InputEventData eventData)
+  {
+    // Debug.Log("Input Down:" + eventData.MixedRealityInputAction.Description);
+    // if the description contains "Speech", then DeepgramConnection.StartDeepgram()
+    if (eventData.MixedRealityInputAction.Description.Contains("Speech"))
+    {
+      deepgramConnection.StartDeepgram();
+    }
+  }
+
+  void IMixedRealityInputHandler.OnInputUp(InputEventData eventData)
+  {
+    // Debug.Log("Input Up:" + eventData.MixedRealityInputAction.Description);
+    // if the description contains "Speech", then DeepgramConnection.StopDeepgram()
+    if (eventData.MixedRealityInputAction.Description.Contains("Speech"))
+    {
+      deepgramConnection.StopDeepgram();
+    }
+  }
 
   private JSONObject commandList;
   public static void LogServerMessage(JSONObject message)
