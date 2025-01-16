@@ -43,6 +43,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
 
   public bool autoReset = false;
 
+  public bool showCosts = false;
+
   #endregion
 
   #endregion

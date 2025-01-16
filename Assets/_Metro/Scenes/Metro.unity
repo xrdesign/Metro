@@ -2234,6 +2234,7 @@ MonoBehaviour:
   timeoutDurationOverride: 90
   gameSeeds: 2100000021000000
   autoReset: 0
+  showCosts: 0
   logRecorder: {fileID: 0}
   currTick: 0
   games: []
@@ -2241,6 +2242,7 @@ MonoBehaviour:
   metroUI: {fileID: 4500513732196729373}
   addTrainUI: {fileID: 0}
   LController: {fileID: 142235710}
+  deepgramConnection: {fileID: 0}
   isDone: 0
 --- !u!4 &1277933883
 Transform:

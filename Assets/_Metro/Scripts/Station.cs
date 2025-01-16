@@ -157,6 +157,18 @@ public class Station : MonoBehaviour,
         }
       }
     }
+
+
+    // TODO: station cost display
+    if (MetroManager.Instance.showCosts)
+    {
+      // Debug.Log("Station cost: " + cost);
+      _stationText.text = stationName + " : " + cost.ToString("F2");
+    }
+    else
+    {
+      _stationText.text = stationName;
+    }
   }
 
   public void SpawnRandomPassenger()
