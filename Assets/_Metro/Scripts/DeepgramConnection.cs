@@ -47,6 +47,7 @@ public class DeepgramConnection : MonoBehaviour
     {
         _audioSource = GetComponent<AudioSource>();
         Debug.Assert(_audioSource != null, "DeepgramConnection missing Audio Source");
+        MetroManager.Instance.deepgramConnection = this;
     }
     // Start is called before the first frame update
     void Start()
@@ -194,6 +195,16 @@ public class DeepgramConnection : MonoBehaviour
             return -32768;
         }
         return (short)f;
+    }
+
+    public void StartDeepgram()
+    {
+        start = true;
+    }
+
+    public void StopDeepgram()
+    {
+        stop = true;
     }
 
 
