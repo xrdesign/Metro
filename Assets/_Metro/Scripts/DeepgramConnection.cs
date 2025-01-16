@@ -161,7 +161,7 @@ public class DeepgramConnection : MonoBehaviour
                 var transcript = deepgramResponse.channel.alternatives[0].transcript;
                 if (playing)
                 {
-                    command += transcript;
+                    command += " " + transcript;
                     Debug.Log("Command: " + command);
                     if (shouldStop)
                     {
