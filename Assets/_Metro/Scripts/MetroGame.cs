@@ -24,7 +24,7 @@ public delegate void GameSelectionDelegateDef(bool selected);
  * SpaceMetro aims to clone mini metro in VR
  * This singleton object initializes and handles global game state and events
  */
-public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
+public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler, IMixedRealityInputHandler
 {
   private Random random;
   private int seed = 21;
@@ -151,11 +151,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   {
     CoreServices.InputSystem?.RegisterHandler<IMixedRealityPointerHandler>(
         this);
+    CoreServices.InputSystem?.RegisterHandler<IMixedRealityInputHandler>(this);
   }
   void OnDisable()
   {
     CoreServices.InputSystem?.UnregisterHandler<IMixedRealityPointerHandler>(
         this);
+    CoreServices.InputSystem?.UnregisterHandler<IMixedRealityInputHandler>(this);
   }
 
   // Start is called before the first frame update
@@ -259,6 +261,25 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   }
 
   #endregion
+
+
+  public void SetStationCosts(JSONObject costs)
+  {
+    // costs is the station_costs array
+    // update costs for each station from the station_costs array
+    for (int i = 0; i < costs.Count; i++)
+    {
+      JSONObject cost = costs[i];
+      int station_id = (int)cost.GetField("station_id").n;
+      float station_cost = cost.GetField("cost").n;
+      // Find the station with the id
+      Station station = stations.Find(x => x.id == station_id);
+      if (station != null)
+      {
+        station.cost = station_cost;
+      }
+    }
+  }
 
   public void SetPaused(bool shouldPause)
   {
@@ -965,6 +986,16 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     {
       return 3.0f;
     }
+  }
+
+  void IMixedRealityInputHandler.OnInputDown(InputEventData eventData)
+  {
+    Debug.Log("Input Down:" + eventData.MixedRealityInputAction.Description);
+  }
+
+  void IMixedRealityInputHandler.OnInputUp(InputEventData eventData)
+  {
+    Debug.Log("Input Up:" + eventData.MixedRealityInputAction.Description);
   }
 
   void IMixedRealityPointerHandler.OnPointerDown(
