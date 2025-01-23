@@ -123,6 +123,9 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   // that we don't have singleton access the game.
   public delegate void MetroGameAction(MetroGame game);
   private Queue ActionQueue = Queue.Synchronized(new Queue());
+  private Queue<Action> mainThreadQueue = new Queue<Action>();
+
+  public bool blockRequest = false; // DEBUG: block sync requests
 
   // Used to link an action and id together so we can later indicate to
   // MetroManager when we complete the action.
@@ -314,12 +317,25 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
           "Cannot Queue Action, Game is paused"); // don't accept actions if
                                                   // game is paused
     Debug.Log("Action Queued on MetroGame: " + this.gameId);
-    uint newID = MetroManager.RequestQueueID();
+    uint newID = MetroManager.GetNextActionQueueID();
     TrackedMetroGameAction trackedMetroGameAction;
     trackedMetroGameAction.action = gameAction;
     trackedMetroGameAction.id = newID;
     lock (ActionQueue.SyncRoot) { ActionQueue.Enqueue(trackedMetroGameAction); }
     return newID;
+  }
+
+  public void RunOnMainThread(Action action)
+  {
+    lock (mainThreadQueue)
+    {
+      // make sure limit to 256 actions, otherwise drop early actions
+      if (mainThreadQueue.Count > 256)
+      {
+        mainThreadQueue.Dequeue();
+      }
+      mainThreadQueue.Enqueue(action);
+    }
   }
 
   // Update is called once per frame
@@ -339,6 +355,16 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       action.action(this);
       Debug.Log("Fulfilling action on game: " + gameId);
       MetroManager.FulfillQueueAction(action.id);
+    }
+
+    if (!blockRequest)
+    {
+      // Debug.Log("Invoked requests: " + mainThreadQueue.Count);
+      while (mainThreadQueue.Count > 0)
+      {
+        var action = mainThreadQueue.Dequeue();
+        action.Invoke();
+      }
     }
 
     if (needReset)
