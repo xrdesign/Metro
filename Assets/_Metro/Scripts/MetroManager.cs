@@ -535,6 +535,12 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   #endregion
 
   #region Queueing System
+
+  public static void RunOnMainThread(Action action, uint gameID)
+  {
+    GetGameWithID(gameID).RunOnMainThread(action);
+  }
+
   /// <summary>
   /// Queues a game action for the game with the given ID
   /// </summary>
@@ -551,13 +557,15 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   /// until FulfillQueueAction is called.
   /// </summary>
   /// <returns></returns>
-  public static uint RequestQueueID()
+  public static uint GetNextActionQueueID()
   {
     MetroManager manager = MetroManager.Instance;
     uint id = manager.actionIDCounter++;
     manager.outstandingActions.Add(id);
     return id;
   }
+
+
 
   /// <summary>
   /// Called from MetroGame to mark that an action has been completed.

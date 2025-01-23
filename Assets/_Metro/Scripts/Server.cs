@@ -104,6 +104,7 @@ public class MetroService : WebSocketBehavior
     var res = new JSONObject();
     var json = new JSONObject(e.Data);
     var command = json["command"].str;
+    var delaySend = false;
 
     try
     {
@@ -135,7 +136,40 @@ public class MetroService : WebSocketBehavior
           res.AddField("new_instructions", MetroManager.HasInstructions());
           res.AddField("instruction_text", MetroManager.GetInstructions());
           break;
+        case "get_state_sync":
+          uint gameIDGetStateSync = (uint)json["game_id"].i;
+          delaySend = true;
 
+          // Enqueue request to be processed on the main thread
+          MetroManager.RunOnMainThread(() =>
+          {
+            var stateRes = new JSONObject();
+            try
+            {
+              stateRes = MetroManager.SerializeGame(gameIDGetStateSync);
+              stateRes.AddField("new_instructions", MetroManager.HasInstructions());
+              stateRes.AddField("instruction_text", MetroManager.GetInstructions());
+
+              Send(stateRes.ToString()); // Respond after Update() runs
+            }
+            catch (Exception exception)
+            {
+              stateRes.Clear();
+              stateRes.AddField("Status", "Error");
+              stateRes.AddField("Error Message", exception.Message);
+              stateRes.AddField("Stack Trace", exception.StackTrace);
+              Send(stateRes.ToString());
+            }
+
+            if (stateRes.ToString().Length > 0)
+            {
+              // if (enableLogs)
+              // {
+              //   Server.sw.WriteLine(stateRes.ToString());
+              // }
+            }
+          }, gameIDGetStateSync);
+          break;
         case "set_response":
           var response = json["arguments"];
           // MetroManager.SetResponse(response);
@@ -209,6 +243,11 @@ public class MetroService : WebSocketBehavior
       res.AddField("Stack Trace", exception.StackTrace);
     }
 
+    if (delaySend)
+    {
+      return;
+    }
+
     Send(res.ToString());
     if (res.ToString().Length > 0)
     {
@@ -217,6 +256,11 @@ public class MetroService : WebSocketBehavior
         Server.sw.WriteLine(res.ToString());
       }
     }
+  }
+
+  protected void QueueRequest(JSONObject args, uint gameID)
+  {
+
   }
 
   // Queues an action for a specific game instance.
