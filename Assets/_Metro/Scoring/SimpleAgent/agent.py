@@ -229,7 +229,7 @@ if __name__ == "__main__":
     numStations = 0
     def getGamesCommand(game_id = 0):
         return {
-            'command': 'get_state',
+            'command': 'get_state_sync',
             'game_id': game_id
         }
 
