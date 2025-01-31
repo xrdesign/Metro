@@ -58,7 +58,7 @@ public class LogRecorder : MonoBehaviour
     else
     {
       instance = this;
-#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#if Unity_EDITOR_OSX 
 #else
       liblsl.StreamInfo inf = new liblsl.StreamInfo(
           "ReplayMarkers", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
@@ -158,7 +158,7 @@ public class LogRecorder : MonoBehaviour
             MetroManager.Instance.games[(int)pair.Item1].gameEfficiency);
       }
       eventWriter.WriteLine(log.ToString());
-#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#if Unity_EDITOR_OSX 
 #else
       markerStream.push_sample(new string[] { log.ToString() });
 #endif
