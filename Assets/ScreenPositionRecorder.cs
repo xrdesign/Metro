@@ -34,7 +34,7 @@ public class ScreenPositionRecorder : MonoBehaviour
 
   void Start()
   {
-#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#if Unity_EDITOR_OSX 
 #else
     liblsl.StreamInfo inf =
         new liblsl.StreamInfo("ScreenPositionEyeTracking", "Markers", 1, 0,
@@ -82,7 +82,7 @@ public class ScreenPositionRecorder : MonoBehaviour
       rPos += Vector2.one * .5f;
       output.WriteLine(
           $"{lPos.x},{lPos.y},{EyeTracking.leftPupilDiamter},{rPos.x},{rPos.y},{EyeTracking.rightPupilDiameter},{time}");
-#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#if Unity_EDITOR_OSX 
 #else
       markerStream.push_sample(new string[] {
         $"{lPos.x},{lPos.y},{EyeTracking.leftPupilDiamter},{rPos.x},{rPos.y},{EyeTracking.rightPupilDiameter},{time}"
