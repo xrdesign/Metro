@@ -221,15 +221,18 @@ public class Train : MonoBehaviour, IMixedRealityPointerHandler
       // (add back to station!)
       if (p.route != null)
       {
-        if (p.route[0] != station)
+        if (p.route.Count > 0)
         {
-          Debug.Log("Error dropping off passenger, arrived at unexpected " +
-                    "station, recomputing route");
-          p.route = gameInstance.FindRouteClosest(station, p.destination);
-        }
-        else
-        {
-          p.route.RemoveAt(0);
+          if (p.route[0] != station)
+          {
+            Debug.Log("Error dropping off passenger, arrived at unexpected " +
+                      "station, recomputing route");
+            p.route = gameInstance.FindRouteClosest(station, p.destination);
+          }
+          else
+          {
+            p.route.RemoveAt(0);
+          }
         }
         if (p.route.Count <= 0 || p.route[0] != nextStation)
         {

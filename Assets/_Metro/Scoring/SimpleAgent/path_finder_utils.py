@@ -484,7 +484,7 @@ class GameHandler:
 
     def get_game_log(self):
         return {
-            'command': 'get_state',
+            'command': 'get_state_sync',
             'game_id': self.game_id
         }
     
