@@ -586,9 +586,11 @@ public class ReplayManager : MonoBehaviour
     int replayVersion = (int)header["VERSION"].i;
     if (replayVersion != VERSION)
     {
-      Debug.LogError(
-          $"[ReplayManager] Loaded replay is of version {replayVersion}, expected version {VERSION}.");
-      return;
+      Debug.LogWarning(
+          $"[ReplayManager] Loaded replay is of version {replayVersion}, current version is {VERSION}.");
+      Debug.LogWarning(
+          "[ReplayManager] This may cause issues: backward compatibility is done by manually computing the tick.");
+      // return;
     }
 
     JSONObject managerParams = header["MANAGER_PARAMS"];
@@ -735,6 +737,15 @@ public class ReplayManager : MonoBehaviour
       nextEventTick = -1;
       return;
     }
-    nextEventTick = (int)nextEvent["TICK"].i;
+    // if version == 0, then we don't have TICK field, so we need to calculate by TIME / 0.02
+    if (nextEvent.HasField("TICK"))
+    {
+      nextEventTick = (int)nextEvent["TICK"].i;
+    }
+    else
+    {
+      nextEventTick = (int)(nextEvent["TIME"].f / _timePerTick);
+    }
+    // nextEventTick = (int)nextEvent["TICK"].i;
   }
 }
