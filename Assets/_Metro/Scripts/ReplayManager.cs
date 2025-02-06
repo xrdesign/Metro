@@ -557,7 +557,16 @@ public class ReplayManager : MonoBehaviour
       nextPositionTick = -1;
       return;
     }
-    nextPositionTick = (int)nextPositionObject["TICK"].i;
+    // if version == 0, then we don't have TICK field, so we need to calculate by TIME / 0.02
+    if (nextPositionObject.HasField("TICK"))
+    {
+      nextPositionTick = (int)nextPositionObject["TICK"].i;
+    }
+    else
+    {
+      nextPositionTick = (int)(nextPositionObject["TIME"].f / _timePerTick);
+    }
+    // nextPositionTick = (int)nextPositionObject["TICK"].i;
   }
 
   /* Helpers */
