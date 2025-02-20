@@ -641,6 +641,12 @@ public class ReplayManager : MonoBehaviour
       return;
     }
     int gameID = (int)nextEvent["GAME_ID"].i;
+    // check if game id == 1 has anything for debug
+    if (gameID == 1)
+    {
+      // print the nextEvent["EVENT_TYPE"].str;
+      Debug.Log("Game 1: " + nextEvent["EVENT_TYPE"].str);
+    }
     MetroGame g = games[gameID];
     JSONObject e = nextEvent["EVENT"]; // event parameters
 

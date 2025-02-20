@@ -45,6 +45,20 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
 
   public bool showCosts = false;
 
+  public enum CostDisplayMode
+  {
+    Name,
+    Highlight,
+    Color
+  }
+
+  public CostDisplayMode costDisplayMode = CostDisplayMode.Name;
+
+  public bool endlessMode = false;
+  public float endlessModeTime = 15.0f;
+
+  public bool forceUpdateGame = false;
+
   #endregion
 
   #endregion
@@ -99,6 +113,11 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public Random random = new Random();
 
   public DeepgramConnection deepgramConnection;
+
+  // TODO make these UI buttons
+  public bool spawnTenStations = false;
+  public bool spawnOneStarStation = false;
+  public bool removeLongestLine = false;
 
   #endregion
 
@@ -219,20 +238,40 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
 
   private void Update()
   {
-    
-    if (lastStateTime == 0) {
+
+    if (forceUpdateGame)
+    {
+      var closestGame =
+        FindNearestMetroGameToPosition(Camera.main.transform.position);
+      if (!closestGame)
+        return;
+      MetroManager.Instance.SelectGame(closestGame);
+    }
+
+    if (lastStateTime == 0)
+    {
       lastStateTime = time;
     }
 
     if (jsonGames != null)
     {
-      
+
       time += Time.deltaTime * gameSpeed;
       if (time >= simLength)
         this.isDone = true;
-    }else{
-      
+    }
+    else
+    {
+
       time += Time.deltaTime;
+    }
+
+    if (endlessMode && endlessModeTime > 0 && time >= endlessModeTime * 60)
+    {
+      foreach (var metroGame in Instance.games)
+      {
+        metroGame.GameOver();
+      }
     }
     // Send LSL Markers
 #if Unity_EDITOR_OSX 
@@ -243,7 +282,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
     }
 
     float stateRecordingInterval = 1.0f / stateFrequency;
-    if (time - lastStateTime > stateRecordingInterval){
+    if (time - lastStateTime > stateRecordingInterval)
+    {
       foreach (var metroGame in Instance.games)
       {
         // log the game state
@@ -251,10 +291,30 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
         var state_str = date.ToString() + metroGame.gameId + ", " +
                             metroGame.SerializeGameState().ToString();
         markerStream.push_sample(new string[] { state_str });
-      } 
+      }
       lastStateTime = time;
     }
 #endif
+
+    // TODO make these UI buttons
+    if (spawnTenStations)
+    {
+      spawnTenStations = false;
+      selectedGame.SpawnStationsWithCount(10);
+    }
+
+    if (spawnOneStarStation)
+    {
+      spawnOneStarStation = false;
+      selectedGame.SpawnOneStarStation();
+    }
+
+    if (removeLongestLine)
+    {
+      removeLongestLine = false;
+      selectedGame.RemoveLongestLine();
+    }
+
   }
 
   private void OnEnable()
