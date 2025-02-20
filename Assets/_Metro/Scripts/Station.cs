@@ -11,7 +11,6 @@ using UnityEngine.Serialization;
 using System;
 
 public enum StationType { Sphere, Cone, Cube, Star }
-
 public class Station : MonoBehaviour,
                        IMixedRealityPointerHandler,
                        IMixedRealityFocusHandler
@@ -69,6 +68,8 @@ public class Station : MonoBehaviour,
   public Image timerImage;
 
   float cooldown = 0.0f;
+  Material instancedMaterial;
+  Color origColor = Color.red;
 
   // Start is called before the first frame update
   public void Init()
@@ -85,6 +86,17 @@ public class Station : MonoBehaviour,
     }
 
     _stationText.text = stationName;
+
+    // create an instance of the material for color highlighting
+    var renderer = GetComponent<Renderer>();
+    if (renderer != null)
+    {
+      renderer.material = GameObject.Instantiate(renderer.material);
+      instancedMaterial = renderer.material;
+      origColor = instancedMaterial.color;
+    }
+
+    // create a point light source for the station
   }
 
   void FixedUpdate()
@@ -142,7 +154,15 @@ public class Station : MonoBehaviour,
     }
 
     timerImage.enabled = true;
-    timerImage.fillAmount = timer / MaxTimeoutDuration;
+    // when it's endless mode, no timeout timer icon
+    if (MetroManager.Instance.endlessMode)
+    {
+      timerImage.fillAmount = 0;
+    }
+    else
+    {
+      timerImage.fillAmount = timer / MaxTimeoutDuration;
+    }
 
     // Update passenger routes
     passengersRoutes = new string[passengers.Count];
@@ -160,15 +180,43 @@ public class Station : MonoBehaviour,
 
 
     // TODO: station cost display
+    _stationText.text = stationName;
+    instancedMaterial.color = origColor;
     if (MetroManager.Instance.showCosts)
     {
       // Debug.Log("Station cost: " + cost);
-      _stationText.text = stationName + " : " + cost.ToString("F2");
+      ShowCost();
     }
-    else
+  }
+
+  public void ShowCost()
+  {
+    switch (MetroManager.Instance.costDisplayMode)
     {
-      _stationText.text = stationName;
+      case MetroManager.CostDisplayMode.Name:
+        _stationText.text = stationName + " : " + cost.ToString("F2");
+        break;
+      case MetroManager.CostDisplayMode.Highlight:
+
+        break;
+      case MetroManager.CostDisplayMode.Color:
+        float norm_cost = gameInstance.GetNormalizedStationCost(cost);
+        instancedMaterial.color = GetColor(norm_cost);
+        break;
     }
+  }
+
+  public Color GetColor(float value)
+  {
+    // Clamp value to ensure it's within the range [0,1]
+    value = Mathf.Clamp01(value);
+
+    // Interpolating between green (0,1,0) and red (1,0,0)
+    float r = value;          // Increases from 0 (green) to 1 (red)
+    float g = 1 - value;      // Decreases from 1 (green) to 0 (red)
+    float b = 0f;             // No blue component
+
+    return new Color(r, g, b);
   }
 
   public void SpawnRandomPassenger()

@@ -2231,19 +2231,29 @@ MonoBehaviour:
   daysPerNewTrain: 5
   daysPerNewLine: 15
   targetGameSpeed: 1
-  timeoutDurationOverride: 90
+  timeoutDurationOverride: 900000
   gameSeeds: 2100000021000000
   autoReset: 0
   showCosts: 0
+  costDisplayMode: 0
+  endlessMode: 0
+  endlessModeTime: 30
+  forceUpdateGame: 0
   logRecorder: {fileID: 0}
   currTick: 0
+  stateFrequency: 5
   games: []
   menuUI: {fileID: 0}
   metroUI: {fileID: 4500513732196729373}
   addTrainUI: {fileID: 0}
   LController: {fileID: 142235710}
   deepgramConnection: {fileID: 0}
+  spawnTenStations: 0
+  spawnOneStarStation: 0
+  removeLongestLine: 0
+  lastStateTime: 0
   isDone: 0
+  time: 0
 --- !u!4 &1277933883
 Transform:
   m_ObjectHideFlags: 0

@@ -141,6 +141,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   public bool simGame = false;
   private float simLength = 0;
 
+  public float maxCost = 0;
+  public float minCost = 0;
+
+  public Station maxCostStation = null;
+
+  public Light pointLight;
+
   private static Color[] lineColors = {
     Color.red,
     Color.blue,
@@ -195,6 +202,14 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
 
     if (!simGame)
       StartGame();
+
+    // Create a point light for highlighting
+    string light_name = "Point Light " + gameId;
+    pointLight = new GameObject(light_name).AddComponent<Light>();
+    pointLight.type = LightType.Point;
+    pointLight.range = 10;
+    pointLight.intensity = 0.5f;
+
   }
 
   public void StartGame()
@@ -266,6 +281,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
 
   public void SetStationCosts(JSONObject costs)
   {
+    // Reset min max
+    maxCost = 0;
+    minCost = float.PositiveInfinity;
+
     // costs is the station_costs array
     // update costs for each station from the station_costs array
     for (int i = 0; i < costs.Count; i++)
@@ -278,8 +297,26 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       if (station != null)
       {
         station.cost = station_cost;
+        // if not infinity, update the min and max cost
+        if (station_cost != float.PositiveInfinity)
+        {
+          if (station_cost > maxCost)
+          {
+            maxCost = station_cost;
+            maxCostStation = station;
+          }
+          if (station_cost < minCost)
+            minCost = station_cost;
+        }
       }
     }
+  }
+
+  public float GetNormalizedStationCost(float cost)
+  {
+    if (cost == float.PositiveInfinity)
+      return 0;
+    return (cost - minCost) / (maxCost - minCost);
   }
 
   public void SetPaused(bool shouldPause)
@@ -374,6 +411,25 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       needReset = false;
       // End this Update step early
       return;
+    }
+
+    // if showCost and mode == highlight, move the light to the station
+    if (MetroManager.Instance.showCosts &&
+        MetroManager.Instance.costDisplayMode == MetroManager.CostDisplayMode.Highlight)
+    {
+      if (maxCostStation != null)
+      {
+        pointLight.transform.position = maxCostStation.transform.position;
+        pointLight.gameObject.SetActive(true);
+      }
+      else
+      {
+        pointLight.gameObject.SetActive(false);
+      }
+    }
+    else
+    {
+      pointLight.gameObject.SetActive(false);
     }
   }
 
@@ -476,8 +532,52 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       uiUpdateDelegate.Invoke();
   }
 
+  // Spawn numbers of stations randomly
+  public void SpawnStationsWithCount(int count)
+  {
+    for (int i = 0; i < count; i++)
+    {
+      var p = GetRandomFloat();
+      var type = StationType.Sphere;
+      if (p < 0.33f)
+        type = StationType.Sphere;
+      else if (p < 0.66f)
+        type = StationType.Cone;
+      else if (p < 1.0f)
+        type = StationType.Cube;
+      SpawnStation(type);
+    }
+  }
+
+  public void SpawnOneStarStation()
+  {
+    SpawnStation(StationType.Star);
+  }
+
+  public void RemoveLongestLine()
+  {
+    if (lines.Count == 0)
+      return;
+    TransportLine longestLine = lines[0];
+    for (int i = 1; i < lines.Count; i++)
+    {
+      if (lines[i].stops.Count > longestLine.stops.Count)
+        longestLine = lines[i];
+    }
+    longestLine.RemoveAll();
+    Destroy(longestLine.tracks.gameObject);
+    Destroy(longestLine.gameObject);
+    lines.Remove(longestLine);
+  }
+
   public void CheckStationTimers()
   {
+    // if the endlessMode is enable, then do not check station timer here
+    if (MetroManager.Instance.endlessMode)
+    {
+      return;
+    }
+
     foreach (Station station in stations)
     {
       float overcrowdedTimerLimit =
