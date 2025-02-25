@@ -502,7 +502,7 @@ class GameHandler:
         }))
 
 if __name__ == "__main__":
-    game_count = 2
+    game_count = 1
     game_address = 'ws://localhost:3000/metro'
     game_handlers = [GameHandler(game_id=i, game_address=game_address) for i in range(game_count)]
     cost_managers = [AStarCostManager(all_stations=game_handlers[i].stations, lines=game_handlers[i].lines) for i in range(game_count)]
