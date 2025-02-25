@@ -222,7 +222,7 @@ class StochasticGreedyAgent(Agent):
         return planned_paths
 
 if __name__ == "__main__":
-    game_count = 2
+    game_count = 1
     ws = websocket.create_connection('ws://localhost:3000/metro')
     agents = []
 
