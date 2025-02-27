@@ -201,13 +201,11 @@ class PathFinder(ABC):
         return route
 
     def compute_all_station_costs(self):
-        cost_to_start = self.compute_costs_to_start()
         cost_to_destination = self.compute_costs_to_destination()
-        assert len(cost_to_start) == len(self.stations)
         assert len(cost_to_destination) == len(self.stations)
         station_costs = []
         for i, station in enumerate( self.stations):
-            cost = cost_to_start[i].cost + cost_to_destination[i].cost
+            cost = cost_to_destination[i].cost
             station_costs.append(StationCost(station, cost))
         return station_costs
 
@@ -239,7 +237,7 @@ class PathFinder(ABC):
             cost_on_path = 0
             for path in self.planned_paths:
                 cost_on_this_path = 0
-                if station in path:
+                if station in path and len(path)>=2:
                     start = station.id
                     # calculate distance from end_x to starting station
                     cost_on_this_path = 0
@@ -250,11 +248,10 @@ class PathFinder(ABC):
                         station_a = path[i].pos
                         station_b = path[i+1].pos
                         x_to_start += GeometryUtils.distance_between_points(station_a, station_b)
-                        if i+1 == start:
-                            continue
+
                     # calculate distance from end_y to starting station
                     y_to_start = 0
-                    for i in range(len(path)-1, 0, -1):
+                    for i in range(len(path)-1, 1, -1):
                         if i == start:
                             continue
                         station_a = path[i].pos
@@ -487,8 +484,8 @@ class GameHandler:
             'command': 'get_state_sync',
             'game_id': self.game_id
         }
-    
-    def send_station_costs_to_game(self, cost_manager):
+
+    def send_station_costs_to_game(self, cost_manager: StationCostManager):
         station_costs = []
         for station_cost in cost_manager.station_costs:
             station_costs.append({
