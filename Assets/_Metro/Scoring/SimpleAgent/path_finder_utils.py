@@ -96,8 +96,8 @@ class StationCostManager:
         self.all_stations = all_stations
         self.planned_paths = [[] for _ in range(len(lines))]
         for i, line in enumerate(lines):
-            for station_id in line.stops:
-                self.planned_paths [i].append(self.all_stations[station_id])
+            for j in line.stops:
+                self.planned_paths [i].append(self.all_stations[j])
         self.station_costs = []  # Reset costs
         self.path_finder = self._create_path_finder(self.all_stations, self.planned_paths)
         self.station_costs = self.path_finder.compute_all_station_costs()
@@ -409,7 +409,7 @@ class GameHandler:
         self.ws = websocket.create_connection(self.game_address)
         self.game_id = game_id
         self.raw_log = None
-        self.game_state = None
+        self.game_state: MetroWrapper.GameState = None
         self.stations = []
         self.lines = []
         self.update_gamestate()

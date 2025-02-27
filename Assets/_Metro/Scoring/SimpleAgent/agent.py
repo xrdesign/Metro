@@ -126,9 +126,6 @@ class Agent:
 
         return ordered_list
 
-    def get_cost_manager(self, all_stations, planned_paths):
-        return self.cost_manager_function(all_stations=all_stations, planned_paths=planned_paths)
-
     def get_better_paths(self, game_state, update_to_game):
         """
         Iteratively generates new paths and evaluates their cost using a cost_manager's extracted cost.
