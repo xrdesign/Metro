@@ -1,10 +1,9 @@
-from typing import Tuple
+from typing import Tuple, List
 from abc import ABC, abstractmethod
 import heapq
 import math, random
 
 import websocket
-from MetroWrapper import GameState
 import MetroWrapper
 import json
 from time import sleep
@@ -410,8 +409,8 @@ class GameHandler:
         self.game_id = game_id
         self.raw_log = None
         self.game_state: MetroWrapper.GameState = None
-        self.stations = []
-        self.lines = []
+        self.stations: List[MetroWrapper.Station] = []
+        self.lines: List[MetroWrapper.Line] = []
         self.update_gamestate()
 
     def update_gamestate(self):
