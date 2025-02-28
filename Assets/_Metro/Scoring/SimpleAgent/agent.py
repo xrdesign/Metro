@@ -160,9 +160,10 @@ class Agent:
 
                 for line_index, station_list in enumerate(self.planned_paths):
                     for insert_index, station in enumerate(station_list):
-                        # print(f"{station.id} ", end=" ")
-                        insert_station(self.ws, line_index, station.id, insert_index, self.game_id)
-                    # print("\n")
+                        insert_station(
+                            ws=self.ws, line=line_index, station=station.id,
+                            insert=insert_index, game_id=self.game_id
+                        )
 
 
 def check_whether_not_crossed(station, station_list):
