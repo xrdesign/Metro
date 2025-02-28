@@ -413,6 +413,15 @@ class GameHandler:
         self.lines: List[MetroWrapper.Line] = []
         self.update_gamestate()
 
+    def get_unconnected_stations(self) -> List[MetroWrapper.Station]:
+        # Create a set of all station IDs that are included in any line's stops
+        connected_station_ids = set()
+        for line in self.lines:
+            connected_station_ids.update(line.stops)
+
+        # Return stations whose id is not in any line's stops
+        return [station for station in self.stations if station.id not in connected_station_ids]
+
     def update_gamestate(self):
         self.raw_log = self.send_and_recieve(json.dumps(self.get_game_log()))
         try:
