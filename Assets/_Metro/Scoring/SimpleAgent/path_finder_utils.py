@@ -78,9 +78,9 @@ class StationCost:
 class StationCostManager:
     def __init__(self):
         self.station_costs = []
-        self.all_stations = []
-        self.planned_paths = []
-        self.path_finder = None
+        self.all_stations: List[MetroWrapper.Station] = []
+        self.planned_paths: List[List[MetroWrapper.Station]] = []
+        self.path_finder: PathFinder = None
 
     def add_cost(self, station, cost):
         self.station_costs.append(StationCost(station, cost))
@@ -98,14 +98,14 @@ class StationCostManager:
             for j in line.stops:
                 self.planned_paths [i].append(self.all_stations[j])
         self.station_costs = []  # Reset costs
-        self.path_finder = self._create_path_finder(self.all_stations, self.planned_paths)
+        self.path_finder: PathFinder = self._create_path_finder(self.all_stations, self.planned_paths)
         self.station_costs = self.path_finder.compute_all_station_costs()
 
     def update_info_using_plan(self, all_stations, planned_paths):
         self.all_stations = all_stations
         self.planned_paths = planned_paths
         self.station_costs = []  # Reset costs
-        self.path_finder = self._create_path_finder(self.all_stations, self.planned_paths)
+        self.path_finder: PathFinder = self._create_path_finder(self.all_stations, self.planned_paths)
         self.station_costs = self.path_finder.compute_all_station_costs()
 
     def get_line_cost(self, line):
@@ -382,7 +382,7 @@ class DijkstraCostManager(StationCostManager):
         super().__init__()
         self.update_info_using_gamesinfo(all_stations, lines)
 
-    def _create_path_finder(self, all_stations, planned_paths):
+    def _create_path_finder(self, all_stations, planned_paths) -> DijkstraPathFinder:
         return DijkstraPathFinder(stations=all_stations, planned_paths=planned_paths)
 
 class AStarCostManager(StationCostManager):
@@ -391,7 +391,7 @@ class AStarCostManager(StationCostManager):
         if lines:
             self.update_info_using_gamesinfo(all_stations, lines)
 
-    def _create_path_finder(self, all_stations, planned_paths):
+    def _create_path_finder(self, all_stations, planned_paths) -> AStarPathFinder:
         return AStarPathFinder(stations=all_stations, planned_paths=planned_paths)
 
 class Segment:
