@@ -150,7 +150,7 @@ class StationCostManager:
         return f"StationCostManager(station_costs={self.station_costs})"
 
 class PathFinder(ABC):
-    def __init__(self, stations, segments=None, planned_paths=None):
+    def __init__(self, stations: List[MetroWrapper.Station], segments=None, planned_paths: List[List[MetroWrapper.Station]]=None):
         """
         Initialize the base PathFinder with station and segment or planned path information.
         Args:
@@ -158,8 +158,8 @@ class PathFinder(ABC):
             segments (list, optional): List of Segment objects. Defaults to None.
             planned_paths (list, optional): List of planned paths. Defaults to None.
         """
-        self.stations = stations
-        self.planned_paths = planned_paths
+        self.stations: List[MetroWrapper.Station] = stations
+        self.planned_paths: List[List[MetroWrapper.Station]] = planned_paths
         if segments:
             self.adjacency_list = PathUtils.generate_adjacency_list(segments)
         elif planned_paths:
@@ -422,7 +422,7 @@ class GameHandler:
         # Return stations whose id is not in any line's stops
         return [station for station in self.stations if station.id not in connected_station_ids]
 
-    def update_gamestate(self):
+    def update_gamestate(self, whether_print=False):
         self.raw_log = self.send_and_recieve(json.dumps(self.get_game_log()))
         try:
             temp_game_state = json.loads(self.raw_log)
@@ -432,7 +432,7 @@ class GameHandler:
         gamestate_update = False
         if temp_game_state:
             self.game_state = MetroWrapper.GameState(temp_game_state)
-            if self.check_for_station_changes_and_update(whether_print=True) or self.check_for_line_changes_and_update(whether_print=True):
+            if self.check_for_station_changes_and_update(whether_print=True) or self.check_for_line_changes_and_update(whether_print=whether_print):
                 gamestate_update = True
         return gamestate_update
 

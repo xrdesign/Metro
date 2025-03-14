@@ -26,7 +26,7 @@ class GameStruct:
 class SimStruct:
     def __init__(self, gameJson):
         self.score = gameJson['score'] if 'score' in gameJson else 0
-        self.passengersDelivered = gameJson['passengersDelivered'] if 'passengersDelivered' in gameJson else 0  
+        self.passengersDelivered = gameJson['passengersDelivered'] if 'passengersDelivered' in gameJson else 0
         self.totalWaitTime = gameJson['totalWaitTime'] if 'totalWaitTime' in gameJson else 0
         self.totalTravelTime = gameJson['totalTravelTime'] if 'totalTravelTime' in gameJson else 0
         self.stationCount = gameJson['station_count'] if 'station_cout' in gameJson else 0
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     data = json.loads(rawData) #parse log file data into json object
     logs = data["time_steps"] #create an array of logsteps from json
 
-    numLogs = len(logs) 
+    numLogs = len(logs)
     i = 1
     if numLogs < 2:
         i = 0
@@ -48,11 +48,11 @@ if __name__ == "__main__":
 
     #determine the type of log using naming convention difference between sim
     #and regular logs:
-    isSim = not "games" in logs[0] 
+    isSim = not "games" in logs[0]
 
     #store the type of struct to create based on whether it is sim data or not
     struct = SimStruct if isSim else GameStruct
-    
+
     #output array
     parsedLogs = []
     for i in range(len(logs)):
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         for g in range(len(games)):
             outputData = games[g].stationsInserted #modify .score depending on desired information
             #eg: outputData = games[g].stationCount to get number of stations
-            #or  outputData = games[g].agentActions to get number of agentActions 
+            #or  outputData = games[g].agentActions to get number of agentActions
             outputFile.write(str(outputData))
             if(g != numGames-1):
                 outputFile.write(",")
@@ -90,9 +90,9 @@ if __name__ == "__main__":
     print("Done.  Output saved to \"output.csv\"")
 
 
-        
 
 
-        
+
+
 
 
