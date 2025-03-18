@@ -24,7 +24,7 @@ def send_and_recieve(ws, message):
                 print(f"Connection failed: {e}")
                 tries += 1
 
-def insert_station(ws, line, station, insert, game_id):
+def insert_station(ws, line: int, station: int, insert: int, game_id: int):
     command =  {
         "command":"take_action",
         "game_id":game_id,
@@ -83,13 +83,16 @@ class Agent:
         self.cost = self.cost_manager.total_cost()
         self.init = True
 
-    def check_for_changes(self, game_state):
+    def check_for_changes(self, game_state, whether_print=False):
         if self.num_paths != len(game_state.lines) or len(self.all_stations) != len(game_state.stations):
-            print("Gamestate Update!!!")
+            if whether_print:
+                print("Gamestate Update!!!")
             if self.num_paths != len(game_state.lines):
-                print(f"Number of paths has changed from {self.num_paths} to {len(game_state.lines)} on game {self.game_id}.")
+                if whether_print:
+                    print(f"Number of paths has changed from {self.num_paths} to {len(game_state.lines)} on game {self.game_id}.")
             if len(self.all_stations) != len(game_state.stations):
-                print(f"Number of stations has changed from {len(self.all_stations)} to {len(game_state.stations)} on game {self.game_id}.")
+                if whether_print:
+                    print(f"Number of stations has changed from {len(self.all_stations)} to {len(game_state.stations)} on game {self.game_id}.")
             return True
         return False
 
@@ -126,9 +129,6 @@ class Agent:
 
         return ordered_list
 
-    def get_cost_manager(self, all_stations, planned_paths):
-        return self.cost_manager_function(all_stations=all_stations, planned_paths=planned_paths)
-
     def get_better_paths(self, game_state, update_to_game):
         """
         Iteratively generates new paths and evaluates their cost using a cost_manager's extracted cost.
@@ -163,9 +163,10 @@ class Agent:
 
                 for line_index, station_list in enumerate(self.planned_paths):
                     for insert_index, station in enumerate(station_list):
-                        # print(f"{station.id} ", end=" ")
-                        insert_station(self.ws, line_index, station.id, insert_index, self.game_id)
-                    # print("\n")
+                        insert_station(
+                            ws=self.ws, line=line_index, station=station.id,
+                            insert=insert_index, game_id=self.game_id
+                        )
 
 
 def check_whether_not_crossed(station, station_list):
@@ -224,7 +225,7 @@ class StochasticGreedyAgent(Agent):
 if __name__ == "__main__":
     game_count = 1
     ws = websocket.create_connection('ws://localhost:3000/metro')
-    agents = []
+    agents: List[Agent] = []
 
     numStations = 0
     def getGamesCommand(game_id = 0):

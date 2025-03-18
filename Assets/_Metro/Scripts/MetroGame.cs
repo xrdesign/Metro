@@ -135,6 +135,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     public uint id;
   }
 
+  private int insertRecommendationStationId = -1;
+  private int insertRecommendationIndex = -1;
+  private int insertRecommendationLineId = -1;
+
   #endregion
 
   private volatile bool needReset = false;
@@ -312,6 +316,69 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     }
   }
 
+  public void SetInsertionRecommendation(int station_id, int index, int line_id)
+  {
+    this.insertRecommendationStationId = station_id;
+    this.insertRecommendationIndex = index;
+    this.insertRecommendationLineId = line_id;
+  }
+
+  public void VisualizeInsertionRecommendation(int station_id, int index, int line_id)
+  {
+    // TODO: 
+
+    if (MetroManager.Instance.showRecommendation)
+    {
+      MetroManager.Instance.recomendationLine.gameObject.SetActive(true);
+    }
+    else
+    {
+      MetroManager.Instance.recomendationLine.gameObject.SetActive(false);
+    }
+    // get the line with line_id
+    TransportLine line = lines.Find(x => x.id == line_id);
+    Tracks tracks = line.tracks;
+
+    // if the tracks.segments is empty then the line is not deployed yet, ignore
+    if (tracks.segments.Count == 0)
+      return;
+
+    // get the station with station_id
+    Station station = stations.Find(x => x.id == station_id);
+
+    // Then the end position is the station position
+    Vector3 endPos = station.transform.position;
+
+    TrackSegment startSeg = null;
+    // now for the startPos there are two cases: edge and middle
+    if (index == 0)
+    {
+      // get the head of the track
+      startSeg = tracks.head;
+    }
+    else if (index == line.stops.Count)
+    {
+      // get the tail of the track
+      startSeg = tracks.tail;
+    }
+    else
+    {
+      // get the segment at index
+      // if index within the range of segments, get the segment at index
+      // otherwise return
+      if (index < 1 || index >= tracks.segments.Count)
+        return;
+      startSeg = tracks.segments[index - 1];
+    }
+
+    // get the middle position of the segment
+    LineRenderer lineRenderer = startSeg.lineRenderer;
+    Vector3 startPos = lineRenderer.GetPosition((int)(lineRenderer.positionCount / 2)); // middle of the segment
+
+    // set the insertion recommendation
+    MetroManager.Instance.recomendationLine.SetPositions(new Vector3[] { startPos, endPos });
+  }
+
   public float GetNormalizedStationCost(float cost)
   {
     if (cost == float.PositiveInfinity)
@@ -430,6 +497,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     else
     {
       pointLight.gameObject.SetActive(false);
+    }
+
+    if (insertRecommendationStationId != -1)
+    {
+      VisualizeInsertionRecommendation(insertRecommendationStationId,
+                                        insertRecommendationIndex,
+                                        insertRecommendationLineId);
     }
   }
 

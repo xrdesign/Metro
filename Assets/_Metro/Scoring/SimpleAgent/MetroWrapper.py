@@ -3,6 +3,7 @@ import sys
 import math
 import json
 import heapq
+from typing import List
 
 SHAPES = ["Sphere", "Cone", "Cube"]
 PositiveInfinity = 100000000
@@ -19,7 +20,7 @@ def GetDistance(a, b):
 class GameState:
     def __init__(self, gameJson):
         #create stations:
-        self.stations = []
+        self.stations: List[Station] = []
         self.stationMappings = {}
         stationsData = gameJson['stations']
         self.score = gameJson['score']
@@ -29,7 +30,7 @@ class GameState:
             self.stations.append(station)
             self.stationMappings[stationData['unique_id']] = station.id
 
-        self.lines = []
+        self.lines: List[Line] = []
         self.lineMappings = {}
         linesData = gameJson['lines']
         for lineData in linesData:

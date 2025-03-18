@@ -224,7 +224,10 @@ public class DeepgramConnection : MonoBehaviour
             StartCoroutine(FinishRecording());
         }
 
-        ProcessAudio();
+        if (playing)
+        {
+            ProcessAudio();
+        }
 
         if (ws != null)
         {
