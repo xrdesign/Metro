@@ -40,6 +40,9 @@ class Advisor:
 class StochasticGreedyAdvisor(Advisor):
     def infer_next_connection(self, attempts: int = 1e4, whether_print = False, whether_implement:bool = False, game_handler: GameHandler=None) -> List[List[Station]]:
         best_candidate = None
+        best_candidate_station = None
+        best_chosen_path_index = None
+        best_insert_position = None
         best_cost = self.future_cost_manager.total_cost()
 
         # Make sure we have at least one unconnected station to try.
@@ -96,6 +99,9 @@ class StochasticGreedyAdvisor(Advisor):
 
 
         # If a candidate was found, return it; otherwise, return the current paths.
+        if best_candidate is None:
+            return self.future_planned_paths, None, None, None
+        # Return the best candidate paths, the station to insert, the path index, and the insertion position.
         return self.future_planned_paths, best_candidate_station.id, best_insert_position, best_chosen_path_index
 
 
@@ -112,5 +118,6 @@ if __name__ == "__main__":
                 advisors[i].update_info_using_gamesinfo(all_stations=game_handlers[i].stations, lines=game_handlers[i].lines)
                 # game_handlers[i].send_station_costs_to_game(advisors[i].cost_manager)
             if len(advisors[i].unconnected_stations)>0:
-                advisors[i].infer_next_connection(attempts=5e2, whether_print=True, whether_implement=False, game_handler=game_handlers[i])
+                _, best_candidate_station_id, best_insert_postion, best_chosen_path_index = advisors[i].infer_next_connection(attempts=5e2, whether_print=True, whether_implement=False, game_handler=game_handlers[i])
+                game_handlers[i].send_recommendation_to_game(best_candidate_station_id, best_insert_postion, best_chosen_path_index)
         time.sleep(1)
