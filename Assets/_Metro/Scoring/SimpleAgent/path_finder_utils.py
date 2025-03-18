@@ -1,10 +1,9 @@
-from typing import Tuple
+from typing import Tuple, List
 from abc import ABC, abstractmethod
 import heapq
 import math, random
 
 import websocket
-from MetroWrapper import GameState
 import MetroWrapper
 import json
 from time import sleep
@@ -79,9 +78,9 @@ class StationCost:
 class StationCostManager:
     def __init__(self):
         self.station_costs = []
-        self.all_stations = []
-        self.planned_paths = []
-        self.path_finder = None
+        self.all_stations: List[MetroWrapper.Station] = []
+        self.planned_paths: List[List[MetroWrapper.Station]] = []
+        self.path_finder: PathFinder = None
 
     def add_cost(self, station, cost):
         self.station_costs.append(StationCost(station, cost))
@@ -96,17 +95,17 @@ class StationCostManager:
         self.all_stations = all_stations
         self.planned_paths = [[] for _ in range(len(lines))]
         for i, line in enumerate(lines):
-            for station_id in line.stops:
-                self.planned_paths [i].append(self.all_stations[station_id])
+            for j in line.stops:
+                self.planned_paths [i].append(self.all_stations[j])
         self.station_costs = []  # Reset costs
-        self.path_finder = self._create_path_finder(self.all_stations, self.planned_paths)
+        self.path_finder: PathFinder = self._create_path_finder(self.all_stations, self.planned_paths)
         self.station_costs = self.path_finder.compute_all_station_costs()
 
     def update_info_using_plan(self, all_stations, planned_paths):
         self.all_stations = all_stations
         self.planned_paths = planned_paths
         self.station_costs = []  # Reset costs
-        self.path_finder = self._create_path_finder(self.all_stations, self.planned_paths)
+        self.path_finder: PathFinder = self._create_path_finder(self.all_stations, self.planned_paths)
         self.station_costs = self.path_finder.compute_all_station_costs()
 
     def get_line_cost(self, line):
@@ -151,7 +150,7 @@ class StationCostManager:
         return f"StationCostManager(station_costs={self.station_costs})"
 
 class PathFinder(ABC):
-    def __init__(self, stations, segments=None, planned_paths=None):
+    def __init__(self, stations: List[MetroWrapper.Station], segments=None, planned_paths: List[List[MetroWrapper.Station]]=None):
         """
         Initialize the base PathFinder with station and segment or planned path information.
         Args:
@@ -159,8 +158,8 @@ class PathFinder(ABC):
             segments (list, optional): List of Segment objects. Defaults to None.
             planned_paths (list, optional): List of planned paths. Defaults to None.
         """
-        self.stations = stations
-        self.planned_paths = planned_paths
+        self.stations: List[MetroWrapper.Station] = stations
+        self.planned_paths: List[List[MetroWrapper.Station]] = planned_paths
         if segments:
             self.adjacency_list = PathUtils.generate_adjacency_list(segments)
         elif planned_paths:
@@ -383,7 +382,7 @@ class DijkstraCostManager(StationCostManager):
         super().__init__()
         self.update_info_using_gamesinfo(all_stations, lines)
 
-    def _create_path_finder(self, all_stations, planned_paths):
+    def _create_path_finder(self, all_stations, planned_paths) -> DijkstraPathFinder:
         return DijkstraPathFinder(stations=all_stations, planned_paths=planned_paths)
 
 class AStarCostManager(StationCostManager):
@@ -392,7 +391,7 @@ class AStarCostManager(StationCostManager):
         if lines:
             self.update_info_using_gamesinfo(all_stations, lines)
 
-    def _create_path_finder(self, all_stations, planned_paths):
+    def _create_path_finder(self, all_stations, planned_paths) -> AStarPathFinder:
         return AStarPathFinder(stations=all_stations, planned_paths=planned_paths)
 
 class Segment:
@@ -409,12 +408,21 @@ class GameHandler:
         self.ws = websocket.create_connection(self.game_address)
         self.game_id = game_id
         self.raw_log = None
-        self.game_state = None
-        self.stations = []
-        self.lines = []
+        self.game_state: MetroWrapper.GameState = None
+        self.stations: List[MetroWrapper.Station] = []
+        self.lines: List[MetroWrapper.Line] = []
         self.update_gamestate()
 
-    def update_gamestate(self):
+    def get_unconnected_stations(self) -> List[MetroWrapper.Station]:
+        # Create a set of all station IDs that are included in any line's stops
+        connected_station_ids = set()
+        for line in self.lines:
+            connected_station_ids.update(line.stops)
+
+        # Return stations whose id is not in any line's stops
+        return [station for station in self.stations if station.id not in connected_station_ids]
+
+    def update_gamestate(self, whether_print=False):
         self.raw_log = self.send_and_recieve(json.dumps(self.get_game_log()))
         try:
             temp_game_state = json.loads(self.raw_log)
@@ -424,7 +432,7 @@ class GameHandler:
         gamestate_update = False
         if temp_game_state:
             self.game_state = MetroWrapper.GameState(temp_game_state)
-            if self.check_for_station_changes_and_update(whether_print=True) or self.check_for_line_changes_and_update(whether_print=True):
+            if self.check_for_station_changes_and_update(whether_print=True) or self.check_for_line_changes_and_update(whether_print=whether_print):
                 gamestate_update = True
         return gamestate_update
 
@@ -497,6 +505,18 @@ class GameHandler:
             'game_id': self.game_id,
             'station_costs': station_costs
         }))
+
+    def send_recommendation_to_game(self, best_candidate_station_id, best_insert_postion, best_chosen_path_index):
+        if best_candidate_station_id is not None and best_insert_postion is not None and best_chosen_path_index is not None:
+            self.send_and_recieve(json.dumps({
+                'command': 'recommend_insertion',
+                'game_id': self.game_id,
+                'arguments': {
+                    'station_id': best_candidate_station_id,
+                    'insert_position': best_insert_postion,
+                    'line_index': best_chosen_path_index
+                }
+            }))
 
 if __name__ == "__main__":
     game_count = 1
