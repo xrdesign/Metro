@@ -506,6 +506,18 @@ class GameHandler:
             'station_costs': station_costs
         }))
 
+    def send_recommendation_to_game(self, best_candidate_station_id, best_insert_postion, best_chosen_path_index):
+        if best_candidate_station_id is not None and best_insert_postion is not None and best_chosen_path_index is not None:
+            self.send_and_recieve(json.dumps({
+                'command': 'recommend_insertion',
+                'game_id': self.game_id,
+                'arguments': {
+                    'station_id': best_candidate_station_id,
+                    'insert_position': best_insert_postion,
+                    'line_index': best_chosen_path_index
+                }
+            }))
+
 if __name__ == "__main__":
     game_count = 1
     game_address = 'ws://localhost:3000/metro'
