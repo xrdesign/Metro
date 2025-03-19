@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using LSL;
@@ -10,7 +9,6 @@ using UnityEngine;
 using Random = System.Random;
 using System.IO;
 using System;
-using UnityEditor.Rendering;
 
 public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedRealityInputHandler
 {
@@ -43,16 +41,11 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public float timeoutDurationOverride = 45.0f;
   public int[] gameSeeds;
 
-  public bool withPerturbations;
-
   public bool autoReset = false;
 
-<<<<<<< Updated upstream
   public bool showRecommendation = false;
 
   public bool showCosts = false;
-=======
->>>>>>> Stashed changes
 
   public enum CostDisplayMode
   {
@@ -124,9 +117,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public Random random = new Random();
 
   public DeepgramConnection deepgramConnection;
-
-
-  public bool showCosts = false;
 
   // TODO make these UI buttons
   public bool spawnTenStations = false;
@@ -246,7 +236,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
       }
       */
     }
-
   }
 
   public float lastStateTime = 0;
@@ -281,7 +270,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
       time += Time.deltaTime;
     }
 
-    if (endlessMode && endlessModeTime > 0 && time >= endlessModeTime)
+    if (endlessMode && endlessModeTime > 0 && time >= endlessModeTime * 60)
     {
       foreach (var metroGame in Instance.games)
       {
@@ -311,6 +300,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
     }
 #endif
 
+    // TODO make these UI buttons
     if (spawnTenStations)
     {
       spawnTenStations = false;
@@ -330,8 +320,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
     }
 
   }
-
-
 
   private void OnEnable()
   {
@@ -795,16 +783,6 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
     Instance.scores.Flush();
   }
 
-
-void Start()
-{
-  if (withPerturbations)
-  {
-    // Start perturbations
-    Instance.StartCoroutine(Instance.ActivatePerturbations());
-  }
-}
-
   // Starts every game simultaneously.
   public static void StartGames()
   {
@@ -812,23 +790,6 @@ void Start()
     {
       metroGame.StartGame();
     }
-
-  }
-
-  private IEnumerator ActivatePerturbations()
-  {
-    // Wait for 2 minutes and call the first function
-    yield return new WaitForSeconds(120f);
-    selectedGame.SpawnOneStarStation();
-
-    // Wait for another 2 minutes (4 minutes total) and call the second function
-    yield return new WaitForSeconds(120f);
-    selectedGame.SpawnStationsWithCount(8);
-
-    // Wait for another 2 minutes (6 minutes total) and call the third function
-    yield return new WaitForSeconds(120f);
-    selectedGame.RemoveLongestLine();
-          
   }
 
   #region Station Name Generation

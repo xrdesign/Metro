@@ -31,7 +31,7 @@ public class SceneLoader : MonoBehaviour
     {
         // SceneManager.LoadScene(1);
         menuUI.SetActive(false);
-
+        MetroManager.StartGames();
     }
 
     public void QuitGame()
