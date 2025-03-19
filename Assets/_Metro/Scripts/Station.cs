@@ -65,6 +65,8 @@ public class Station : MonoBehaviour,
   static bool dragging = false;
   bool firstDrag = false;
 
+  private bool isResetting = false; // Flag to track if the coroutine is already running
+
   public Image timerImage;
 
   float cooldown = 0.0f;
@@ -204,10 +206,34 @@ public class Station : MonoBehaviour,
         instancedMaterial.color = GetColor(norm_cost);
         break;
     }
+
+    // Start a coroutine to turn off the display mode after 5 seconds only if it's not already running
+    if (!isResetting)
+    {
+        StartCoroutine(ResetCostDisplayMode());
+    }
+  }
+
+  private IEnumerator ResetCostDisplayMode()
+  {
+    isResetting = true; // Set the flag to true to prevent multiple calls
+    // Wait for 5 seconds
+    yield return new WaitForSeconds(5f);
+    _stationText.text = stationName;
+    instancedMaterial.color = origColor;
+    MetroManager.Instance.showCosts = false;
+    isResetting = false; // Reset the flag so it can be called again
   }
 
   public Color GetColor(float value)
   {
+    // Check if the value is infinite
+    if (value == -1)
+    {
+    // Return black for infinite values
+      return Color.black;
+    }
+
     // Clamp value to ensure it's within the range [0,1]
     value = Mathf.Clamp01(value);
 
