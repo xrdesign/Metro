@@ -46,11 +46,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public bool withPerturbations;
 
   public bool autoReset = false;
+  public bool showRecommendation = false;
 
-<<<<<<< Updated upstream
-  public bool showCosts = false;
-=======
->>>>>>> Stashed changes
 
   public enum CostDisplayMode
   {
@@ -112,6 +109,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public GameObject addTrainUI;
   public GameObject LController;
   TransportLineUI[] lineUIs;
+
+  public LineRenderer recomendationLine;
 
   #endregion
 
@@ -530,6 +529,15 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public static void SetStationCosts(uint gameID, JSONObject costs)
   {
     GetGameWithID(gameID).SetStationCosts(costs);
+  }
+
+  /// <summary>
+  /// Set the insertion recommendation for a specific game.
+  /// </summary>
+  /// <param name="gameID"></param> ID of game to set recommendation for
+  public static void SetInsertionRecommendation(uint gameID, int station_id, int index, int line_index)
+  {
+    GetGameWithID(gameID).SetInsertionRecommendation(station_id, index, line_index);
   }
 
   /// <summary>
