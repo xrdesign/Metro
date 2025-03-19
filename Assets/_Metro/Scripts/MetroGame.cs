@@ -382,7 +382,7 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   public float GetNormalizedStationCost(float cost)
   {
     if (cost == float.PositiveInfinity)
-      return 0;
+      return -1;
     return (cost - minCost) / (maxCost - minCost);
   }
 
@@ -621,11 +621,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
         type = StationType.Cube;
       SpawnStation(type);
     }
+    Debug.Log("###################### Spawned " + count + " stations ######################");
   }
 
   public void SpawnOneStarStation()
   {
     SpawnStation(StationType.Star);
+    Debug.Log("###################### Spawned 1 star station ######################");
   }
 
   public void RemoveLongestLine()
@@ -639,9 +641,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
         longestLine = lines[i];
     }
     longestLine.RemoveAll();
-    Destroy(longestLine.tracks.gameObject);
-    Destroy(longestLine.gameObject);
-    lines.Remove(longestLine);
+    // Destroy(longestLine.tracks.gameObject);
+    // Destroy(longestLine.gameObject);
+    // lines.Remove(longestLine);
+    Debug.Log("###################### Deleted longest line ######################");
   }
 
   public void CheckStationTimers()
