@@ -2231,7 +2231,7 @@ MonoBehaviour:
   daysPerNewTrain: 5
   daysPerNewLine: 15
   targetGameSpeed: 1
-  timeoutDurationOverride: 90
+  timeoutDurationOverride: 900000
   gameSeeds: 2100000021000000
   autoReset: 0
   showCosts: 0
@@ -2950,9 +2950,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed201ec36d8db2e429d05141fbeb21ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  microphoneSource: {fileID: 0}
+  ttsSource: {fileID: 2023129230}
   start: 0
   stop: 0
   API_Key: 5b0227b54f76d599ca4feb05640d73b5a31f8aa7
+  testString: 
+  test: 0
 --- !u!82 &2023129230
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2962,7 +2966,7 @@ AudioSource:
   m_GameObject: {fileID: 2023129227}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: -3487397707123164002, guid: 43dd89968e7d2e646af515dc509172ee, type: 2}
+  OutputAudioMixerGroup: {fileID: 24300002, guid: 43dd89968e7d2e646af515dc509172ee, type: 2}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 0
   m_Volume: 1
