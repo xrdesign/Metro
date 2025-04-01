@@ -2232,13 +2232,13 @@ MonoBehaviour:
   daysPerNewLine: 15
   targetGameSpeed: 1
   timeoutDurationOverride: 900000
-  gameSeeds: 2100000021000000
+  gameSeeds: 01000000
+  withPerturbations: 1
   autoReset: 0
   showRecommendation: 0
-  showCosts: 0
-  costDisplayMode: 0
-  endlessMode: 0
-  endlessModeTime: 30
+  costDisplayMode: 2
+  endlessMode: 1
+  endlessModeTime: 480
   forceUpdateGame: 0
   logRecorder: {fileID: 0}
   currTick: 0
@@ -2250,6 +2250,7 @@ MonoBehaviour:
   LController: {fileID: 142235710}
   recomendationLine: {fileID: 1603119945}
   deepgramConnection: {fileID: 0}
+  showCosts: 0
   spawnTenStations: 0
   spawnOneStarStation: 0
   removeLongestLine: 0

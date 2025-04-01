@@ -210,6 +210,7 @@ public class Station : MonoBehaviour,
     // Start a coroutine to turn off the display mode after 5 seconds only if it's not already running
     if (!isResetting)
     {
+        MetroManager.Instance.markerStream.push_sample(new string[] {"Show Cost Enabled"});
         StartCoroutine(ResetCostDisplayMode());
     }
   }
@@ -218,7 +219,7 @@ public class Station : MonoBehaviour,
   {
     isResetting = true; // Set the flag to true to prevent multiple calls
     // Wait for 5 seconds
-    yield return new WaitForSeconds(5f);
+    yield return new WaitForSeconds(8f);
     _stationText.text = stationName;
     instancedMaterial.color = origColor;
     MetroManager.Instance.showCosts = false;
