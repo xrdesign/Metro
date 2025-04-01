@@ -24,7 +24,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
 
   #region LibLSL
 
-  private liblsl.StreamOutlet markerStream;
+  public liblsl.StreamOutlet markerStream;
 
   private Queue<string> markersThisFrame;
 
@@ -309,19 +309,22 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
     if (spawnTenStations)
     {
       spawnTenStations = false;
-      selectedGame.SpawnStationsWithCount(10);
+      selectedGame.SpawnStationsWithCount(8);
+      markerStream.push_sample(new string[] {"Perturbation: Spawn 8 Stations"});
     }
 
     if (spawnOneStarStation)
     {
       spawnOneStarStation = false;
       selectedGame.SpawnOneStarStation();
+      markerStream.push_sample(new string[] {"Perturbation: Spawn Star Station"});
     }
 
     if (removeLongestLine)
     {
       removeLongestLine = false;
       selectedGame.RemoveLongestLine();
+      markerStream.push_sample(new string[] {"Perturbation: Remove Longest Line"});
     }
 
   }
