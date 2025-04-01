@@ -129,6 +129,9 @@ public class MetroService : WebSocketBehavior
           uint gameIDSetStationCosts = (uint)json["game_id"].i;
           var stationCosts = json["station_costs"];
           MetroManager.SetStationCosts(gameIDSetStationCosts, stationCosts);
+          LogRecorder.SendLossEvent(
+              gameIDSetStationCosts,
+              new StationsLossEvent((int)gameIDSetStationCosts, stationCosts));
           break;
 
         // Agent can set recommendation with this command

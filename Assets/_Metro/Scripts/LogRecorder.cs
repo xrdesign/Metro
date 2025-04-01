@@ -15,6 +15,7 @@ public class LogRecorder : MonoBehaviour
   int sessionID = -1;
 
   private Queue<Tuple<uint, BaseEvent>> eventsThisFrame;
+  private Queue<Tuple<uint, BaseEvent>> lossEventsThisFrame;
   private float currentTime;
 
   private StreamWriter eventWriter;
@@ -25,6 +26,8 @@ public class LogRecorder : MonoBehaviour
   static LogRecorder instance;
 
   private liblsl.StreamOutlet markerStream;
+  private liblsl.StreamOutlet stationLossStream;
+
 
   private string _logDir = "";
   public static string logDir
@@ -63,6 +66,10 @@ public class LogRecorder : MonoBehaviour
       liblsl.StreamInfo inf = new liblsl.StreamInfo(
           "ReplayMarkers", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
       markerStream = new liblsl.StreamOutlet(inf);
+
+      liblsl.StreamInfo inf2 = new liblsl.StreamInfo(
+          "StationsLoss", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
+      stationLossStream = new liblsl.StreamOutlet(inf2);
 #endif
     }
 
@@ -109,6 +116,7 @@ public class LogRecorder : MonoBehaviour
         new StreamWriter(File.Create(filePath + ("position")));
 
     eventsThisFrame = new Queue<Tuple<uint, BaseEvent>>();
+    lossEventsThisFrame = new Queue<Tuple<uint, BaseEvent>>();
     currentTime = 0;
   }
 
@@ -161,6 +169,23 @@ public class LogRecorder : MonoBehaviour
 #if Unity_EDITOR_OSX 
 #else
       markerStream.push_sample(new string[] { log.ToString() });
+#endif
+    }
+    while (lossEventsThisFrame.Count > 0)
+    {
+      Tuple<uint, BaseEvent> pair = lossEventsThisFrame.Dequeue();
+      JSONObject log = new JSONObject();
+      log.AddField("TIME", currentTime);
+      log.AddField("TICK",
+                   MetroManager.Instance.games[(int)pair.Item1].tickCount);
+      log.AddField("GAME_ID", pair.Item1);
+      log.AddField("EVENT_TYPE", pair.Item2.EventType());
+      log.AddField("EVENT", pair.Item2.ToJson());
+#if UNITY_EDITOR_OSX
+#else
+      stationLossStream.push_sample(new string[] { log.ToString() });
+      // TODO: DEBUG
+      Debug.Log("Pushing sample: " + log.ToString());
 #endif
     }
   }
@@ -216,6 +241,21 @@ public class LogRecorder : MonoBehaviour
     }
     instance.eventsThisFrame.Enqueue(new Tuple<uint, BaseEvent>(gameID, e));
   }
+
+  public static void SendLossEvent(uint gameID, BaseEvent e)
+  {
+    if (instance == null)
+    {
+      Debug.LogError(
+          "[LogRecorder] Attempting to log data with no LogRecorder in scene");
+      return;
+    }
+    if (!instance.enabled)
+    {
+      return;
+    }
+    instance.lossEventsThisFrame.Enqueue(new Tuple<uint, BaseEvent>(gameID, e));
+  }
 }
 
 public class BaseEvent
@@ -223,6 +263,26 @@ public class BaseEvent
   public BaseEvent() { }
   public virtual string EventType() { return "BaseEvent"; }
   public virtual JSONObject ToJson() { return new JSONObject(); }
+}
+
+public class StationsLossEvent : BaseEvent
+{
+  private int gameID;
+  private string lossInfo;
+
+  public StationsLossEvent(int gameID, JSONObject lossInfoJson)
+  {
+    this.gameID = gameID;
+    this.lossInfo = lossInfoJson.ToString();
+  }
+  public override string EventType() { return "StationsLossEvent"; }
+  public override JSONObject ToJson()
+  {
+    JSONObject o = new JSONObject();
+    o.AddField("GAME_ID", gameID);
+    o.AddField("LOSS_INFO", lossInfo);
+    return o;
+  }
 }
 
 public class PassengerSpawnedEvent : BaseEvent
