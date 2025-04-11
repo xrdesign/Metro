@@ -122,6 +122,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
 
 
   public bool showCosts = false;
+  private bool _prevShowCosts = false;
 
   // TODO make these UI buttons
   public bool spawnTenStations = false;
@@ -326,6 +327,15 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
       selectedGame.RemoveLongestLine();
       markerStream.push_sample(new string[] {"Perturbation: Remove Longest Line"});
     }
+
+    // Only send the marker when showCosts is set to true in this frame,
+    // but was false in the previous frame.
+    if (showCosts && !_prevShowCosts)
+    {
+      markerStream.push_sample(new string[] { "Show Cost Enabled" });
+    }
+    // Update our record of the previous state
+    _prevShowCosts = showCosts;
 
   }
 
