@@ -2232,7 +2232,7 @@ MonoBehaviour:
   daysPerNewLine: 15
   targetGameSpeed: 1
   timeoutDurationOverride: 900000
-  gameSeeds: 01000000
+  gameSeeds: 15000000
   withPerturbations: 1
   autoReset: 0
   showRecommendation: 0

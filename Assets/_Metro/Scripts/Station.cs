@@ -67,6 +67,7 @@ public class Station : MonoBehaviour,
 
   private bool isResetting = false; // Flag to track if the coroutine is already running
 
+
   public Image timerImage;
 
   float cooldown = 0.0f;
@@ -207,19 +208,19 @@ public class Station : MonoBehaviour,
         break;
     }
 
-    // Start a coroutine to turn off the display mode after 5 seconds only if it's not already running
+    // Start a coroutine to turn off the display mode after 8 seconds only if it's not already running
     if (!isResetting)
     {
-        MetroManager.Instance.markerStream.push_sample(new string[] {"Show Cost Enabled"});
-        StartCoroutine(ResetCostDisplayMode());
+      isResetting = true; // Set the flag to true to prevent multiple calls
+      StartCoroutine(ResetCostDisplayMode());
     }
   }
 
+
   private IEnumerator ResetCostDisplayMode()
   {
-    isResetting = true; // Set the flag to true to prevent multiple calls
-    // Wait for 5 seconds
-    yield return new WaitForSeconds(8f);
+    // Wait for 8 seconds
+    yield return new WaitForSeconds(8);
     _stationText.text = stationName;
     instancedMaterial.color = origColor;
     MetroManager.Instance.showCosts = false;
