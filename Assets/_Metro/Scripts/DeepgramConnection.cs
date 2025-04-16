@@ -34,7 +34,9 @@ public class DeepgramConnection : MonoBehaviour
     private WebSocket ws;
 
     public bool start = false, stop = false;
-    [SerializeField] string API_Key;
+
+    private string API_Key;
+    private bool hasKey = false;
     private bool playing = false;
     private bool shouldStop = false;
 
@@ -52,6 +54,16 @@ public class DeepgramConnection : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        try
+        {
+            API_Key = DeepgramKey.Value;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Deepgram API Key not found: " + e.Message);
+            return;
+        }
+        hasKey = true;
         //Connect to Mic
         Debug.Log("Connecting to mic");
         Debug.Assert(Microphone.devices.Length > 0, "No microphone available for DeepgramConnection");
@@ -211,6 +223,8 @@ public class DeepgramConnection : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!hasKey)
+            return;
         if (start)
         {
             start = false;
