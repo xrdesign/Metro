@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using LSL;
@@ -9,6 +10,7 @@ using UnityEngine;
 using Random = System.Random;
 using System.IO;
 using System;
+using UnityEditor.Rendering;
 
 public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedRealityInputHandler
 {
@@ -22,7 +24,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
 
   #region LibLSL
 
-  private liblsl.StreamOutlet markerStream;
+  public liblsl.StreamOutlet markerStream;
 
   private Queue<string> markersThisFrame;
 
@@ -41,9 +43,25 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public float timeoutDurationOverride = 45.0f;
   public int[] gameSeeds;
 
-  public bool autoReset = false;
+  public bool withPerturbations;
 
-  public bool showCosts = false;
+  public bool autoReset = false;
+  public bool showRecommendation = false;
+
+
+  public enum CostDisplayMode
+  {
+    Name,
+    Highlight,
+    Color
+  }
+
+  public CostDisplayMode costDisplayMode = CostDisplayMode.Name;
+
+  public bool endlessMode = false;
+  public float endlessModeTime = 15.0f;
+
+  public bool forceUpdateGame = false;
 
   #endregion
 
@@ -53,6 +71,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
 
   public LogRecorder logRecorder;
   public int currTick = 0;
+
+  public float stateFrequency = 5;
 
   public StreamWriter states;
   public StreamWriter scores;
@@ -90,6 +110,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public GameObject LController;
   TransportLineUI[] lineUIs;
 
+  public LineRenderer recomendationLine;
+
   #endregion
 
   #region Public
@@ -97,6 +119,15 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public Random random = new Random();
 
   public DeepgramConnection deepgramConnection;
+
+
+  public bool showCosts = false;
+  private bool _prevShowCosts = false;
+
+  // TODO make these UI buttons
+  public bool spawnTenStations = false;
+  public bool spawnOneStarStation = false;
+  public bool removeLongestLine = false;
 
   #endregion
 
@@ -138,7 +169,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
     if (this.enabled)
       gameObject.AddComponent<Server>();
 
-#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#if Unity_EDITOR_OSX
 #else
     liblsl.StreamInfo inf = new liblsl.StreamInfo(
         "EventMarker", "Markers", 1, 0, liblsl.channel_format_t.cf_string);
@@ -211,25 +242,104 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
       }
       */
     }
+
   }
+
+  public float lastStateTime = 0;
 
   private void Update()
   {
+
+    if (forceUpdateGame)
+    {
+      var closestGame =
+        FindNearestMetroGameToPosition(Camera.main.transform.position);
+      if (!closestGame)
+        return;
+      MetroManager.Instance.SelectGame(closestGame);
+    }
+
+    if (lastStateTime == 0)
+    {
+      lastStateTime = time;
+    }
+
     if (jsonGames != null)
     {
+
       time += Time.deltaTime * gameSpeed;
       if (time >= simLength)
         this.isDone = true;
     }
+    else
+    {
+
+      time += Time.deltaTime;
+    }
+
+    if (endlessMode && endlessModeTime > 0 && time >= endlessModeTime)
+    {
+      foreach (var metroGame in Instance.games)
+      {
+        metroGame.GameOver();
+      }
+    }
     // Send LSL Markers
-#if Unity_EDITOR_OSX || UNITY_STANDALONE
+#if Unity_EDITOR_OSX 
 #else
     while (markersThisFrame.Count > 0)
     {
       markerStream.push_sample(new string[] { markersThisFrame.Dequeue() });
     }
+
+    float stateRecordingInterval = 1.0f / stateFrequency;
+    if (time - lastStateTime > stateRecordingInterval)
+    {
+      foreach (var metroGame in Instance.games)
+      {
+        // log the game state
+        var date = DateTime.Now;
+        var state_str = date.ToString() + metroGame.gameId + ", " +
+                            metroGame.SerializeGameState().ToString();
+        markerStream.push_sample(new string[] { state_str });
+      }
+      lastStateTime = time;
+    }
 #endif
+
+    if (spawnTenStations)
+    {
+      spawnTenStations = false;
+      selectedGame.SpawnStationsWithCount(8);
+      markerStream.push_sample(new string[] {"Perturbation: Spawn 8 Stations"});
+    }
+
+    if (spawnOneStarStation)
+    {
+      spawnOneStarStation = false;
+      selectedGame.SpawnOneStarStation();
+      markerStream.push_sample(new string[] {"Perturbation: Spawn Star Station"});
+    }
+
+    if (removeLongestLine)
+    {
+      removeLongestLine = false;
+      selectedGame.RemoveLongestLine();
+      markerStream.push_sample(new string[] {"Perturbation: Remove Longest Line"});
+    }
+
+    // Only send the marker when showCosts is set to true in this frame,
+    // but was false in the previous frame.
+    if (showCosts && !_prevShowCosts)
+    {
+      markerStream.push_sample(new string[] { "Show Cost Enabled" });
+    }
+    // Update our record of the previous state
+    _prevShowCosts = showCosts;
+
   }
+
+
 
   private void OnEnable()
   {
@@ -370,7 +480,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   float simLength;
   public bool isDone = false;
   float gameSpeed;
-  float time = 0;
+  public float time = 0;
   public void SetupSim(List<JSONObject> games, float gameSpeed,
                        float simLength)
   {
@@ -432,6 +542,15 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public static void SetStationCosts(uint gameID, JSONObject costs)
   {
     GetGameWithID(gameID).SetStationCosts(costs);
+  }
+
+  /// <summary>
+  /// Set the insertion recommendation for a specific game.
+  /// </summary>
+  /// <param name="gameID"></param> ID of game to set recommendation for
+  public static void SetInsertionRecommendation(uint gameID, int station_id, int index, int line_index)
+  {
+    GetGameWithID(gameID).SetInsertionRecommendation(station_id, index, line_index);
   }
 
   /// <summary>
@@ -684,6 +803,16 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
     Instance.scores.Flush();
   }
 
+
+void Start()
+{
+  if (withPerturbations)
+  {
+    // Start perturbations
+    Instance.StartCoroutine(Instance.ActivatePerturbations());
+  }
+}
+
   // Starts every game simultaneously.
   public static void StartGames()
   {
@@ -691,6 +820,23 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
     {
       metroGame.StartGame();
     }
+
+  }
+
+  private IEnumerator ActivatePerturbations()
+  {
+    // Wait for 2 minutes and call the first function
+    yield return new WaitForSeconds(120f);
+    selectedGame.SpawnOneStarStation();
+
+    // Wait for another 2 minutes (4 minutes total) and call the second function
+    yield return new WaitForSeconds(120f);
+    selectedGame.SpawnStationsWithCount(8);
+
+    // Wait for another 2 minutes (6 minutes total) and call the third function
+    yield return new WaitForSeconds(120f);
+    selectedGame.RemoveLongestLine();
+          
   }
 
   #region Station Name Generation

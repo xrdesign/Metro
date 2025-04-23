@@ -557,7 +557,16 @@ public class ReplayManager : MonoBehaviour
       nextPositionTick = -1;
       return;
     }
-    nextPositionTick = (int)nextPositionObject["TICK"].i;
+    // if version == 0, then we don't have TICK field, so we need to calculate by TIME / 0.02
+    if (nextPositionObject.HasField("TICK"))
+    {
+      nextPositionTick = (int)nextPositionObject["TICK"].i;
+    }
+    else
+    {
+      nextPositionTick = (int)(nextPositionObject["TIME"].f / _timePerTick);
+    }
+    // nextPositionTick = (int)nextPositionObject["TICK"].i;
   }
 
   /* Helpers */
@@ -586,9 +595,11 @@ public class ReplayManager : MonoBehaviour
     int replayVersion = (int)header["VERSION"].i;
     if (replayVersion != VERSION)
     {
-      Debug.LogError(
-          $"[ReplayManager] Loaded replay is of version {replayVersion}, expected version {VERSION}.");
-      return;
+      Debug.LogWarning(
+          $"[ReplayManager] Loaded replay is of version {replayVersion}, current version is {VERSION}.");
+      Debug.LogWarning(
+          "[ReplayManager] This may cause issues: backward compatibility is done by manually computing the tick.");
+      // return;
     }
 
     JSONObject managerParams = header["MANAGER_PARAMS"];
@@ -630,6 +641,12 @@ public class ReplayManager : MonoBehaviour
       return;
     }
     int gameID = (int)nextEvent["GAME_ID"].i;
+    // check if game id == 1 has anything for debug
+    if (gameID == 1)
+    {
+      // print the nextEvent["EVENT_TYPE"].str;
+      Debug.Log("Game 1: " + nextEvent["EVENT_TYPE"].str);
+    }
     MetroGame g = games[gameID];
     JSONObject e = nextEvent["EVENT"]; // event parameters
 
@@ -735,6 +752,15 @@ public class ReplayManager : MonoBehaviour
       nextEventTick = -1;
       return;
     }
-    nextEventTick = (int)nextEvent["TICK"].i;
+    // if version == 0, then we don't have TICK field, so we need to calculate by TIME / 0.02
+    if (nextEvent.HasField("TICK"))
+    {
+      nextEventTick = (int)nextEvent["TICK"].i;
+    }
+    else
+    {
+      nextEventTick = (int)(nextEvent["TIME"].f / _timePerTick);
+    }
+    // nextEventTick = (int)nextEvent["TICK"].i;
   }
 }

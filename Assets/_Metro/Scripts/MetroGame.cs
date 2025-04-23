@@ -135,11 +135,22 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
     public uint id;
   }
 
+  private int insertRecommendationStationId = -1;
+  private int insertRecommendationIndex = -1;
+  private int insertRecommendationLineId = -1;
+
   #endregion
 
   private volatile bool needReset = false;
   public bool simGame = false;
   private float simLength = 0;
+
+  public float maxCost = 0;
+  public float minCost = 0;
+
+  public Station maxCostStation = null;
+
+  public Light pointLight;
 
   private static Color[] lineColors = {
     Color.red,
@@ -195,6 +206,14 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
 
     if (!simGame)
       StartGame();
+
+    // Create a point light for highlighting
+    string light_name = "Point Light " + gameId;
+    pointLight = new GameObject(light_name).AddComponent<Light>();
+    pointLight.type = LightType.Point;
+    pointLight.range = 10;
+    pointLight.intensity = 0.5f;
+
   }
 
   public void StartGame()
@@ -266,6 +285,10 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
 
   public void SetStationCosts(JSONObject costs)
   {
+    // Reset min max
+    maxCost = 0;
+    minCost = float.PositiveInfinity;
+
     // costs is the station_costs array
     // update costs for each station from the station_costs array
     for (int i = 0; i < costs.Count; i++)
@@ -278,8 +301,89 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       if (station != null)
       {
         station.cost = station_cost;
+        // if not infinity, update the min and max cost
+        if (station_cost != float.PositiveInfinity)
+        {
+          if (station_cost > maxCost)
+          {
+            maxCost = station_cost;
+            maxCostStation = station;
+          }
+          if (station_cost < minCost)
+            minCost = station_cost;
+        }
       }
     }
+  }
+
+  public void SetInsertionRecommendation(int station_id, int index, int line_id)
+  {
+    this.insertRecommendationStationId = station_id;
+    this.insertRecommendationIndex = index;
+    this.insertRecommendationLineId = line_id;
+  }
+
+  public void VisualizeInsertionRecommendation(int station_id, int index, int line_id)
+  {
+    // TODO: 
+
+    if (MetroManager.Instance.showRecommendation)
+    {
+      MetroManager.Instance.recomendationLine.gameObject.SetActive(true);
+    }
+    else
+    {
+      MetroManager.Instance.recomendationLine.gameObject.SetActive(false);
+    }
+    // get the line with line_id
+    TransportLine line = lines.Find(x => x.id == line_id);
+    Tracks tracks = line.tracks;
+
+    // if the tracks.segments is empty then the line is not deployed yet, ignore
+    if (tracks.segments.Count == 0)
+      return;
+
+    // get the station with station_id
+    Station station = stations.Find(x => x.id == station_id);
+
+    // Then the end position is the station position
+    Vector3 endPos = station.transform.position;
+
+    TrackSegment startSeg = null;
+    // now for the startPos there are two cases: edge and middle
+    if (index == 0)
+    {
+      // get the head of the track
+      startSeg = tracks.head;
+    }
+    else if (index == line.stops.Count)
+    {
+      // get the tail of the track
+      startSeg = tracks.tail;
+    }
+    else
+    {
+      // get the segment at index
+      // if index within the range of segments, get the segment at index
+      // otherwise return
+      if (index < 1 || index >= tracks.segments.Count)
+        return;
+      startSeg = tracks.segments[index - 1];
+    }
+
+    // get the middle position of the segment
+    LineRenderer lineRenderer = startSeg.lineRenderer;
+    Vector3 startPos = lineRenderer.GetPosition((int)(lineRenderer.positionCount / 2)); // middle of the segment
+
+    // set the insertion recommendation
+    MetroManager.Instance.recomendationLine.SetPositions(new Vector3[] { startPos, endPos });
+  }
+
+  public float GetNormalizedStationCost(float cost)
+  {
+    if (cost == float.PositiveInfinity)
+      return -1;
+    return (cost - minCost) / (maxCost - minCost);
   }
 
   public void SetPaused(bool shouldPause)
@@ -374,6 +478,32 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       needReset = false;
       // End this Update step early
       return;
+    }
+
+    // if showCost and mode == highlight, move the light to the station
+    if (MetroManager.Instance.showCosts &&
+        MetroManager.Instance.costDisplayMode == MetroManager.CostDisplayMode.Highlight)
+    {
+      if (maxCostStation != null)
+      {
+        pointLight.transform.position = maxCostStation.transform.position;
+        pointLight.gameObject.SetActive(true);
+      }
+      else
+      {
+        pointLight.gameObject.SetActive(false);
+      }
+    }
+    else
+    {
+      pointLight.gameObject.SetActive(false);
+    }
+
+    if (insertRecommendationStationId != -1)
+    {
+      VisualizeInsertionRecommendation(insertRecommendationStationId,
+                                        insertRecommendationIndex,
+                                        insertRecommendationLineId);
     }
   }
 
@@ -476,8 +606,55 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
       uiUpdateDelegate.Invoke();
   }
 
+  // Spawn numbers of stations randomly
+  public void SpawnStationsWithCount(int count)
+  {
+    for (int i = 0; i < count; i++)
+    {
+      var p = GetRandomFloat();
+      var type = StationType.Sphere;
+      if (p < 0.33f)
+        type = StationType.Sphere;
+      else if (p < 0.66f)
+        type = StationType.Cone;
+      else if (p < 1.0f)
+        type = StationType.Cube;
+      SpawnStation(type);
+    }
+    Debug.Log("###################### Spawned " + count + " stations ######################");
+  }
+
+  public void SpawnOneStarStation()
+  {
+    SpawnStation(StationType.Star);
+    Debug.Log("###################### Spawned 1 star station ######################");
+  }
+
+  public void RemoveLongestLine()
+  {
+    if (lines.Count == 0)
+      return;
+    TransportLine longestLine = lines[0];
+    for (int i = 1; i < lines.Count; i++)
+    {
+      if (lines[i].stops.Count > longestLine.stops.Count)
+        longestLine = lines[i];
+    }
+    longestLine.RemoveAll();
+    // Destroy(longestLine.tracks.gameObject);
+    // Destroy(longestLine.gameObject);
+    // lines.Remove(longestLine);
+    Debug.Log("###################### Deleted longest line ######################");
+  }
+
   public void CheckStationTimers()
   {
+    // if the endlessMode is enable, then do not check station timer here
+    if (MetroManager.Instance.endlessMode)
+    {
+      return;
+    }
+
     foreach (Station station in stations)
     {
       float overcrowdedTimerLimit =

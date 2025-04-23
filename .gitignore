@@ -89,3 +89,6 @@ Assets/Resources/OculusRuntimeSettings.asset.meta
 # Ignore Python cache files
 *.pyc
 __pycache__/
+
+# Deepgram Key
+/Assets/StreamingAssets/deepgram.json

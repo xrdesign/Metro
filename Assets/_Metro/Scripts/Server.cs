@@ -124,11 +124,36 @@ public class MetroService : WebSocketBehavior
             res.AddField("Status", "Failure");
           break;
 
-
+        // Agent can set station cost with this command
         case "set_station_costs":
           uint gameIDSetStationCosts = (uint)json["game_id"].i;
           var stationCosts = json["station_costs"];
           MetroManager.SetStationCosts(gameIDSetStationCosts, stationCosts);
+          LogRecorder.SendLossEvent(
+              gameIDSetStationCosts,
+              new StationsLossEvent((int)gameIDSetStationCosts, stationCosts));
+          break;
+
+        // Agent can set recommendation with this command
+        case "recommend_insertion":
+          var gameIDSetRecommendation = (uint)json["game_id"].i;
+          // self.send_and_recieve(json.dumps({
+          //   'command': 'recommend_insertion',
+          //       'game_id': self.game_id,
+          //       'arguments': {
+          //     'station_id': best_candidate_station_id,
+          //           'insert_position': best_insert_postion,
+          //           'line_index': best_chosen_path_index
+          //       }
+          // }))
+          var recommendation = json["arguments"];
+          Debug.Log("[Server][Metro Service] Set Insertion Recommendation: " +
+                    recommendation.ToString());
+          MetroManager.SetInsertionRecommendation(
+              gameIDSetRecommendation,
+              (int)recommendation["station_id"].i,
+              (int)recommendation["insert_position"].i,
+              (int)recommendation["line_index"].i);
           break;
         case "get_state":
           uint gameIDGetState = (uint)json["game_id"].i;
@@ -174,6 +199,8 @@ public class MetroService : WebSocketBehavior
           var response = json["arguments"];
           // MetroManager.SetResponse(response);
           break;
+
+
         case "get_all_states":
           var games = new JSONObject(JSONObject.Type.ARRAY);
           uint count = MetroManager.GetNumGames();

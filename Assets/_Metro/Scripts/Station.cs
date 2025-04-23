@@ -11,7 +11,6 @@ using UnityEngine.Serialization;
 using System;
 
 public enum StationType { Sphere, Cone, Cube, Star }
-
 public class Station : MonoBehaviour,
                        IMixedRealityPointerHandler,
                        IMixedRealityFocusHandler
@@ -66,9 +65,14 @@ public class Station : MonoBehaviour,
   static bool dragging = false;
   bool firstDrag = false;
 
+  private bool isResetting = false; // Flag to track if the coroutine is already running
+
+
   public Image timerImage;
 
   float cooldown = 0.0f;
+  Material instancedMaterial;
+  Color origColor = Color.red;
 
   // Start is called before the first frame update
   public void Init()
@@ -85,6 +89,17 @@ public class Station : MonoBehaviour,
     }
 
     _stationText.text = stationName;
+
+    // create an instance of the material for color highlighting
+    var renderer = GetComponent<Renderer>();
+    if (renderer != null)
+    {
+      renderer.material = GameObject.Instantiate(renderer.material);
+      instancedMaterial = renderer.material;
+      origColor = instancedMaterial.color;
+    }
+
+    // create a point light source for the station
   }
 
   void FixedUpdate()
@@ -142,7 +157,15 @@ public class Station : MonoBehaviour,
     }
 
     timerImage.enabled = true;
-    timerImage.fillAmount = timer / MaxTimeoutDuration;
+    // when it's endless mode, no timeout timer icon
+    if (MetroManager.Instance.endlessMode)
+    {
+      timerImage.fillAmount = 0;
+    }
+    else
+    {
+      timerImage.fillAmount = timer / MaxTimeoutDuration;
+    }
 
     // Update passenger routes
     passengersRoutes = new string[passengers.Count];
@@ -160,15 +183,68 @@ public class Station : MonoBehaviour,
 
 
     // TODO: station cost display
+    _stationText.text = stationName;
+    instancedMaterial.color = origColor;
     if (MetroManager.Instance.showCosts)
     {
       // Debug.Log("Station cost: " + cost);
-      _stationText.text = stationName + " : " + cost.ToString("F2");
+      ShowCost();
     }
-    else
+  }
+
+  public void ShowCost()
+  {
+    switch (MetroManager.Instance.costDisplayMode)
     {
-      _stationText.text = stationName;
+      case MetroManager.CostDisplayMode.Name:
+        _stationText.text = stationName + " : " + cost.ToString("F2");
+        break;
+      case MetroManager.CostDisplayMode.Highlight:
+
+        break;
+      case MetroManager.CostDisplayMode.Color:
+        float norm_cost = gameInstance.GetNormalizedStationCost(cost);
+        instancedMaterial.color = GetColor(norm_cost);
+        break;
     }
+
+    // Start a coroutine to turn off the display mode after 8 seconds only if it's not already running
+    if (!isResetting)
+    {
+      isResetting = true; // Set the flag to true to prevent multiple calls
+      StartCoroutine(ResetCostDisplayMode());
+    }
+  }
+
+
+  private IEnumerator ResetCostDisplayMode()
+  {
+    // Wait for 8 seconds
+    yield return new WaitForSeconds(8);
+    _stationText.text = stationName;
+    instancedMaterial.color = origColor;
+    MetroManager.Instance.showCosts = false;
+    isResetting = false; // Reset the flag so it can be called again
+  }
+
+  public Color GetColor(float value)
+  {
+    // Check if the value is infinite
+    if (value == -1)
+    {
+    // Return black for infinite values
+      return Color.black;
+    }
+
+    // Clamp value to ensure it's within the range [0,1]
+    value = Mathf.Clamp01(value);
+
+    // Interpolating between green (0,1,0) and red (1,0,0)
+    float r = value;          // Increases from 0 (green) to 1 (red)
+    float g = 1 - value;      // Decreases from 1 (green) to 0 (red)
+    float b = 0f;             // No blue component
+
+    return new Color(r, g, b);
   }
 
   public void SpawnRandomPassenger()
