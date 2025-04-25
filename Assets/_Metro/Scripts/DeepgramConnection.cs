@@ -186,9 +186,19 @@ public class DeepgramConnection : MonoBehaviour
         ws = null;
     }
 
-    void OnOpenHandler() => Debug.Log("Connected to Deepgram");
+    void OnOpenHandler() { Debug.Log("Connected to Deepgram"); StartCoroutine(KeepAliveLoop()); }
     void OnErrorHandler(string e) { Debug.LogError("WebSocket error: " + e); TryReconnect(); }
     void OnCloseHandler(WebSocketCloseCode e) { Debug.LogError("WebSocket closed: " + e); TryReconnect(); }
+
+    IEnumerator KeepAliveLoop()
+    {
+        const string json = "{\"type\":\"KeepAlive\"}";
+        while (ws != null && ws.State == WebSocketState.Open)
+        {
+            ws.SendText(json);
+            yield return new WaitForSeconds(3);
+        }
+    }
 
     async void SetupWebsocket()
     {
