@@ -159,11 +159,22 @@ public class DeepgramConnection : MonoBehaviour
         }
     }
 
+    IEnumerator KeepAliveLoop()
+    {
+        const string json = "{\"type\":\"KeepAlive\"}";
+        while (ws != null && ws.State == WebSocketState.Open)
+        {
+            ws.SendText(json);
+            yield return new WaitForSeconds(3);
+        }
+    }
+
     async void SetupWebsocket()
     {
         var headers = new Dictionary<string, string>{
-            { "Authorization", $"Token {API_Key}" }
+            { "Authorization", $"token {API_Key}" }
         };
+        Debug.Log("Sample rate: " + AudioSettings.outputSampleRate.ToString());
         ws = new WebSocket(
                 "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=" +
                 AudioSettings.outputSampleRate.ToString(),
@@ -172,6 +183,11 @@ public class DeepgramConnection : MonoBehaviour
         ws.OnOpen += () =>
         {
             Debug.Log("Connected to Deepgram");
+            // var silent = new byte[AudioSettings.outputSampleRate / 10 * 2];
+            // ws.Send(silent);
+
+            // start it after Connect()
+            StartCoroutine(KeepAliveLoop());
         };
 
         ws.OnError += (e) =>
@@ -245,7 +261,8 @@ public class DeepgramConnection : MonoBehaviour
         stop = true;
     }
 
-    public void Speak(string text) {
+    public void Speak(string text)
+    {
 
         Debug.Log("[DeepgramConnection] Testing Speak for " + text);
         var client = new RestClient("https://api.deepgram.com/v1/speak?model=aura-asteria-en");
@@ -260,14 +277,15 @@ public class DeepgramConnection : MonoBehaviour
 
         Debug.Log("[DeepgramConnection] Send request for " + text);
 
-        if (response.IsSuccessful && response.RawBytes != null) {
+        if (response.IsSuccessful && response.RawBytes != null)
+        {
             Debug.Log("[DeepgramConnection] Response successful for " + text);
 
             lock (ttsLock)
             {
                 ttsAudioBytes = response.RawBytes;
             }
-           
+
         }
         else
         {
@@ -309,7 +327,8 @@ public class DeepgramConnection : MonoBehaviour
             }
         }
 
-        if(test){
+        if (test)
+        {
             Speak(testString);
             test = false;
         }
@@ -317,12 +336,14 @@ public class DeepgramConnection : MonoBehaviour
         byte[] audioBytes = null;
         lock (ttsLock)
         {
-            if (ttsAudioBytes != null) {
+            if (ttsAudioBytes != null)
+            {
                 audioBytes = ttsAudioBytes;
                 ttsAudioBytes = null;
             }
         }
-        if (audioBytes != null) {
+        if (audioBytes != null)
+        {
             string filePath = Path.Combine(Application.persistentDataPath, "ttsAudio.mp3");
             try
             {
@@ -358,7 +379,7 @@ public class DeepgramConnection : MonoBehaviour
             }
         }
     }
-    
+
 }
 
 
