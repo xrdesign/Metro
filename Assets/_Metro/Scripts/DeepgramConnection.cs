@@ -292,6 +292,8 @@ public class DeepgramConnection : MonoBehaviour
 
     public void Speak(string text)
     {
+    public void Speak(string text)
+    {
 
         Debug.Log("[DeepgramConnection] Testing Speak for " + text);
         var client = new RestClient("https://api.deepgram.com/v1/speak?model=aura-asteria-en");
@@ -308,86 +310,95 @@ public class DeepgramConnection : MonoBehaviour
 
         if (response.IsSuccessful && response.RawBytes != null)
         {
-            Debug.Log("[DeepgramConnection] Response successful for " + text);
-
-            lock (ttsLock)
+            if (response.IsSuccessful && response.RawBytes != null)
             {
-                ttsAudioBytes = response.RawBytes;
+                Debug.Log("[DeepgramConnection] Response successful for " + text);
+
+                lock (ttsLock)
+                {
+                    ttsAudioBytes = response.RawBytes;
+                }
+
+
             }
-
-        }
-        else
-        {
-            Debug.Log("[DeepgramConnection] Response not successful for" + text);
-            Debug.LogError("Error in TTS request: " + response.StatusCode);
-            Debug.LogError(response.Content);
-        }
-    }
-
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (!hasKey)
-            return;
-        if (start)
-        {
-            start = false;
-            Debug.Log("start pressed");
-            StartCoroutine(StartRecording());
-        }
-        if (stop)
-        {
-            stop = false;
-            Debug.Log("stop pressed");
-            StartCoroutine(FinishRecording());
-        }
-
-        if (playing)
-        {
-            ProcessAudio();
-        }
-
-        if (ws != null)
-        {
-            if (ws.State == WebSocketState.Open)
+            else
             {
-                ws.DispatchMessageQueue();
+                Debug.Log("[DeepgramConnection] Response not successful for" + text);
+                Debug.LogError("Error in TTS request: " + response.StatusCode);
+                Debug.LogError(response.Content);
             }
         }
 
-        if (test)
-        {
-            Speak(testString);
-            test = false;
-        }
 
-        byte[] audioBytes = null;
-        lock (ttsLock)
+        // Update is called once per frame
+        void Update()
         {
-            if (ttsAudioBytes != null)
+            if (!hasKey)
+                return;
+            if (start)
             {
-                audioBytes = ttsAudioBytes;
-                ttsAudioBytes = null;
+                start = false;
+                Debug.Log("start pressed");
+                StartCoroutine(StartRecording());
             }
-        }
-        if (audioBytes != null)
-        {
-            string filePath = Path.Combine(Application.persistentDataPath, "ttsAudio.mp3");
-            try
+            if (stop)
             {
-                File.WriteAllBytes(filePath, audioBytes);
-                Debug.Log("Audio file saved as ttsAudio.mp3");
-                Debug.Log("Persistent Data Path: " + Application.persistentDataPath);
-                StartCoroutine(PlayAudio(filePath));
+                stop = false;
+                Debug.Log("stop pressed");
+                StartCoroutine(FinishRecording());
             }
-            catch (Exception ex)
-            {
-                Debug.LogError("Failed to save audio file: " + ex.Message);
-            }
-        }
 
-    }
+            if (playing)
+            {
+                ProcessAudio();
+            }
+
+            if (ws != null)
+            {
+                if (ws.State == WebSocketState.Open)
+                {
+                    ws.DispatchMessageQueue();
+                }
+            }
+
+            if (test)
+            {
+                if (test)
+                {
+                    Speak(testString);
+                    test = false;
+                }
+
+                byte[] audioBytes = null;
+                lock (ttsLock)
+                {
+                    if (ttsAudioBytes != null)
+                    {
+                        if (ttsAudioBytes != null)
+                        {
+                            audioBytes = ttsAudioBytes;
+                            ttsAudioBytes = null;
+                        }
+                    }
+                    if (audioBytes != null)
+                    {
+                        if (audioBytes != null)
+                        {
+                            string filePath = Path.Combine(Application.persistentDataPath, "ttsAudio.mp3");
+                            try
+                            {
+                                File.WriteAllBytes(filePath, audioBytes);
+                                Debug.Log("Audio file saved as ttsAudio.mp3");
+                                Debug.Log("Persistent Data Path: " + Application.persistentDataPath);
+                                StartCoroutine(PlayAudio(filePath));
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogError("Failed to save audio file: " + ex.Message);
+                            }
+                        }
+
+                    }
 
     private IEnumerator PlayAudio(string filePath)
     {
@@ -408,6 +419,7 @@ public class DeepgramConnection : MonoBehaviour
             }
         }
     }
+
 
 }
 
