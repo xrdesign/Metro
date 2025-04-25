@@ -61,6 +61,7 @@ public class DeepgramConnection : MonoBehaviour
     private byte[] ttsAudioBytes = null;
     private object ttsLock = new object();
 
+    private bool isReconnecting = false;
 
     void Awake()
     {
@@ -159,58 +160,102 @@ public class DeepgramConnection : MonoBehaviour
         }
     }
 
+    async Task CleanupWebsocketAsync()
+    {
+        if (ws == null) return;
+
+        // detach handlers
+        ws.OnOpen -= OnOpenHandler;
+        ws.OnError -= OnErrorHandler;
+        ws.OnClose -= OnCloseHandler;
+        ws.OnMessage -= OnDeepgramMessage;
+
+        // only close if open or connecting
+        if (ws.State == WebSocketState.Open || ws.State == WebSocketState.Connecting)
+        {
+            try
+            {
+                await ws.Close();   // await the async close
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("WebSocket close failed: " + ex.Message);
+            }
+        }
+
+        ws = null;
+    }
+
+    void OnOpenHandler() => Debug.Log("Connected to Deepgram");
+    void OnErrorHandler(string e) { Debug.LogError("WebSocket error: " + e); TryReconnect(); }
+    void OnCloseHandler(WebSocketCloseCode e) { Debug.LogError("WebSocket closed: " + e); TryReconnect(); }
+
     async void SetupWebsocket()
     {
-        var headers = new Dictionary<string, string>{
-            { "Authorization", $"Token {API_Key}" }
-        };
+        await CleanupWebsocketAsync();
+
+        var headers = new Dictionary<string, string> { { "Authorization", $"Token {API_Key}" } };
         ws = new WebSocket(
-                "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=" +
-                AudioSettings.outputSampleRate.ToString(),
-                headers);
+            "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=" +
+            AudioSettings.outputSampleRate,
+            headers);
 
-        ws.OnOpen += () =>
-        {
-            Debug.Log("Connected to Deepgram");
-        };
-
-        ws.OnError += (e) =>
-        {
-            Debug.LogError(e);
-        };
-
-        ws.OnClose += (e) =>
-        {
-            Debug.LogError(e);
-            ws = null;
-        };
-
-        ws.OnMessage += (bytes) =>
-        {
-            var message = System.Text.Encoding.UTF8.GetString(bytes);
-
-            //unpack deepgram response
-            DeepgramResponse deepgramResponse = new DeepgramResponse();
-            object boxedDeepgramResponse = deepgramResponse;
-            JsonUtility.FromJsonOverwrite(message, boxedDeepgramResponse);
-            deepgramResponse = (DeepgramResponse)boxedDeepgramResponse;
-            if (deepgramResponse.is_final)
-            {
-                var transcript = deepgramResponse.channel.alternatives[0].transcript;
-                if (playing)
-                {
-                    command += " " + transcript;
-                    Debug.Log("Command: " + command);
-                    if (shouldStop)
-                    {
-                        playing = false;
-                        shouldStop = false;
-                    }
-                }
-            }
-        };
+        ws.OnOpen += OnOpenHandler;
+        ws.OnError += OnErrorHandler;
+        ws.OnClose += OnCloseHandler;
+        ws.OnMessage += OnDeepgramMessage;
 
         await ws.Connect();
+    }
+
+    void OnDestroy()
+    {
+        StopAllCoroutines();
+        var _ = CleanupWebsocketAsync();
+    }
+
+    // Schedule a reconnect after a short delay, but only one at a time
+    void TryReconnect()
+    {
+        if (isReconnecting) return;
+        isReconnecting = true;
+        StartCoroutine(ReconnectCoroutine());
+    }
+
+    IEnumerator ReconnectCoroutine()
+    {
+        yield return new WaitForSeconds(2);          // back-off delay
+        if (ws != null && ws.State != WebSocketState.Open)
+        {
+            Debug.Log("Attempting WebSocket reconnect...");
+            SetupWebsocket();                        // re-create connection
+        }
+        isReconnecting = false;
+    }
+
+    void OnDeepgramMessage(byte[] bytes)
+    {
+        var message = System.Text.Encoding.UTF8.GetString(bytes);
+
+        //unpack deepgram response
+        DeepgramResponse deepgramResponse = new DeepgramResponse();
+        object boxedDeepgramResponse = deepgramResponse;
+        JsonUtility.FromJsonOverwrite(message, boxedDeepgramResponse);
+        deepgramResponse = (DeepgramResponse)boxedDeepgramResponse;
+        if (deepgramResponse.is_final)
+        {
+            var transcript = deepgramResponse.channel.alternatives[0].transcript;
+            if (playing)
+            {
+                command += " " + transcript;
+                Debug.Log("Command: " + command);
+                if (shouldStop)
+                {
+                    playing = false;
+                    shouldStop = false;
+                }
+            }
+        }
     }
 
     async void SendToDeepgram(byte[] data)
@@ -245,7 +290,8 @@ public class DeepgramConnection : MonoBehaviour
         stop = true;
     }
 
-    public void Speak(string text) {
+    public void Speak(string text)
+    {
 
         Debug.Log("[DeepgramConnection] Testing Speak for " + text);
         var client = new RestClient("https://api.deepgram.com/v1/speak?model=aura-asteria-en");
@@ -260,14 +306,15 @@ public class DeepgramConnection : MonoBehaviour
 
         Debug.Log("[DeepgramConnection] Send request for " + text);
 
-        if (response.IsSuccessful && response.RawBytes != null) {
+        if (response.IsSuccessful && response.RawBytes != null)
+        {
             Debug.Log("[DeepgramConnection] Response successful for " + text);
 
             lock (ttsLock)
             {
                 ttsAudioBytes = response.RawBytes;
             }
-           
+
         }
         else
         {
@@ -309,7 +356,8 @@ public class DeepgramConnection : MonoBehaviour
             }
         }
 
-        if(test){
+        if (test)
+        {
             Speak(testString);
             test = false;
         }
@@ -317,12 +365,14 @@ public class DeepgramConnection : MonoBehaviour
         byte[] audioBytes = null;
         lock (ttsLock)
         {
-            if (ttsAudioBytes != null) {
+            if (ttsAudioBytes != null)
+            {
                 audioBytes = ttsAudioBytes;
                 ttsAudioBytes = null;
             }
         }
-        if (audioBytes != null) {
+        if (audioBytes != null)
+        {
             string filePath = Path.Combine(Application.persistentDataPath, "ttsAudio.mp3");
             try
             {
@@ -358,7 +408,7 @@ public class DeepgramConnection : MonoBehaviour
             }
         }
     }
-    
+
 }
 
 
