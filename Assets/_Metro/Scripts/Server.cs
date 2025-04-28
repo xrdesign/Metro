@@ -229,6 +229,25 @@ public class MetroService : WebSocketBehavior
           res = new JSONObject(actionFinished);
           break;
 
+        // AGENT TTS
+        case "speak":
+        {
+          string agent_response = json["response"].str;
+          Debug.Log("[Server][Metro Service] Agent speak requested: " + agent_response);
+          if (MetroManager.Instance != null && MetroManager.Instance.deepgramConnection != null)
+          {
+            Debug.Log("[Server] [Metro Service] Requesting Deepgram: " + agent_response);
+            MetroManager.Instance.deepgramConnection.Speak(agent_response);
+            res.AddField("Status", "Success");
+          }
+          else 
+          {
+            res.AddField("Status", "Error");
+            res.AddField("Error Message", "DeepgramConnection is not initialzied");
+          }
+        }
+        break;
+
         case "take_action":
           MetroManager.LogServerMessage(json);
           uint gameIDTakeAction = (uint)json["game_id"].i;
