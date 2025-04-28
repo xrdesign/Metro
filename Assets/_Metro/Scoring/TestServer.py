@@ -29,7 +29,7 @@ def send_response(ws, response):
         "command": "speak",
         "response" : response
     }
-    ws.send(json.dumps(message))
+    send_and_recv(ws, message)
 
 
 ws = websocket.create_connection(url)
@@ -52,7 +52,7 @@ while True:
     #     Send(stateRes.ToString()); // Respond after Update() runs
     # }
 
-    if result["new_instructions"]:
+    if "new_instructions" in result and result["new_instructions"]:
         instruction_text = result["instruction_text"]
         print(instruction_text)
 
