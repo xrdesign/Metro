@@ -120,15 +120,26 @@ public class DeepgramConnection : MonoBehaviour
         if (!playing || shouldStop)
             yield return null;
 
-
         shouldStop = true;
+        
+        float timer = 0f;
         while (shouldStop)
         {
             yield return new WaitForEndOfFrame();
+            timer += Time.deltaTime;
+
+            if (timer >= 1.0f){
+                shouldStop = false;
+                playing = false;
+            }
         }
-        MetroManager.AddInstructions(command);
-        Debug.Log("Finish command: " + command);
-        command = "";
+        if (command == ""){
+            Debug.Log("Command is empty, skipping");
+        }else{
+            MetroManager.AddInstructions(command);
+            Debug.Log("Finish command: " + command);
+            command = "";
+        }
     }
 
     void ProcessAudio()

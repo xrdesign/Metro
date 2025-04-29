@@ -36,6 +36,9 @@ MRTK packages can be directly downloaded from [https://github.com/microsoft/Mixe
 
 - Open _Metro/Scenes/Metro.unity and select Import TMPro Essentials from the popup
 
+- "The controllers are pink! How to fix?" 
+- - Right-click on `Packages/com.microsoft.mixedreality.toolkit.foundation/SDK/StandardAssets/Controllers/Visuals/Models` and `Reimport`
+
 
 ## TODOs
 
