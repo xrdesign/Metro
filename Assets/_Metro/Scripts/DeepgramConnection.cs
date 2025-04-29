@@ -206,7 +206,7 @@ public class DeepgramConnection : MonoBehaviour
 
         var headers = new Dictionary<string, string> { { "Authorization", $"Token {API_Key}" } };
         ws = new WebSocket(
-            "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=" +
+            "wss://api.deepgram.com/v1/listen?encoding=linear16&interim_results=true&model=nova-3&sample_rate=" +
             AudioSettings.outputSampleRate,
             headers);
 
@@ -255,6 +255,7 @@ public class DeepgramConnection : MonoBehaviour
         if (deepgramResponse.is_final)
         {
             var transcript = deepgramResponse.channel.alternatives[0].transcript;
+            Debug.Log("Transcript: " + transcript);
             if (playing)
             {
                 command += " " + transcript;
