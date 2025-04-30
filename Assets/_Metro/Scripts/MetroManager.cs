@@ -828,14 +828,17 @@ void Start()
     // Wait for 2 minutes and call the first function
     yield return new WaitForSeconds(120f);
     selectedGame.SpawnOneStarStation();
+    markerStream.push_sample(new string[] {"Perturbation: Spawn Star Station"});
 
     // Wait for another 2 minutes (4 minutes total) and call the second function
     yield return new WaitForSeconds(120f);
     selectedGame.SpawnStationsWithCount(8);
+    markerStream.push_sample(new string[] {"Perturbation: Spawn 8 Stations"});
 
     // Wait for another 2 minutes (6 minutes total) and call the third function
     yield return new WaitForSeconds(120f);
     selectedGame.RemoveLongestLine();
+    markerStream.push_sample(new string[] {"Perturbation: Remove Longest Line"});
           
   }
 
