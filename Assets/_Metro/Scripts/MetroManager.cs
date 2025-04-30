@@ -642,6 +642,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   {
     Debug.Log("added instructions: " + i);
     instructionQueue.Enqueue(i);
+    Instance.markerStream.push_sample(new string [] { "Added Instructions: " + i });
   }
 
 

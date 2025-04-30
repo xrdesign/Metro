@@ -54,7 +54,7 @@ while True:
 
     if "new_instructions" in result and result["new_instructions"]:
         instruction_text = result["instruction_text"]
-        print(instruction_text)
+        # print(instruction_text)
 
         if "hello" in instruction_text.lower() or "hi" in instruction_text.lower() or "good morning" in instruction_text.lower() or "good afternoon" in instruction_text.lower():
             send_response(ws, "Hello, how can I help you?")
