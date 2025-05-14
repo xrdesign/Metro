@@ -1,0 +1,82 @@
+name: Unity CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: StandaloneWindows64
+            method: BuildWindows
+            output: build/windows/Metro.exe
+          - os: macos-latest
+            target: StandaloneOSX
+            method: BuildMacOS
+            output: build/macos/Metro.app
+          - os: ubuntu-latest
+            target: Android
+            method: BuildAndroid
+            output: build/android/Metro.apk
+          - os: ubuntu-latest
+            target: WebGL
+            method: BuildWebGL
+            output: build/webgl
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library folder
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: ${{ runner.os }}-lib-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
+          restore-keys: |
+            ${{ runner.os }}-lib-
+
+      - name: Activate Unity license
+        uses: game-ci/unity-activate@v2
+        with:
+          email: ${{ secrets.UNITY_EMAIL }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          license: ${{ secrets.UNITY_LICENSE }}
+
+      - name: Inject deepgram.json (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          if (!(Test-Path Assets\StreamingAssets)) { New-Item -ItemType Directory Assets\StreamingAssets }
+          Set-Content -Path Assets\StreamingAssets\deepgram.json -Value "${{ secrets.DEEPGRAM_JSON }}" -NoNewline
+        shell: powershell
+
+      - name: Inject deepgram.json (macOS/Linux)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p Assets/StreamingAssets
+          echo '${{ secrets.DEEPGRAM_JSON }}' > Assets/StreamingAssets/deepgram.json
+
+      - name: Build project
+        uses: game-ci/unity-builder@v4
+        with:
+          unityVersion: 2022.3.45f1
+          targetPlatform: ${{ matrix.target }}
+          customParameters: -executeMethod BuildScript.${{ matrix.method }}
+        env:
+          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}
+          path: ${{ matrix.output }}
