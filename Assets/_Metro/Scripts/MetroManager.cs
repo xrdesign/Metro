@@ -166,8 +166,8 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
       Debug.LogError("More than one MetroManager initialized!");
     }
 
-    if (this.enabled)
-      gameObject.AddComponent<Server>();
+    // if (this.enabled)
+    // gameObject.AddComponent<Server>();
 
 #if Unity_EDITOR_OSX
 #else
@@ -311,21 +311,21 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
     {
       spawnTenStations = false;
       selectedGame.SpawnStationsWithCount(8);
-      markerStream.push_sample(new string[] {"Perturbation: Spawn 8 Stations"});
+      markerStream.push_sample(new string[] { "Perturbation: Spawn 8 Stations" });
     }
 
     if (spawnOneStarStation)
     {
       spawnOneStarStation = false;
       selectedGame.SpawnOneStarStation();
-      markerStream.push_sample(new string[] {"Perturbation: Spawn Star Station"});
+      markerStream.push_sample(new string[] { "Perturbation: Spawn Star Station" });
     }
 
     if (removeLongestLine)
     {
       removeLongestLine = false;
       selectedGame.RemoveLongestLine();
-      markerStream.push_sample(new string[] {"Perturbation: Remove Longest Line"});
+      markerStream.push_sample(new string[] { "Perturbation: Remove Longest Line" });
     }
 
     // Only send the marker when showCosts is set to true in this frame,
@@ -642,7 +642,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   {
     Debug.Log("added instructions: " + i);
     instructionQueue.Enqueue(i);
-    Instance.markerStream.push_sample(new string [] { "Added Instructions: " + i });
+    Instance.markerStream.push_sample(new string[] { "Added Instructions: " + i });
   }
 
 
@@ -805,14 +805,14 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   }
 
 
-void Start()
-{
-  if (withPerturbations)
+  void Start()
   {
-    // Start perturbations
-    Instance.StartCoroutine(Instance.ActivatePerturbations());
+    if (withPerturbations)
+    {
+      // Start perturbations
+      Instance.StartCoroutine(Instance.ActivatePerturbations());
+    }
   }
-}
 
   // Starts every game simultaneously.
   public static void StartGames()
@@ -829,18 +829,18 @@ void Start()
     // Wait for 2 minutes and call the first function
     yield return new WaitForSeconds(120f);
     selectedGame.SpawnOneStarStation();
-    markerStream.push_sample(new string[] {"Perturbation: Spawn Star Station"});
+    markerStream.push_sample(new string[] { "Perturbation: Spawn Star Station" });
 
     // Wait for another 2 minutes (4 minutes total) and call the second function
     yield return new WaitForSeconds(120f);
     selectedGame.SpawnStationsWithCount(8);
-    markerStream.push_sample(new string[] {"Perturbation: Spawn 8 Stations"});
+    markerStream.push_sample(new string[] { "Perturbation: Spawn 8 Stations" });
 
     // Wait for another 2 minutes (6 minutes total) and call the third function
     yield return new WaitForSeconds(120f);
     selectedGame.RemoveLongestLine();
-    markerStream.push_sample(new string[] {"Perturbation: Remove Longest Line"});
-          
+    markerStream.push_sample(new string[] { "Perturbation: Remove Longest Line" });
+
   }
 
   #region Station Name Generation
