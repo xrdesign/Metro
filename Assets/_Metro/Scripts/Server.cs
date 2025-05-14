@@ -9,21 +9,35 @@ using System.IO;
 public class Server : MonoBehaviour
 {
 
+  List<WebSocketServer> servers = new List<WebSocketServer>();
+  public int[] ports = new int[] { 3000, 3001, 3002 };
+
   public void Start()
   {
     SetupLogs();
-    var wssv = new WebSocketServer("ws://0.0.0.0:3000");
+    // var wssv = new WebSocketServer("ws://0.0.0.0:3000");
 
-    wssv.AddWebSocketService<MetroService>("/metro");
-    wssv.AddWebSocketService<MetroService>("/multiplayer");
-    wssv.Start();
+    // wssv.AddWebSocketService<MetroService>("/metro");
+    // wssv.AddWebSocketService<MetroService>("/multiplayer");
+    // wssv.Start();
 
-    // remove timeout
-    // wssv.WaitTime = System.Threading.Timeout.InfiniteTimeSpan;
+    // // remove timeout
+    // // wssv.WaitTime = System.Threading.Timeout.InfiniteTimeSpan;
 
-    Debug.Log("[Server] WebSocket opened for MetroService at url " +
-              "ws://0.0.0.0:3000/metro");
+    // Debug.Log("[Server] WebSocket opened for MetroService at url " +
+    //           "ws://0.0.0.0:3000/metro");
     // wssv.Stop ();
+
+    for (int i = 0; i < ports.Length; i++)
+    {
+      var wssv = new WebSocketServer("ws://0.0.0.0:" + ports[i]);
+      wssv.AddWebSocketService<MetroService>("/metro");
+      wssv.AddWebSocketService<MetroService>("/multiplayer");
+      wssv.Start();
+      servers.Add(wssv);
+      Debug.Log("[Server] WebSocket opened for MetroService at url " +
+                "ws://0.0.0.0:" + ports[i]);
+    }
   }
 
   public static StreamWriter sw;
@@ -43,7 +57,12 @@ public class Server : MonoBehaviour
     // start new log
     sw = new StreamWriter(filePath + "ServerLatest.txt");
   }
-  void OnDisable() { sw.Flush(); }
+  void OnDisable()
+  {
+    foreach (var srv in servers)
+      srv.Stop();
+    sw.Flush();
+  }
 }
 
 public class MetroService : WebSocketBehavior
@@ -52,11 +71,12 @@ public class MetroService : WebSocketBehavior
   bool enableLogs = true;
   protected override void OnOpen()
   {
-    Debug.Log("[Server][Metro Service] Client connected.");
+    Debug.Log("[Server][Metro Service - " + Context.WebSocket.Url.Port + "] Client connected to " +
+              Context.WebSocket.Url);
   }
   protected override void OnClose(CloseEventArgs e)
   {
-    Debug.Log("[Server][Metro Service] Client disconnected.");
+    Debug.Log("[Server][Metro Service] Client disconnected");
   }
 
   // Old API (Pre Instanced Games)
@@ -147,7 +167,7 @@ public class MetroService : WebSocketBehavior
           //       }
           // }))
           var recommendation = json["arguments"];
-          Debug.Log("[Server][Metro Service] Set Insertion Recommendation: " +
+          Debug.Log("[Server][Metro Service - " + Context.WebSocket.Url.Port + "] Set Insertion Recommendation: " +
                     recommendation.ToString());
           MetroManager.SetInsertionRecommendation(
               gameIDSetRecommendation,
@@ -231,22 +251,22 @@ public class MetroService : WebSocketBehavior
 
         // AGENT TTS
         case "speak":
-        {
-          string agent_response = json["response"].str;
-          Debug.Log("[Server][Metro Service] Agent speak requested: " + agent_response);
-          if (MetroManager.Instance != null && MetroManager.Instance.deepgramConnection != null)
           {
-            Debug.Log("[Server] [Metro Service] Requesting Deepgram: " + agent_response);
-            MetroManager.Instance.deepgramConnection.Speak(agent_response);
-            res.AddField("Status", "Success");
+            string agent_response = json["response"].str;
+            Debug.Log("[Server][Metro Service - " + Context.WebSocket.Url.Port + "] Agent speak requested: " + agent_response);
+            if (MetroManager.Instance != null && MetroManager.Instance.deepgramConnection != null)
+            {
+              Debug.Log("[Server] [Metro Service - " + Context.WebSocket.Url.Port + "] Requesting Deepgram: " + agent_response);
+              MetroManager.Instance.deepgramConnection.Speak(agent_response);
+              res.AddField("Status", "Success");
+            }
+            else
+            {
+              res.AddField("Status", "Error");
+              res.AddField("Error Message", "DeepgramConnection is not initialzied");
+            }
           }
-          else 
-          {
-            res.AddField("Status", "Error");
-            res.AddField("Error Message", "DeepgramConnection is not initialzied");
-          }
-        }
-        break;
+          break;
 
         case "take_action":
           MetroManager.LogServerMessage(json);
@@ -277,7 +297,7 @@ public class MetroService : WebSocketBehavior
           res.AddField("Status", "None");
           break;
         default:
-          Debug.LogError("[Server][Metro Service] Received: " + e.Data);
+          Debug.LogError("[Server][Metro Service - " + Context.WebSocket.Url.Port + "] Received: " + e.Data);
           throw new Exception("Unrecognized Command");
       }
     }
@@ -313,8 +333,8 @@ public class MetroService : WebSocketBehavior
   protected JSONObject QueueAction(JSONObject args, uint gameID)
   {
     var action = args["action"].str;
-    Debug.Log("[Server][Metro Service] take action: " + action);
-    Debug.Log("[Server][Metro Service] full action: " + args);
+    Debug.Log("[Server][Metro Service - " + Context.WebSocket.Url.Port + "] take action: " + action);
+    Debug.Log("[Server][Metro Service - " + Context.WebSocket.Url.Port + "] full action: " + args);
 
     uint queueID = 0;
 

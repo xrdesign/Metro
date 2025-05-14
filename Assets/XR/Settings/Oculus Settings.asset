@@ -22,7 +22,7 @@ MonoBehaviour:
   PhaseSync: 0
   SymmetricProjection: 1
   SubsampledLayout: 0
-  FoveatedRenderingMethod: 0
+  FoveatedRenderingMethod: 1
   LateLatching: 0
   LateLatchingDebug: 0
   EnableTrackingOriginStageMode: 0

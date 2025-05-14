@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
+#if UNITY_ANDROID
+using UnityEngine.Android;
+#endif
 
 // TTS IMPORTS
 using RestSharp;
@@ -76,6 +79,10 @@ public class DeepgramConnection : MonoBehaviour
         // _audioSource = GetComponent<AudioSource>();
         // Debug.Assert(_audioSource != null, "DeepgramConnection missing Audio Source");
         MetroManager.Instance.deepgramConnection = this;
+#if UNITY_ANDROID
+        if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
+            Permission.RequestUserPermission(Permission.Microphone);
+#endif
     }
     // Start is called before the first frame update
     void Start()
@@ -93,11 +100,28 @@ public class DeepgramConnection : MonoBehaviour
         //Connect to Mic
         Debug.Log("Connecting to mic");
         Debug.Assert(Microphone.devices.Length > 0, "No microphone available for DeepgramConnection");
-        microphoneSource.clip = Microphone.Start(null, true, 30, AudioSettings.outputSampleRate);
+        string micDevice = Microphone.devices.Length > 0 ? Microphone.devices[0] : null;
+        microphoneSource.clip = Microphone.Start(micDevice, true, 5, AudioSettings.outputSampleRate);
         microphoneSource.loop = true;
         microphoneSource.Play();
         curPos = 0; lastPos = 0;
         SetupWebsocket();
+
+        // make sure you have an AudioSource on this GO
+        // var playSrc = gameObject.AddComponent<AudioSource>();
+        // playSrc.spatialBlend = 0f;      // 2D audio so you hear it equally
+        // playSrc.loop = true;
+        // playSrc.volume = 1f;
+
+        // // start the mic
+        // // string micDevice = Microphone.devices.Length > 0 ? Microphone.devices[0] : null;
+        // playSrc.clip = Microphone.Start(micDevice, true, 5, AudioSettings.outputSampleRate);
+
+        // // wait until mic actually starts
+        // while (Microphone.GetPosition(micDevice) <= 0) { /* spin */ }
+
+        // // then play it back
+        // playSrc.Play();
 
     }
 
@@ -108,6 +132,9 @@ public class DeepgramConnection : MonoBehaviour
 
         playing = true;
         shouldStop = false;
+
+        // reset the audio buffer
+        lastPos = Microphone.GetPosition(null);
         yield return new WaitForSeconds(29);
         if (playing && !shouldStop)
         {
@@ -121,21 +148,25 @@ public class DeepgramConnection : MonoBehaviour
             yield return null;
 
         shouldStop = true;
-        
+
         float timer = 0f;
         while (shouldStop)
         {
             yield return new WaitForEndOfFrame();
             timer += Time.deltaTime;
 
-            if (timer >= 1.0f){
+            if (timer >= 1.0f)
+            {
                 shouldStop = false;
                 playing = false;
             }
         }
-        if (command == ""){
+        if (command == "")
+        {
             Debug.Log("Command is empty, skipping");
-        }else{
+        }
+        else
+        {
             MetroManager.AddInstructions(command);
             Debug.Log("Finish command: " + command);
             command = "";
