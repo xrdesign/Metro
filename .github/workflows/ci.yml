@@ -23,10 +23,10 @@ jobs:
             target: Android
             method: BuildAndroid
             output: build/android/Metro.apk
-          - os: ubuntu-latest
-            target: WebGL
-            method: BuildWebGL
-            output: build/webgl
+          # - os: ubuntu-latest
+          #   target: WebGL
+          #   method: BuildWebGL
+          #   output: build/webgl
 
     runs-on: ${{ matrix.os }}
 
