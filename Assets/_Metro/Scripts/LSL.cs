@@ -949,7 +949,7 @@ namespace LSL
 		const string libname = "liblsl32";
 #elif UNITY_STANDALONE_WIN
 		// a build hook will took care that the correct dll will be renamed after a successfull build 
-		const string libname =  "liblsl";
+	    const string libname =  "liblsl64";
 #elif (UNITY_EDITOR_LINUX && UNITY_EDITOR_64) || UNITY_STANDALONE_LINUX
 	   const string libname = "liblsl64.so";
 #elif UNITY_EDITOR_LINUX
@@ -963,6 +963,8 @@ namespace LSL
 	   const string libname = "liblsl";
 #elif UNITY_ANDROID
 	   const string libname = "liblsl";
+#elif UNITY_WEBGL
+       const string libname = "liblsl"; // to shut the compiler up, but this will not work
 #endif
 
             [DllImport(libname, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi, ExactSpelling = true)]
