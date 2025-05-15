@@ -1,0 +1,100 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: StandaloneWindows64
+            output: build/windows/Metro.exe
+          - os: macos-latest
+            platform: StandaloneOSX
+            output: build/macos/Metro.app
+          - os: ubuntu-latest
+            platform: Android
+            output: build/android/Metro.apk
+          # - os: ubuntu-latest
+          #   platform: WebGL
+          #   output: build/webgl
+
+    steps:
+      # 1) Checkout (no LFS)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      # 2) Git LFS
+      - name: Create LFS file list
+        run: |
+          git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      # 3) Cache Library
+      - name: Cache Library folder
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+
+      # 4) Inject deepgram.json
+      # inject on Windows (PowerShell)
+      - name: Inject deepgram.json (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'Assets\StreamingAssets')) {
+            New-Item -ItemType Directory 'Assets\StreamingAssets' | Out-Null
+          }
+          Set-Content -Path 'Assets\StreamingAssets\deepgram.json' `
+                      -Value '${{ secrets.DEEPGRAM_JSON }}' `
+                      -NoNewline
+
+      # inject on Linux/macOS (bash)
+      - name: Inject deepgram.json (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p Assets/StreamingAssets
+          echo '${{ secrets.DEEPGRAM_JSON }}' > Assets/StreamingAssets/deepgram.json
+
+
+      # 5) Build (Unity activation is handled automatically by the builder using the env below)
+      - name: Build project (${{ matrix.platform }})
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion:   2022.3.45f1
+          targetPlatform: ${{ matrix.platform }}
+
+      # 6) Upload artifact
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: ${{ matrix.output }}
