@@ -61,11 +61,25 @@ jobs:
             Library-
 
       # 4) Inject deepgram.json
-      - name: Inject deepgram.json
+      # inject on Windows (PowerShell)
+      - name: Inject deepgram.json (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'Assets\StreamingAssets')) {
+            New-Item -ItemType Directory 'Assets\StreamingAssets' | Out-Null
+          }
+          Set-Content -Path 'Assets\StreamingAssets\deepgram.json' `
+                      -Value '${{ secrets.DEEPGRAM_JSON }}' `
+                      -NoNewline
+
+      # inject on Linux/macOS (bash)
+      - name: Inject deepgram.json (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
           mkdir -p Assets/StreamingAssets
-          echo '${{ secrets.DEEPGRAM_JSON }}' \
-            > Assets/StreamingAssets/deepgram.json
+          echo '${{ secrets.DEEPGRAM_JSON }}' > Assets/StreamingAssets/deepgram.json
+
 
       # 5) Build (Unity activation is handled automatically by the builder using the env below)
       - name: Build project (${{ matrix.platform }})
