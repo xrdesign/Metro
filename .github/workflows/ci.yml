@@ -2,48 +2,31 @@
 name: CI
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            platform: StandaloneWindows64
-            output: build/windows/Metro.exe
-          - os: macos-latest
-            platform: StandaloneOSX
-            output: build/macos/Metro.app
-          - os: ubuntu-latest
-            platform: Android
-            output: build/android/Metro.apk
-          # - os: ubuntu-latest
-          #   platform: WebGL
-          #   output: build/webgl
-
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    env:
+      UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
     steps:
-      # 1) Checkout (no LFS)
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           lfs: false
 
-      # 2) Git LFS
       - name: Create LFS file list
         run: |
           git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
-
 
       - name: Restore LFS cache
         uses: actions/cache@v3
         with:
           path: .git/lfs
-          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+          key: windows-lfs-${{ hashFiles('.lfs-assets-id') }}
 
       - name: Git LFS Pull
         run: |
@@ -51,19 +34,15 @@ jobs:
           git add .
           git reset --hard
 
-      # 3) Cache Library
       - name: Cache Library folder
         uses: actions/cache@v3
         with:
           path: Library
-          key: Library-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
+          key: windows-lib-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
           restore-keys: |
-            Library-
+            windows-lib-
 
-      # 4) Inject deepgram.json
-      # inject on Windows (PowerShell)
       - name: Inject deepgram.json (Windows)
-        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           if (-not (Test-Path 'Assets\StreamingAssets')) {
@@ -73,28 +52,122 @@ jobs:
                       -Value '${{ secrets.DEEPGRAM_JSON }}' `
                       -NoNewline
 
-      # inject on Linux/macOS (bash)
-      - name: Inject deepgram.json (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Build Windows
+        uses: game-ci/unity-builder@v4
+        with:
+          unityVersion:   2022.3.45f1
+          targetPlatform: StandaloneWindows64
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: build/windows/Metro.exe
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    env:
+      UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Create LFS file list
+        run: |
+          git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        with:
+          path: .git/lfs
+          key: macos-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Cache Library folder
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: macos-lib-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
+          restore-keys: |
+            macos-lib-
+
+      - name: Inject deepgram.json (macOS/Linux)
         run: |
           mkdir -p Assets/StreamingAssets
           echo '${{ secrets.DEEPGRAM_JSON }}' > Assets/StreamingAssets/deepgram.json
 
-
-      # 5) Build (Unity activation is handled automatically by the builder using the env below)
-      - name: Build project (${{ matrix.platform }})
+      - name: Build macOS
         uses: game-ci/unity-builder@v4
-        env:
-          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
         with:
           unityVersion:   2022.3.45f1
-          targetPlatform: ${{ matrix.platform }}
+          targetPlatform: StandaloneOSX
 
-      # 6) Upload artifact
-      - name: Upload build artifact
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}
-          path: ${{ matrix.output }}
+          name: macos
+          path: build/macos/Metro.app
+
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    env:
+      UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Create LFS file list
+        run: |
+          git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        with:
+          path: .git/lfs
+          key: ubuntu-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Cache Library folder
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: ubuntu-lib-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
+          restore-keys: |
+            ubuntu-lib-
+
+      - name: Inject deepgram.json (macOS/Linux)
+        run: |
+          mkdir -p Assets/StreamingAssets
+          echo '${{ secrets.DEEPGRAM_JSON }}' > Assets/StreamingAssets/deepgram.json
+
+      - name: Build Android
+        uses: game-ci/unity-builder@v4
+        with:
+          unityVersion:   2022.3.45f1
+          targetPlatform: Android
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: build/android/Metro.apk
