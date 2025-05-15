@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-lib-
 
       - name: Activate Unity license
-        uses: game-ci/unity-activate@v2
+        uses: game-ci/unity-activate@v4
         with:
           unityVersion: 2022.3.45f1
         #   email: ${{ secrets.UNITY_EMAIL }}
