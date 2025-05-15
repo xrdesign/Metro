@@ -1,4 +1,5 @@
-name: Unity CI
+# .github/workflows/ci.yml
+name: CI
 
 on:
   push:
@@ -8,76 +9,79 @@ on:
 
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: windows-latest
-            target: StandaloneWindows64
-            method: BuildWindows
+            platform: StandaloneWindows64
             output: build/windows/Metro.exe
           - os: macos-latest
-            target: StandaloneOSX
-            method: BuildMacOS
+            platform: StandaloneOSX
             output: build/macos/Metro.app
           - os: ubuntu-latest
-            target: Android
-            method: BuildAndroid
+            platform: Android
             output: build/android/Metro.apk
           # - os: ubuntu-latest
-          #   target: WebGL
-          #   method: BuildWebGL
+          #   platform: WebGL
           #   output: build/webgl
 
-    runs-on: ${{ matrix.os }}
-
     steps:
-      - name: Checkout repo
+      # 1) Checkout (no LFS)
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          lfs: true
+          lfs: false
 
+      # 2) Git LFS
+      - name: Create LFS file list
+        run: |
+          git lfs ls-files -l \
+            | cut -d' ' -f1 \
+            | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      # 3) Cache Library
       - name: Cache Library folder
         uses: actions/cache@v3
         with:
           path: Library
-          key: ${{ runner.os }}-lib-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
+          key: Library-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
           restore-keys: |
-            ${{ runner.os }}-lib-
+            Library-
 
-      - name: Activate Unity license
-        uses: game-ci/unity-activate@v4
-        with:
-          unityVersion: 2022.3.45f1
-        #   email: ${{ secrets.UNITY_EMAIL }}
-        #   password: ${{ secrets.UNITY_PASSWORD }}
-          license: ${{ secrets.UNITY_LICENSE }}
-
-      - name: Inject deepgram.json (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          if (!(Test-Path Assets\StreamingAssets)) { New-Item -ItemType Directory Assets\StreamingAssets }
-          Set-Content -Path Assets\StreamingAssets\deepgram.json -Value "${{ secrets.DEEPGRAM_JSON }}" -NoNewline
-        shell: powershell
-
-      - name: Inject deepgram.json (macOS/Linux)
-        if: runner.os != 'Windows'
+      # 4) Inject deepgram.json
+      - name: Inject deepgram.json
         run: |
           mkdir -p Assets/StreamingAssets
-          echo '${{ secrets.DEEPGRAM_JSON }}' > Assets/StreamingAssets/deepgram.json
+          echo '${{ secrets.DEEPGRAM_JSON }}' \
+            > Assets/StreamingAssets/deepgram.json
 
-      - name: Build project
+      # 5) Build (Unity activation is handled automatically by the builder using the env below)
+      - name: Build project (${{ matrix.platform }})
         uses: game-ci/unity-builder@v4
-        with:
-          unityVersion: 2022.3.45f1
-          targetPlatform: ${{ matrix.target }}
-          customParameters: -executeMethod BuildScript.${{ matrix.method }}
         env:
-          # UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
-          # UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target }}
+          unityVersion:   2022.3.45f1
+          targetPlatform: ${{ matrix.platform }}
+
+      # 6) Upload artifact
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform }}
           path: ${{ matrix.output }}
