@@ -47,8 +47,8 @@ jobs:
       - name: Activate Unity license
         uses: game-ci/unity-activate@v2
         with:
-          email: ${{ secrets.UNITY_EMAIL }}
-          password: ${{ secrets.UNITY_PASSWORD }}
+        #   email: ${{ secrets.UNITY_EMAIL }}
+        #   password: ${{ secrets.UNITY_PASSWORD }}
           license: ${{ secrets.UNITY_LICENSE }}
 
       - name: Inject deepgram.json (Windows)
@@ -71,8 +71,8 @@ jobs:
           targetPlatform: ${{ matrix.target }}
           customParameters: -executeMethod BuildScript.${{ matrix.method }}
         env:
-          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          # UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          # UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
 
       - name: Upload artifact
