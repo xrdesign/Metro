@@ -47,6 +47,7 @@ jobs:
       - name: Activate Unity license
         uses: game-ci/unity-activate@v2
         with:
+          unityVersion: 2022.3.45f1
         #   email: ${{ secrets.UNITY_EMAIL }}
         #   password: ${{ secrets.UNITY_PASSWORD }}
           license: ${{ secrets.UNITY_LICENSE }}
