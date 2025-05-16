@@ -3,9 +3,21 @@ name: CI
 
 on:
   workflow_dispatch:
+    inputs:
+      job:
+        description: "Which build job to run"
+        required: true
+        default: windows
+        type: choice
+        options:
+          - windows
+          - macos
+          - android
+          - webgl
 
 jobs:
   build-windows:
+    if: ${{ github.event.inputs.job == 'windows' }}    # run only when job=windows
     name: Build Windows
     runs-on: windows-latest
     env:
@@ -66,6 +78,7 @@ jobs:
           path: build/windows/Metro.exe
 
   build-macos:
+    if: ${{ github.event.inputs.job == 'macos' }}     # run only when job=macos
     name: Build macOS
     runs-on: macos-latest
     env:
@@ -121,6 +134,7 @@ jobs:
           path: build/macos/Metro.app
 
   build-android:
+    if: ${{ github.event.inputs.job == 'android' }}   # run only when job=android
     name: Build Android
     runs-on: ubuntu-latest
     env:
@@ -178,7 +192,9 @@ jobs:
         with:
           name: android
           path: build/android/Metro.apk
+
   build-webgl:
+    if: ${{ github.event.inputs.job == 'webgl' }}     # run only when job=webgl
     name: Build WebGL
     runs-on: ubuntu-latest
     env:
