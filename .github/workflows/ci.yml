@@ -1,4 +1,3 @@
-# .github/workflows/ci.yml
 name: CI
 
 on:
@@ -11,13 +10,16 @@ on:
         type: choice
         options:
           - windows
-          - macos
+          # - macos
           - android
-          - webgl
+          # - webgl
+      buildTag:
+        description: 'Provide Build Version'
+        required: true
 
 jobs:
   build-windows:
-    if: ${{ github.event.inputs.job == 'windows' }}    # run only when job=windows
+    if: ${{ github.event.inputs.job == 'windows' }}
     name: Build Windows
     runs-on: windows-latest
     env:
@@ -70,15 +72,16 @@ jobs:
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: StandaloneWindows64
+          buildName:      Metro.exe
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows
+          name: windows-${{ github.event.inputs.buildTag }}
           path: build/windows/Metro.exe
 
   build-macos:
-    if: ${{ github.event.inputs.job == 'macos' }}     # run only when job=macos
+    if: ${{ github.event.inputs.job == 'macos' }}
     name: Build macOS
     runs-on: macos-latest
     env:
@@ -126,15 +129,16 @@ jobs:
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: StandaloneOSX
+          buildName:      Metro.app
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macos
+          name: macos-${{ github.event.inputs.buildTag }}
           path: build/macos/Metro.app
 
   build-android:
-    if: ${{ github.event.inputs.job == 'android' }}   # run only when job=android
+    if: ${{ github.event.inputs.job == 'android' }}
     name: Build Android
     runs-on: ubuntu-latest
     env:
@@ -186,15 +190,16 @@ jobs:
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: Android
+          buildName:      Metro.apk
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android
+          name: android-${{ github.event.inputs.buildTag }}
           path: build/android/Metro.apk
 
   build-webgl:
-    if: ${{ github.event.inputs.job == 'webgl' }}     # run only when job=webgl
+    if: ${{ github.event.inputs.job == 'webgl' }}
     name: Build WebGL
     runs-on: ubuntu-latest
     env:
@@ -242,9 +247,10 @@ jobs:
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: WebGL
+          buildName:      Metro
 
       - name: Upload WebGL artifact
         uses: actions/upload-artifact@v4
         with:
-          name: webgl
-          path: build/webgl
+          name: webgl-${{ github.event.inputs.buildTag }}
+          path: build/webgl/Metro
