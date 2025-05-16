@@ -73,6 +73,7 @@ jobs:
           unityVersion:   2022.3.45f1
           targetPlatform: StandaloneWindows64
           buildName:      Metro
+          buildMethod: BuildScript.BuildWindows
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -130,6 +131,7 @@ jobs:
           unityVersion:   2022.3.45f1
           targetPlatform: StandaloneOSX
           buildName:      Metro
+          buildMethod: BuildScript.BuildMacOS
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -191,6 +193,7 @@ jobs:
           unityVersion:   2022.3.45f1
           targetPlatform: Android
           buildName:      Metro
+          buildMethod: BuildScript.BuildAndroid
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
@@ -248,6 +251,7 @@ jobs:
           unityVersion:   2022.3.45f1
           targetPlatform: WebGL
           buildName:      Metro
+          buildMethod: BuildScript.BuildWebGL
 
       - name: Upload WebGL artifact
         uses: actions/upload-artifact@v4
