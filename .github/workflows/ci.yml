@@ -72,7 +72,7 @@ jobs:
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: StandaloneWindows64
-          buildName:      Metro.exe
+          buildName:      Metro
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -129,7 +129,7 @@ jobs:
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: StandaloneOSX
-          buildName:      Metro.app
+          buildName:      Metro
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -190,7 +190,7 @@ jobs:
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: Android
-          buildName:      Metro.apk
+          buildName:      Metro
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
