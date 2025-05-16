@@ -53,7 +53,8 @@ jobs:
                       -NoNewline
 
       - name: Build Windows
-        uses: game-ci/unity-builder@v4
+        uses: game-ci/unity-builder@v4.4.0
+        continue-on-error: true
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: StandaloneWindows64
@@ -107,7 +108,8 @@ jobs:
           echo '${{ secrets.DEEPGRAM_JSON }}' > Assets/StreamingAssets/deepgram.json
 
       - name: Build macOS
-        uses: game-ci/unity-builder@v4
+        uses: game-ci/unity-builder@v4.4.0
+        continue-on-error: true
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: StandaloneOSX
@@ -126,6 +128,10 @@ jobs:
       UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
       UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
     steps:
+      - name: Delete huge unnecessary tools folder
+        run: rm -rf /opt/hostedtoolcache
+        continue-on-error: true
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -161,7 +167,8 @@ jobs:
           echo '${{ secrets.DEEPGRAM_JSON }}' > Assets/StreamingAssets/deepgram.json
 
       - name: Build Android
-        uses: game-ci/unity-builder@v4
+        uses: game-ci/unity-builder@v4.4.0
+        continue-on-error: true
         with:
           unityVersion:   2022.3.45f1
           targetPlatform: Android
@@ -171,3 +178,57 @@ jobs:
         with:
           name: android
           path: build/android/Metro.apk
+  build-webgl:
+    name: Build WebGL
+    runs-on: ubuntu-latest
+    env:
+      UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Create LFS file list
+        run: |
+          git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        with:
+          path: .git/lfs
+          key: ubuntu-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Cache Library folder
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: ubuntu-lib-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
+          restore-keys: |
+            ubuntu-lib-
+
+      - name: Inject deepgram.json (Linux/macOS)
+        run: |
+          mkdir -p Assets/StreamingAssets
+          echo '${{ secrets.DEEPGRAM_JSON }}' > Assets/StreamingAssets/deepgram.json
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4.4.0
+        continue-on-error: true
+        with:
+          unityVersion:   2022.3.45f1
+          targetPlatform: WebGL
+
+      - name: Upload WebGL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webgl
+          path: build/webgl
