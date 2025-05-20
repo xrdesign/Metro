@@ -1,0 +1,72 @@
+name: Windows Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      buildTag:
+        description: 'Provide Build Version'
+        required: true
+        type: string
+
+jobs:
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    env:
+      UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Create LFS file list
+        run: |
+          git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        with:
+          path: .git/lfs
+          key: windows-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Cache Library folder
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: windows-lib-${{ hashFiles('Assets/**','Packages/**','ProjectSettings/**') }}
+          restore-keys: |
+            windows-lib-
+
+      - name: Inject deepgram.json (Windows)
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'Assets\StreamingAssets')) {
+            New-Item -ItemType Directory 'Assets\StreamingAssets' | Out-Null
+          }
+          Set-Content -Path 'Assets\StreamingAssets\deepgram.json' `
+                      -Value '${{ secrets.DEEPGRAM_JSON }}' `
+                      -NoNewline
+
+      - name: Build Windows
+        uses: game-ci/unity-builder@v4.4.0
+        continue-on-error: true
+        with:
+          unityVersion:   2022.3.45f1
+          targetPlatform: StandaloneWindows64
+          buildName:      Metro
+          buildMethod: BuildScript.BuildWindows
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ github.event.inputs.buildTag }}
+          path: build/windows

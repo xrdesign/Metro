@@ -1,5 +1,4 @@
-name: ${{ github.event.inputs.job }} build — ${{ github.event.inputs.buildTag }}
-
+name: All Platforms Build
 on:
   workflow_dispatch:
     inputs:
