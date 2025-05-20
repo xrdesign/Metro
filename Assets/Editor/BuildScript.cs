@@ -94,6 +94,7 @@ public static class BuildScript
     // Builds Windows Standalone (64-bit)
     public static void BuildWindows()
     {
+        PreBuild();
         string outputPath = "build/windows/Metro.exe";
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
         BuildPipeline.BuildPlayer(Scenes, outputPath, BuildTarget.StandaloneWindows64, BuildOptions.None);
@@ -102,6 +103,7 @@ public static class BuildScript
     // Builds macOS Standalone
     public static void BuildMacOS()
     {
+        PreBuild();
         string outputPath = "build/macos/Metro.app";
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
         BuildPipeline.BuildPlayer(Scenes, outputPath, BuildTarget.StandaloneOSX, BuildOptions.None);
@@ -110,6 +112,7 @@ public static class BuildScript
     // Builds WebGL
     public static void BuildWebGL()
     {
+        PreBuild();
         string outputPath = "build/webgl";
         Directory.CreateDirectory(outputPath);
         BuildPipeline.BuildPlayer(Scenes, outputPath, BuildTarget.WebGL, BuildOptions.None);
@@ -118,6 +121,7 @@ public static class BuildScript
     // Builds Android APK (Quest)
     public static void BuildAndroid()
     {
+        PreBuild();
         string outputPath = "build/android/Metro.apk";
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
         BuildPipeline.BuildPlayer(Scenes, outputPath, BuildTarget.Android, BuildOptions.None);
