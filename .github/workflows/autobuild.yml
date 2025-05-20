@@ -1,4 +1,4 @@
-name: CI
+name: ${{ github.event.inputs.job }} build — ${{ github.event.inputs.buildTag }}
 
 on:
   workflow_dispatch:
