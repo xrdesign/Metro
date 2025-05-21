@@ -16,7 +16,8 @@ public class FallbackCameraController : MonoBehaviour
     float yaw;
     float pitch;
     MixedRealityInputAction selectAction;
-
+    MixedRealityInputAction speechAction;
+    private IMixedRealityInputSource keyboardInputSource;
     void Awake()
     {
         // disable in Editor or when any XR loader (headset) is active
@@ -32,11 +33,21 @@ public class FallbackCameraController : MonoBehaviour
             .InputSystemProfile.InputActionsProfile;
         selectAction = actionsProfile.InputActions
             .First(a => a.Description == "Select");
+        speechAction = actionsProfile.InputActions
+            .First(a => a.Description == "Speech");
 
         // init yaw/pitch from current rotation
         var e = transform.rotation.eulerAngles;
         yaw = e.y;
         pitch = e.x;
+
+        keyboardInputSource = new BaseGenericInputSource(
+            "KeyboardInput",
+            new IMixedRealityPointer[0],
+            InputSourceType.Controller
+        );
+
+
     }
 
     void Update()
@@ -77,5 +88,28 @@ public class FallbackCameraController : MonoBehaviour
 
         if (Input.GetMouseButtonUp(0))
             inputSystem.RaisePointerUp(pointer, selectAction, handedness);
+
+
+        // when P is pressed, triggle on input down with the speech action
+        //         void IMixedRealityInputHandler.OnInputDown(InputEventData eventData)
+        //   {
+        //             // Debug.Log("Input Down:" + eventData.MixedRealityInputAction.Description);
+        //             // if the description contains "Speech", then DeepgramConnection.StartDeepgram()
+        //             if (eventData.MixedRealityInputAction.Description.Contains("Speech"))
+        //             {
+        //                 deepgramConnection.StartDeepgram();
+        //             }
+        //         }
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            // mimic speech-action press
+            inputSystem.RaiseOnInputDown(keyboardInputSource, handedness, speechAction);
+        }
+
+        if (Input.GetKeyUp(KeyCode.P))
+        {
+            // mimic speech-action release
+            inputSystem.RaiseOnInputUp(keyboardInputSource, handedness, speechAction);
+        }
     }
 }
