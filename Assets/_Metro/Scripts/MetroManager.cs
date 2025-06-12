@@ -44,6 +44,7 @@ public class MetroManager : MonoBehaviour, IMixedRealityTeleportHandler, IMixedR
   public int[] gameSeeds;
 
   public bool withPerturbations;
+  public bool willRandomlySpawnStarStation = true;
 
   public bool autoReset = false;
   public bool showRecommendation = false;

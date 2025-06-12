@@ -861,6 +861,13 @@ public class MetroGame : MonoBehaviour, IMixedRealityPointerHandler
   {
     var p = GetRandomFloat();
     var type = StationType.Sphere;
+
+    // if willRandomlySpawnStarStation is false, then scale the p up to 0.1~1.0 so that no star station will be spawned
+    if (!MetroManager.Instance.willRandomlySpawnStarStation)
+    {
+      p = 0.1f + p * 0.9f; // scale to 0.1~1.0
+    }
+
     if (p < .1f && !containsStarStation)
       type = StationType.Star;
     else if (p < 0.45f)
