@@ -9,6 +9,8 @@ using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Physics;
 using UnityEngine.Serialization;
 using System;
+using UnityEngine.InputSystem.Controls;
+using UnityEditor.Search;
 
 public enum StationType { Sphere, Cone, Cube, Star }
 public class Station : MonoBehaviour,
@@ -67,12 +69,19 @@ public class Station : MonoBehaviour,
 
   private bool isResetting = false; // Flag to track if the coroutine is already running
 
+  private bool isShowingCost = false;
 
   public Image timerImage;
 
   float cooldown = 0.0f;
   Material instancedMaterial;
   Color origColor = Color.red;
+
+  private Renderer rend;
+  private MaterialPropertyBlock block;
+
+  Interactable interactable;
+  InteractableShaderTheme shaderTheme;
 
   // Start is called before the first frame update
   public void Init()
@@ -91,15 +100,83 @@ public class Station : MonoBehaviour,
     _stationText.text = stationName;
 
     // create an instance of the material for color highlighting
-    var renderer = GetComponent<Renderer>();
-    if (renderer != null)
+    interactable = GetComponent<Interactable>();
+    if (interactable != null)
     {
-      renderer.material = GameObject.Instantiate(renderer.material);
-      instancedMaterial = renderer.material;
-      origColor = instancedMaterial.color;
+      // // instancedMaterial = renderer.material;
+      // // var colorTheme = interactable.ActiveThemes[0];
+      // var profile = interactable.Profiles[0];
+      // var originalTheme = profile.Themes[0];                         // Theme SO
+      // var themeClone = ScriptableObject.Instantiate(originalTheme);  // deep-clones Definitions too
+      // themeClone.name += "_Instance";
+
+      // // 2. Swap in your clone
+      // profile.Themes[0] = themeClone; // build a Theme from our Definition :contentReference[oaicite:1]{index=1}
+
+      shaderTheme = interactable.ActiveThemes
+                       .OfType<InteractableShaderTheme>()
+                       .FirstOrDefault();
+      origColor = shaderTheme.StateProperties[0].Values[0].Color;
     }
 
+    rend = GetComponent<Renderer>();
+    block = new MaterialPropertyBlock();
+
     // create a point light source for the station
+  }
+
+  private void Awake()
+  {
+    interactable = GetComponent<Interactable>();
+
+    // 1. Deep‐clone every Theme SO in the profile
+    foreach (var profile in interactable.Profiles)
+    {
+      for (int i = 0; i < profile.Themes.Count; i++)
+      {
+        var original = profile.Themes[i];
+        // JSON‐clone ensures nested Definitions are copied too :contentReference[oaicite:1]{index=1}
+        var json = JsonUtility.ToJson(original);
+        var clone = ScriptableObject.CreateInstance<Theme>();
+        JsonUtility.FromJsonOverwrite(json, clone);
+        clone.name = original.name + "_Instance";
+        profile.Themes[i] = clone;
+      }
+    }
+
+    // 2. Trigger Interactable to tear down & rebuild its theme engines
+    //    so it uses your clones instead of the shared assets
+    interactable.enabled = false;
+    interactable.enabled = true;
+  }
+
+  public void SetThemeColor(int stateIndex, Color color)
+  {
+    if (shaderTheme == null) return;
+
+    // Ensure the theme’s StateProperties list is valid
+    var prop = shaderTheme.StateProperties.FirstOrDefault();
+    if (prop == null) return;
+
+    // Update the color value for that state
+    prop.Values[stateIndex].Color = color;
+
+    // Force the Interactable to re-apply all theme values
+    // interactable.UpdateVisuals();
+    // interactable.SetState(
+    //   InteractableStates.InteractableStateEnum.Default,
+    //   false);
+    // interactable.SetState(
+    //     InteractableStates.InteractableStateEnum.Default,
+    //     true);
+  }
+
+  public void SetColor(Color color)
+  {
+    // Get current block, modify its "_Color" property, then apply it
+    rend.GetPropertyBlock(block);
+    block.SetColor("_Color", color);
+    rend.SetPropertyBlock(block);
   }
 
   void FixedUpdate()
@@ -184,11 +261,22 @@ public class Station : MonoBehaviour,
 
     // TODO: station cost display
     _stationText.text = stationName;
-    instancedMaterial.color = origColor;
+    // instancedMaterial.color = origColor;
     if (MetroManager.Instance.showCosts)
     {
       // Debug.Log("Station cost: " + cost);
+      isShowingCost = true;
       ShowCost();
+    }
+    else
+    {
+      if (isShowingCost)
+      {
+        isShowingCost = false;
+        _stationText.text = stationName; // Reset to original name
+        SetThemeColor(0, origColor);
+        SetColor(origColor);
+      }
     }
   }
 
@@ -204,7 +292,10 @@ public class Station : MonoBehaviour,
         break;
       case MetroManager.CostDisplayMode.Color:
         float norm_cost = gameInstance.GetNormalizedStationCost(cost);
-        instancedMaterial.color = GetColor(norm_cost);
+        //-1 * float.Parse(stationName);
+        // instancedMaterial.color = GetColor(norm_cost);
+        SetThemeColor(0, GetColor(norm_cost));
+        SetColor(GetColor(norm_cost));
         break;
     }
 
@@ -217,12 +308,16 @@ public class Station : MonoBehaviour,
   }
 
 
+
+
   private IEnumerator ResetCostDisplayMode()
   {
     // Wait for 8 seconds
     yield return new WaitForSeconds(8);
     _stationText.text = stationName;
-    instancedMaterial.color = origColor;
+    // instancedMaterial.color = origColor;
+    SetThemeColor(0, origColor);
+    SetColor(origColor);
     MetroManager.Instance.showCosts = false;
     isResetting = false; // Reset the flag so it can be called again
   }
@@ -230,10 +325,22 @@ public class Station : MonoBehaviour,
   public Color GetColor(float value)
   {
     // Check if the value is infinite
-    if (value == -1)
+    if (value <= -1)
     {
-    // Return black for infinite values
-      return Color.black;
+      // Return black for infinite values
+      // return Color.black;
+      // Debug color
+      // -1 returns black, -10 returns white, intermediate values interpolate between black and white
+      if (value <= -10)
+      {
+        return Color.white;
+      }
+      else if (value <= -1)
+      {
+        // Interpolate between black (-1) and white (-10)
+        float t = Mathf.InverseLerp(-1, -10, value);
+        return Color.Lerp(Color.black, Color.white, t);
+      }
     }
 
     // Clamp value to ensure it's within the range [0,1]
