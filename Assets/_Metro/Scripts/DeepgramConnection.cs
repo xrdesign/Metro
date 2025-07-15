@@ -66,6 +66,9 @@ public class DeepgramConnection : MonoBehaviour
 
     private bool isReconnecting = false;
 
+    public GameObject micIcon;
+    public GameObject transcriptionTextPanel;
+
     void Awake()
     {
         if (microphoneSource == null)
@@ -133,6 +136,9 @@ public class DeepgramConnection : MonoBehaviour
         playing = true;
         shouldStop = false;
 
+        // set active the mic icon
+        micIcon.SetActive(true);
+
         // reset the audio buffer
         lastPos = Microphone.GetPosition(null);
         yield return new WaitForSeconds(29);
@@ -140,6 +146,8 @@ public class DeepgramConnection : MonoBehaviour
         {
             StartCoroutine(FinishRecording());
         }
+
+
     }
 
     IEnumerator FinishRecording()
@@ -148,6 +156,9 @@ public class DeepgramConnection : MonoBehaviour
             yield return null;
 
         shouldStop = true;
+
+        // set inactive the mic icon
+        micIcon.SetActive(false);
 
         float timer = 0f;
         while (shouldStop)
@@ -161,6 +172,13 @@ public class DeepgramConnection : MonoBehaviour
                 playing = false;
             }
         }
+
+        // Set the transcription text panel inactive
+        if (transcriptionTextPanel != null)
+        {
+            transcriptionTextPanel.SetActive(false);
+        }
+
         if (command == "")
         {
             Debug.Log("Command is empty, skipping");
@@ -398,6 +416,21 @@ public class DeepgramConnection : MonoBehaviour
         if (playing)
         {
             ProcessAudio();
+
+            // if Commend is not pure space or empty, enable the transcription text panel and set the text
+            if (command.Trim().Length > 0)
+            {
+                if (transcriptionTextPanel != null)
+                {
+                    transcriptionTextPanel.SetActive(true);
+                    var textComponent = transcriptionTextPanel.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+                    if (textComponent != null)
+                    {
+                        textComponent.text = command;
+                    }
+                }
+            }
+            // the FinishRecording coroutine will handle the disable
         }
 
         if (ws != null)
