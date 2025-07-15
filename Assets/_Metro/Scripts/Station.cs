@@ -75,7 +75,7 @@ public class Station : MonoBehaviour,
 
   float cooldown = 0.0f;
   Material instancedMaterial;
-  Color origColor = Color.red;
+  Color origColor = Color.white;
 
   private Renderer rend;
   private MaterialPropertyBlock block;
@@ -116,7 +116,7 @@ public class Station : MonoBehaviour,
       shaderTheme = interactable.ActiveThemes
                        .OfType<InteractableShaderTheme>()
                        .FirstOrDefault();
-      origColor = shaderTheme.StateProperties[0].Values[0].Color;
+      // origColor = shaderTheme.StateProperties[0].Values[0].Color;
     }
 
     rend = GetComponent<Renderer>();
@@ -161,14 +161,9 @@ public class Station : MonoBehaviour,
     // Update the color value for that state
     prop.Values[stateIndex].Color = color;
 
-    // Force the Interactable to re-apply all theme values
-    // interactable.UpdateVisuals();
-    // interactable.SetState(
-    //   InteractableStates.InteractableStateEnum.Default,
-    //   false);
-    // interactable.SetState(
-    //     InteractableStates.InteractableStateEnum.Default,
-    //     true);
+    // reset the state to default 
+    interactable.SetState(InteractableStates.InteractableStateEnum.Default, true);
+    interactable.ResetAllStates();
   }
 
   public void SetColor(Color color)
@@ -565,6 +560,17 @@ public class Station : MonoBehaviour,
       }
     }
     return neighbors;
+  }
+
+  // when application exit, set the color (in case of MRTK) to the original
+  void OnDestroy()
+  {
+    if (shaderTheme != null)
+    {
+      // Reset the color to the original color
+      SetThemeColor(0, origColor);
+      SetColor(origColor);
+    }
   }
 
   void IMixedRealityPointerHandler.OnPointerDown(
